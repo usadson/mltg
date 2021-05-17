@@ -1,0 +1,45 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "d2d"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug d2d"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "d2d", "--release"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "release d2d"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "d3d12"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug d3d12"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "d3d12", "--release"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "release d3d12"
+		}
+	]
+}

@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "debug d2d",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/d2d.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug d2d"
+        },
+        {
+            "name": "debug d3d12",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/d3d12.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug d3d12"
+        }
+    ]
+}
