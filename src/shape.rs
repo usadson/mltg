@@ -96,3 +96,48 @@ impl Stroke for Circle {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+pub struct RoundedRect {
+    pub rect: Rect,
+    pub radius: Vector,
+}
+
+impl RoundedRect {
+    #[inline]
+    pub fn new(rect: impl Into<Rect>, radius: impl Into<Vector>) -> Self {
+        Self {
+            rect: rect.into(),
+            radius: radius.into(),
+        }
+    }
+}
+
+impl From<RoundedRect> for D2D1_ROUNDED_RECT {
+    #[inline]
+    fn from(src: RoundedRect) -> D2D1_ROUNDED_RECT {
+        D2D1_ROUNDED_RECT {
+            rect: src.rect.into(),
+            radiusX: src.radius.x,
+            radiusY: src.radius.y,
+        }
+    }
+}
+
+impl Fill for RoundedRect {
+    #[inline]
+    fn fill(&self, dc: &ID2D1DeviceContext, brush: &Brush) {
+        unsafe {
+            dc.FillRoundedRectangle(&D2D1_ROUNDED_RECT::from(*self), &brush.0);
+        }
+    }
+}
+
+impl Stroke for RoundedRect {
+    #[inline]
+    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &Brush, width: f32) {
+        unsafe {
+            dc.DrawRoundedRectangle(&D2D1_ROUNDED_RECT::from(*self), &brush.0, width, None);
+        }
+    }
+}
