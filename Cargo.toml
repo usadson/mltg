@@ -3,7 +3,16 @@ name = "mltg"
 version = "0.0.1"
 authors = ["LNSEAB <691752+LNSEAB@users.noreply.github.com>"]
 edition = "2018"
+keywords = ["windows", "direct2d"]
+description = "Direct2D wrapper library"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/LNSEAB/mltg"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+default-target = "x86_64-pc-windows-msvc"
+all-featurse = true
 
 [dependencies]
 gecl = "0.0.1"
