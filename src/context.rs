@@ -16,12 +16,12 @@ impl<'a> Command<'a> {
 
     #[inline]
     pub fn fill(&self, object: &impl Fill, brush: &Brush) {
-        object.fill(self.0, brush);
+        object.fill(self.0, &brush.0);
     }
 
     #[inline]
-    pub fn stroke(&self, object: &impl Stroke, brush: &Brush, width: f32) {
-        object.stroke(self.0, brush, width);
+    pub fn stroke(&self, object: &impl Stroke, brush: &Brush, width: f32, style: Option<&StrokeStyle>) {
+        object.stroke(self.0, &brush.0, width, style.map(|s| s.0.clone()));
     }
 
     #[inline]
@@ -109,6 +109,11 @@ where
                 .unwrap()
         };
         PathBuilder::new(geometry)
+    }
+
+    #[inline]
+    pub fn stroke_style(&self, props: &StrokeStyleProperties) -> windows::Result<StrokeStyle> {
+        StrokeStyle::new(self.backend.d2d1_factory(), props)
     }
 
     #[inline]

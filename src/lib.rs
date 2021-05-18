@@ -7,6 +7,7 @@ pub mod d3d11;
 pub mod d3d12;
 mod path;
 mod shape;
+mod stroke_style;
 mod text;
 mod utility;
 
@@ -18,6 +19,7 @@ pub use d3d12::Direct3D12;
 pub use gecl::{circle, point, rect, rgba, size, vector};
 pub use path::*;
 pub use shape::*;
+pub use stroke_style::*;
 pub use text::*;
 pub use utility::*;
 
@@ -29,9 +31,9 @@ pub trait Target {
 }
 
 pub trait Fill {
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &Brush);
+    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush);
 }
 
 pub trait Stroke {
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &Brush, width: f32);
+    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>);
 }

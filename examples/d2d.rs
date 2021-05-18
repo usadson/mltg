@@ -3,6 +3,7 @@ struct Application {
     context: mltg::Context<mltg::Direct2D>,
     white_brush: mltg::Brush,
     text: mltg::TextLayout,
+    stroke_style: mltg::StrokeStyle,
 }
 
 impl Application {
@@ -17,12 +18,22 @@ impl Application {
         let text_format =
             context.text_format("Meiryo", mltg::font_point(14.0), &Default::default())?;
         let text = context.text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
+        let stroke_style = context.stroke_style(&mltg::StrokeStyleProperties {
+            start_cap: mltg::CapStyle::Triangle,
+            end_cap: mltg::CapStyle::Round,
+            line_join: mltg::LineJoin::Round,
+            dash: Some(mltg::Dash {
+                style: mltg::DashStyle::Dash,
+                ..Default::default()
+            }),
+        })?;
         context.set_dpi(window.dpi() as _);
         Ok(Self {
             back_buffer,
             context,
             white_brush,
             text,
+            stroke_style,
         })
     }
 }
@@ -39,21 +50,23 @@ impl wita::EventHandler for Application {
             mltg::rect(pos, (hw - pos2, hh - pos2))
         };
         let text_box = mltg::rect((hw, hh), self.text.size());
-        let path = self.context.path()
+        let path = self
+            .context
+            .path()
             .begin((30.0, hh + 30.0))
             .cubic_bezier_to(
                 (hw / 2.0, hh + 30.0),
-                (hw / 2.0, window_size.height as f32 - 30.0), 
-                (hw - 30.0, window_size.height as f32 - 30.0)
+                (hw / 2.0, window_size.height as f32 - 30.0),
+                (hw - 30.0, window_size.height as f32 - 30.0),
             )
             .end(mltg::FigureEnd::Open)
             .build();
         self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear((0.0, 0.0, 0.3, 0.0));
             cmd.fill(&white_rect, &self.white_brush);
-            cmd.stroke(&text_box, &self.white_brush, 2.0);
+            cmd.stroke(&text_box, &self.white_brush, 2.0, None);
             cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
-            cmd.stroke(&path, &self.white_brush, 5.0);
+            cmd.stroke(&path, &self.white_brush, 5.0, Some(&self.stroke_style));
         });
     }
 

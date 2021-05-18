@@ -146,12 +146,14 @@ impl wita::EventHandler for Application {
             mltg::rect(pos, (hw - pos2, hh - pos2))
         };
         let text_box = mltg::rect((hw, hh), self.text.size());
-        let path = self.context.path()
+        let path = self
+            .context
+            .path()
             .begin((30.0, hh + 30.0))
             .cubic_bezier_to(
                 (hw / 2.0, hh + 30.0),
-                (hw / 2.0, window_size.height as f32 - 30.0), 
-                (hw - 30.0, window_size.height as f32 - 30.0)
+                (hw / 2.0, window_size.height as f32 - 30.0),
+                (hw - 30.0, window_size.height as f32 - 30.0),
             )
             .end(mltg::FigureEnd::Open)
             .build();
@@ -218,9 +220,9 @@ impl wita::EventHandler for Application {
                 .ExecuteCommandLists(command_lists.len() as _, command_lists.as_mut_ptr());
             self.context.draw(&self.bitmaps[index], |cmd| {
                 cmd.fill(&white_rect, &self.white_brush);
-                cmd.stroke(&text_box, &self.white_brush, 2.0);
+                cmd.stroke(&text_box, &self.white_brush, 2.0, None);
                 cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
-                cmd.stroke(&path, &self.white_brush, 5.0);
+                cmd.stroke(&path, &self.white_brush, 5.0, None);
             });
             self.swap_chain.Present(1, 0).unwrap();
         }
@@ -237,20 +239,17 @@ impl wita::EventHandler for Application {
         self.render_targets.clear();
         self.context.backend().flush();
         unsafe {
-            self.swap_chain.ResizeBuffers(
-                0,
-                size.width,
-                size.height,
-                DXGI_FORMAT_UNKNOWN,
-                0,
-            ).unwrap();
+            self.swap_chain
+                .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
+                .unwrap();
         }
         self.render_targets = unsafe {
             let mut handle = self.rtv_heap.GetCPUDescriptorHandleForHeapStart();
             let mut buffers = vec![];
             for i in 0..2 {
                 let buffer: ID3D12Resource = self.swap_chain.GetBuffer(i as _).unwrap();
-                self.d3d12_device.CreateRenderTargetView(&buffer, std::ptr::null(), handle);
+                self.d3d12_device
+                    .CreateRenderTargetView(&buffer, std::ptr::null(), handle);
                 buffers.push(buffer);
                 handle.ptr += self.rtv_descriptor_size;
             }

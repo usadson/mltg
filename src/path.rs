@@ -6,18 +6,18 @@ pub struct Path(pub(crate) ID2D1PathGeometry);
 
 impl Fill for Path {
     #[inline]
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &Brush) {
+    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
         unsafe {
-            dc.FillGeometry(&self.0, &brush.0, None);
+            dc.FillGeometry(&self.0, brush, None);
         }
     }
 }
 
 impl Stroke for Path {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &Brush, width: f32) {
+    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
         unsafe {
-            dc.DrawGeometry(&self.0, &brush.0, width, None);
+            dc.DrawGeometry(&self.0, brush, width, style);
         }
     }
 }
