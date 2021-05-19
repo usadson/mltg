@@ -28,6 +28,16 @@ impl<'a> Command<'a> {
     pub fn draw_text(&self, layout: &TextLayout, brush: &Brush, origin: impl Into<Point>) {
         layout.draw(&self.0, brush, origin.into());
     }
+
+    #[inline]
+    pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&Command)) {
+        let rect: D2D_RECT_F = rect.into().into();
+        unsafe {
+            self.0.PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            f(self);
+            self.0.PopAxisAlignedClip();
+        }
+    }
 }
 
 pub trait Backend {
