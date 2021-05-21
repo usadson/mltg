@@ -6,7 +6,7 @@ use crate::bindings::Windows::Win32::{
 use crate::d3d11;
 use crate::*;
 
-pub type Bitmap = d3d11::Bitmap;
+pub type RenderTarget = d3d11::RenderTarget;
 
 pub struct Direct2D {
     _d3d11_device: ID3D11Device,
@@ -90,7 +90,7 @@ impl Direct2D {
 }
 
 impl Backend for Direct2D {
-    type RenderTarget = Bitmap;
+    type RenderTarget = RenderTarget;
 
     #[inline]
     fn device_context(&self) -> &ID2D1DeviceContext {

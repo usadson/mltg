@@ -88,9 +88,13 @@ impl StrokeStyle {
                 };
                 (cap, style, dash.offset, dashes, dashes_len)
             }
-            None => {
-                (D2D1_CAP_STYLE_FLAT, D2D1_DASH_STYLE_SOLID, 0.0, std::ptr::null(), 0)
-            }
+            None => (
+                D2D1_CAP_STYLE_FLAT,
+                D2D1_DASH_STYLE_SOLID,
+                0.0,
+                std::ptr::null(),
+                0,
+            ),
         };
         let (line_join, miter_limit) = match props.line_join {
             LineJoin::Miter => (D2D1_LINE_JOIN_MITER, 1.0),

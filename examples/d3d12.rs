@@ -21,7 +21,7 @@ struct Application {
     fence: ID3D12Fence,
     fence_value: Cell<u64>,
     context: mltg::Context<mltg::Direct3D12>,
-    bitmaps: Vec<mltg::d3d12::Bitmap>,
+    bitmaps: Vec<mltg::d3d12::RenderTarget>,
     text: mltg::TextLayout,
     white_brush: mltg::Brush,
 }
@@ -95,8 +95,7 @@ impl Application {
             let context =
                 mltg::Context::new(mltg::Direct3D12::new(&d3d12_device, &command_queue)?)?;
             let bitmaps = context.back_buffers(&swap_chain)?;
-            let text_format =
-                context.text_format("Meiryo", mltg::font_point(14.0), &Default::default())?;
+            let text_format = context.text_format("Meiryo", mltg::font_point(14.0), None)?;
             let text = context.text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
             let white_brush = context.solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
             context.set_dpi(window.dpi() as _);

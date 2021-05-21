@@ -55,7 +55,7 @@ pub fn font_point(value: f32) -> FontPoint {
     FontPoint(value)
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TextStyle {
     weight: FontWeight,
     style: FontStyle,
@@ -82,10 +82,11 @@ impl TextFormat {
         factory: &IDWriteFactory,
         font_name: &str,
         size: f32,
-        style: &TextStyle,
+        style: Option<&TextStyle>,
     ) -> windows::Result<Self> {
         let format = unsafe {
             let mut p = None;
+            let style = style.cloned().unwrap_or_default();
             factory
                 .CreateTextFormat(
                     font_name,

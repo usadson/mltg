@@ -15,7 +15,13 @@ impl Fill for Path {
 
 impl Stroke for Path {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         unsafe {
             dc.DrawGeometry(&self.0, brush, width, style);
         }

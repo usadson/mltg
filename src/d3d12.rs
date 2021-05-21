@@ -3,12 +3,12 @@ use crate::*;
 use windows::{Abi, IUnknown, Interface};
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct Bitmap {
+pub struct RenderTarget {
     wrapper: ID3D11Resource,
     bitmap: ID2D1Bitmap1,
 }
 
-impl Target for Bitmap {
+impl Target for RenderTarget {
     fn bitmap(&self) -> &ID2D1Bitmap1 {
         &self.bitmap
     }
@@ -92,7 +92,7 @@ impl Direct3D12 {
 }
 
 impl Backend for Direct3D12 {
-    type RenderTarget = Bitmap;
+    type RenderTarget = RenderTarget;
 
     #[inline]
     fn device_context(&self) -> &ID2D1DeviceContext {
@@ -142,7 +142,7 @@ impl Backend for Direct3D12 {
                         .CreateBitmapFromDxgiSurface(&surface, &bmp_props, &mut p)
                         .and_some(p)?
                 };
-                targets.push(Bitmap { wrapper, bitmap });
+                targets.push(RenderTarget { wrapper, bitmap });
             }
             Ok(targets)
         }

@@ -23,7 +23,7 @@ pub use stroke_style::*;
 pub use text::*;
 pub use utility::*;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Brush(ID2D1Brush);
 
 pub trait Target {
@@ -35,5 +35,11 @@ pub trait Fill {
 }
 
 pub trait Stroke {
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>);
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    );
 }

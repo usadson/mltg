@@ -17,7 +17,13 @@ pub fn line(x0: impl Into<Point>, x1: impl Into<Point>) -> Line {
 
 impl Stroke for Line {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         let x0: D2D_POINT_2F = self.0.into();
         let x1: D2D_POINT_2F = self.1.into();
         unsafe {
@@ -37,7 +43,13 @@ impl Fill for Rect {
 
 impl Stroke for Rect {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         unsafe {
             dc.DrawRectangle(&D2D_RECT_F::from(*self), brush, width, style);
         }
@@ -72,7 +84,13 @@ impl Fill for Ellipse {
 
 impl Stroke for Ellipse {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         unsafe {
             dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style);
         }
@@ -90,7 +108,13 @@ impl Fill for Circle {
 
 impl Stroke for Circle {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         unsafe {
             dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style);
         }
@@ -135,7 +159,13 @@ impl Fill for RoundedRect {
 
 impl Stroke for RoundedRect {
     #[inline]
-    fn stroke(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush, width: f32, style: Option<ID2D1StrokeStyle>) {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<ID2D1StrokeStyle>,
+    ) {
         unsafe {
             dc.DrawRoundedRectangle(&D2D1_ROUNDED_RECT::from(*self), brush, width, style);
         }

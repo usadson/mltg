@@ -3,9 +3,9 @@ use crate::*;
 use windows::{Abi, Interface};
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct Bitmap(ID2D1Bitmap1);
+pub struct RenderTarget(ID2D1Bitmap1);
 
-impl Target for Bitmap {
+impl Target for RenderTarget {
     fn bitmap(&self) -> &ID2D1Bitmap1 {
         &self.0
     }
@@ -55,7 +55,7 @@ impl Direct3D11 {
 }
 
 impl Backend for Direct3D11 {
-    type RenderTarget = Bitmap;
+    type RenderTarget = RenderTarget;
 
     #[inline]
     fn device_context(&self) -> &ID2D1DeviceContext {
@@ -98,10 +98,10 @@ impl Backend for Direct3D11 {
                     )
                     .and_some(p)?
             };
-            Ok(vec![Bitmap(bitmap)])
+            Ok(vec![RenderTarget(bitmap)])
         }
     }
 
-    fn begin_draw(&self, _target: &Bitmap) {}
-    fn end_draw(&self, _target: &Bitmap) {}
+    fn begin_draw(&self, _target: &RenderTarget) {}
+    fn end_draw(&self, _target: &RenderTarget) {}
 }

@@ -20,7 +20,13 @@ impl<'a> Command<'a> {
     }
 
     #[inline]
-    pub fn stroke(&self, object: &impl Stroke, brush: &Brush, width: f32, style: Option<&StrokeStyle>) {
+    pub fn stroke(
+        &self,
+        object: &impl Stroke,
+        brush: &Brush,
+        width: f32,
+        style: Option<&StrokeStyle>,
+    ) {
         object.stroke(self.0, &brush.0, width, style.map(|s| s.0.clone()));
     }
 
@@ -33,7 +39,8 @@ impl<'a> Command<'a> {
     pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&Command)) {
         let rect: D2D_RECT_F = rect.into().into();
         unsafe {
-            self.0.PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+            self.0
+                .PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
             f(self);
             self.0.PopAxisAlignedClip();
         }
@@ -131,7 +138,7 @@ where
         &self,
         font_name: impl AsRef<str>,
         size: impl Into<f32>,
-        style: &TextStyle,
+        style: Option<&TextStyle>,
     ) -> windows::Result<TextFormat> {
         TextFormat::new(&self.dwrite_factory, font_name.as_ref(), size.into(), style)
     }

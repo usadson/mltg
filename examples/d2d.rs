@@ -1,5 +1,5 @@
 struct Application {
-    back_buffer: Vec<mltg::d2d::Bitmap>,
+    back_buffer: Vec<mltg::d2d::RenderTarget>,
     context: mltg::Context<mltg::Direct2D>,
     white_brush: mltg::Brush,
     text: mltg::TextLayout,
@@ -15,8 +15,7 @@ impl Application {
         let context = mltg::Context::new(backend)?;
         let back_buffer = context.back_buffers(context.backend().swap_chain())?;
         let white_brush = context.solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
-        let text_format =
-            context.text_format("Meiryo", mltg::font_point(14.0), &Default::default())?;
+        let text_format = context.text_format("Meiryo", mltg::font_point(14.0), None)?;
         let text = context.text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
         let stroke_style = context.stroke_style(&mltg::StrokeStyleProperties {
             start_cap: mltg::CapStyle::Triangle,
