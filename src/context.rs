@@ -1,4 +1,4 @@
-use crate::bindings::Windows::Win32::Graphics::{Direct2D::*, DirectWrite::*, Dxgi::*};
+use crate::bindings::Windows::Win32::Graphics::{Direct2D::*, DirectWrite::*, Dxgi::*, Imaging::*};
 use crate::utility::*;
 use crate::*;
 use windows::{Abi, Interface};
@@ -36,6 +36,17 @@ impl<'a> Command<'a> {
     }
 
     #[inline]
+    pub fn draw_image(
+        &self,
+        image: &Image,
+        dest_rect: impl Into<Rect>,
+        src_rect: Option<Rect>,
+        interpolation: Interpolation,
+    ) {
+        image.draw(&self.0, dest_rect.into(), src_rect, interpolation);
+    }
+
+    #[inline]
     pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&Command)) {
         let rect: D2D_RECT_F = rect.into().into();
         unsafe {
@@ -63,6 +74,7 @@ pub trait Backend {
 pub struct Context<T> {
     backend: T,
     dwrite_factory: IDWriteFactory,
+    wic_imaging_factory: IWICImagingFactory,
 }
 
 impl<T> Context<T>
@@ -81,9 +93,11 @@ where
                 )
                 .and_some(p)?
             };
+            let wic_imaging_factory = windows::create_instance(&CLSID_WICImagingFactory)?;
             Ok(Self {
                 backend,
                 dwrite_factory,
+                wic_imaging_factory,
             })
         }
     }
@@ -94,7 +108,7 @@ where
     }
 
     #[inline]
-    pub fn back_buffers(
+    pub fn create_back_buffers(
         &self,
         swap_chain: &impl windows::Interface,
     ) -> windows::Result<Vec<T::RenderTarget>> {
@@ -103,7 +117,7 @@ where
     }
 
     #[inline]
-    pub fn solid_color_brush(&self, color: impl Into<Rgba>) -> windows::Result<Brush> {
+    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> windows::Result<Brush> {
         let color: D2D1_COLOR_F = color.into().into();
         let brush = unsafe {
             let mut p = None;
@@ -116,7 +130,7 @@ where
     }
 
     #[inline]
-    pub fn path(&self) -> PathBuilder {
+    pub fn create_path(&self) -> PathBuilder {
         let geometry = unsafe {
             let mut p = None;
             self.backend
@@ -129,12 +143,15 @@ where
     }
 
     #[inline]
-    pub fn stroke_style(&self, props: &StrokeStyleProperties) -> windows::Result<StrokeStyle> {
+    pub fn create_stroke_style(
+        &self,
+        props: &StrokeStyleProperties,
+    ) -> windows::Result<StrokeStyle> {
         StrokeStyle::new(self.backend.d2d1_factory(), props)
     }
 
     #[inline]
-    pub fn text_format(
+    pub fn create_text_format(
         &self,
         font_name: impl AsRef<str>,
         size: impl Into<f32>,
@@ -144,12 +161,21 @@ where
     }
 
     #[inline]
-    pub fn text_layout(
+    pub fn create_text_layout(
         &self,
         text: impl AsRef<str>,
         format: &TextFormat,
     ) -> windows::Result<TextLayout> {
         TextLayout::new(&self.dwrite_factory, text.as_ref(), format)
+    }
+
+    #[inline]
+    pub fn create_image(&self, loader: impl ImageLoader) -> windows::Result<Image> {
+        Image::new(
+            self.backend.device_context(),
+            &self.wic_imaging_factory,
+            loader,
+        )
     }
 
     #[inline]

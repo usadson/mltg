@@ -4,6 +4,7 @@ struct Application {
     white_brush: mltg::Brush,
     text: mltg::TextLayout,
     stroke_style: mltg::StrokeStyle,
+    image: mltg::Image,
 }
 
 impl Application {
@@ -13,11 +14,11 @@ impl Application {
         let backend =
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
-        let back_buffer = context.back_buffers(context.backend().swap_chain())?;
-        let white_brush = context.solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
-        let text_format = context.text_format("Meiryo", mltg::font_point(14.0), None)?;
-        let text = context.text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
-        let stroke_style = context.stroke_style(&mltg::StrokeStyleProperties {
+        let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
+        let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
+        let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
+        let text = context.create_text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
+        let stroke_style = context.create_stroke_style(&mltg::StrokeStyleProperties {
             start_cap: mltg::CapStyle::Triangle,
             end_cap: mltg::CapStyle::Round,
             line_join: mltg::LineJoin::Round,
@@ -26,6 +27,7 @@ impl Application {
                 ..Default::default()
             }),
         })?;
+        let image = context.create_image("ferris.png")?;
         context.set_dpi(window.dpi() as _);
         Ok(Self {
             back_buffer,
@@ -33,6 +35,7 @@ impl Application {
             white_brush,
             text,
             stroke_style,
+            image,
         })
     }
 }
@@ -51,7 +54,7 @@ impl wita::EventHandler for Application {
         let text_box = mltg::rect((hw, hh), self.text.size());
         let path = self
             .context
-            .path()
+            .create_path()
             .begin((30.0, hh + 30.0))
             .cubic_bezier_to(
                 (hw / 2.0, hh + 30.0),
@@ -60,11 +63,21 @@ impl wita::EventHandler for Application {
             )
             .end(mltg::FigureEnd::Open)
             .build();
+        let image_size = {
+            let size = self.image.size();
+            (size.width as f32 / 4.0, size.height as f32 / 4.0)
+        };
         self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear((0.0, 0.0, 0.3, 0.0));
             cmd.fill(&white_rect, &self.white_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
             cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
+            cmd.draw_image(
+                &self.image,
+                mltg::Rect::new((hw, 10.0), image_size),
+                None,
+                mltg::Interpolation::HighQualityCubic,
+            );
             cmd.stroke(&path, &self.white_brush, 5.0, Some(&self.stroke_style));
         });
     }
@@ -79,12 +92,13 @@ impl wita::EventHandler for Application {
         self.context.backend().resize((size.width, size.height));
         self.back_buffer = self
             .context
-            .back_buffers(self.context.backend().swap_chain())
+            .create_back_buffers(self.context.backend().swap_chain())
             .unwrap();
         window.redraw();
     }
 }
 
 fn main() {
+    windows::initialize_sta().unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }

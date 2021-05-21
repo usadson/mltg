@@ -5,6 +5,7 @@ fn main() {
         Windows::Win32::Graphics::Dxgi::*,
         Windows::Win32::Graphics::Direct2D::*,
         Windows::Win32::Graphics::DirectWrite::*,
+        Windows::Win32::Graphics::Imaging::*,
         Windows::Win32::System::Threading::{
             CreateEventW,
             WaitForSingleObject,
@@ -12,6 +13,7 @@ fn main() {
         Windows::Win32::System::SystemServices::{
             TRUE,
             FALSE,
+            GENERIC_READ,
         },
         Windows::Win32::System::WindowsProgramming::{
             INFINITE,
