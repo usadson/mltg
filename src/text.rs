@@ -174,6 +174,15 @@ impl TextLayout {
     }
 
     #[inline]
+    pub fn set_size(&self, size: impl Into<Size>) {
+        unsafe {
+            let size = size.into();
+            self.layout.SetMaxWidth(size.width).unwrap();
+            self.layout.SetMaxHeight(size.height).unwrap();
+        }
+    }
+
+    #[inline]
     pub fn size(&self) -> Size {
         self.size
     }
