@@ -73,6 +73,15 @@ impl Default for TextStyle {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(i32)]
+pub enum TextAlignment {
+    Leading = DWRITE_TEXT_ALIGNMENT_LEADING.0,
+    Center = DWRITE_TEXT_ALIGNMENT_CENTER.0,
+    Trailing = DWRITE_TEXT_ALIGNMENT_TRAILING.0,
+    Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED.0,
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct TextFormat(IDWriteTextFormat);
 
@@ -116,6 +125,8 @@ impl TextLayout {
         factory: &IDWriteFactory,
         text: &str,
         format: &TextFormat,
+        alignment: TextAlignment,
+        size: Option<Size>,
     ) -> windows::Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
@@ -130,13 +141,17 @@ impl TextLayout {
                     &mut p,
                 )
                 .and_some(p)?;
-            let size: Size = {
+            let size = size.unwrap_or_else(|| {
                 let mut metrics = Default::default();
                 layout.GetMetrics(&mut metrics).unwrap();
                 (metrics.width, metrics.height).into()
-            };
+            });
             layout.SetMaxWidth(size.width).unwrap();
             layout.SetMaxHeight(size.height).unwrap();
+            layout.SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _)).unwrap();
+            layout
+                .SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+                .unwrap();
             (layout, size)
         };
         Ok(Self {

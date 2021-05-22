@@ -165,8 +165,10 @@ where
         &self,
         text: impl AsRef<str>,
         format: &TextFormat,
+        alignment: TextAlignment,
+        size: Option<Size>,
     ) -> windows::Result<TextLayout> {
-        TextLayout::new(&self.dwrite_factory, text.as_ref(), format)
+        TextLayout::new(&self.dwrite_factory, text.as_ref(), format, alignment, size)
     }
 
     #[inline]

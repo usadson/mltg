@@ -3,6 +3,7 @@ struct Application {
     context: mltg::Context<mltg::Direct2D>,
     white_brush: mltg::Brush,
     text: mltg::TextLayout,
+    text2: mltg::TextLayout,
     stroke_style: mltg::StrokeStyle,
     image: mltg::Image,
 }
@@ -17,7 +18,18 @@ impl Application {
         let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
         let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
         let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
-        let text = context.create_text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
+        let text = context.create_text_layout(
+            "abcdefghijklmnopqrstuvwxyz",
+            &text_format,
+            mltg::TextAlignment::Leading,
+            None,
+        )?;
+        let text2 = context.create_text_layout(
+            "abcdefghijklmnopqrstuvwxyz",
+            &text_format,
+            mltg::TextAlignment::Center,
+            Some(text.size() + (30.0, 30.0)),
+        )?;
         let stroke_style = context.create_stroke_style(&mltg::StrokeStyleProperties {
             start_cap: mltg::CapStyle::Triangle,
             end_cap: mltg::CapStyle::Round,
@@ -34,6 +46,7 @@ impl Application {
             context,
             white_brush,
             text,
+            text2,
             stroke_style,
             image,
         })
@@ -52,6 +65,7 @@ impl wita::EventHandler for Application {
             mltg::rect(pos, (hw - pos2, hh - pos2))
         };
         let text_box = mltg::rect((hw, hh), self.text.size());
+        let text_box2 = mltg::rect((hw, hh + 50.0), self.text2.size());
         let path = self
             .context
             .create_path()
@@ -72,6 +86,8 @@ impl wita::EventHandler for Application {
             cmd.fill(&white_rect, &self.white_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
             cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
+            cmd.stroke(&text_box2, &self.white_brush, 2.0, None);
+            cmd.draw_text(&self.text2, &self.white_brush, (hw, hh + 50.0));
             cmd.draw_image(
                 &self.image,
                 mltg::Rect::new((hw, 10.0), image_size),

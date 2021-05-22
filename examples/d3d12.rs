@@ -97,7 +97,12 @@ impl Application {
                 mltg::Context::new(mltg::Direct3D12::new(&d3d12_device, &command_queue)?)?;
             let bitmaps = context.create_back_buffers(&swap_chain)?;
             let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
-            let text = context.create_text_layout("abcdefghijklmnopqrstuvwxyz", &text_format)?;
+            let text = context.create_text_layout(
+                "abcdefghijklmnopqrstuvwxyz",
+                &text_format,
+                mltg::TextAlignment::Leading,
+                None,
+            )?;
             let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
             let image = context.create_image("ferris.png")?;
             context.set_dpi(window.dpi() as _);
