@@ -1,5 +1,6 @@
 use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, System::SystemServices::*};
 use crate::*;
+use windows::Abi;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -113,9 +114,18 @@ impl TextFormat {
     }
 }
 
+impl std::hash::Hash for TextFormat {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.abi().hash(state);
+    }
+}
+
 #[derive(Clone)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
+    format: TextFormat,
+    text: String,
     size: Size,
 }
 
@@ -156,6 +166,8 @@ impl TextLayout {
         };
         Ok(Self {
             layout,
+            format: format.clone(),
+            text: text.into(),
             size: max_size,
         })
     }
@@ -174,16 +186,26 @@ impl TextLayout {
     }
 
     #[inline]
+    pub fn format(&self) -> &TextFormat {
+        &self.format
+    }
+
+    #[inline]
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
+    #[inline]
+    pub fn size(&self) -> Size {
+        self.size
+    }
+
+    #[inline]
     pub fn set_size(&self, size: impl Into<Size>) {
         unsafe {
             let size = size.into();
             self.layout.SetMaxWidth(size.width).unwrap();
             self.layout.SetMaxHeight(size.height).unwrap();
         }
-    }
-
-    #[inline]
-    pub fn size(&self) -> Size {
-        self.size
     }
 }
