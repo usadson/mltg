@@ -1,5 +1,6 @@
 use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, System::SystemServices::*};
 use crate::*;
+use std::convert::TryInto;
 use windows::Abi;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -56,7 +57,7 @@ pub fn font_point(value: f32) -> FontPoint {
     FontPoint(value)
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TextStyle {
     weight: FontWeight,
     style: FontStyle,
@@ -83,8 +84,23 @@ pub enum TextAlignment {
     Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED.0,
 }
 
+impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
+    type Error = ();
+
+    fn try_from(src: DWRITE_TEXT_ALIGNMENT) -> Result<Self, ()> {
+        let dest = match src {
+            DWRITE_TEXT_ALIGNMENT_LEADING => TextAlignment::Leading,
+            DWRITE_TEXT_ALIGNMENT_CENTER => TextAlignment::Center,
+            DWRITE_TEXT_ALIGNMENT_TRAILING => TextAlignment::Trailing,
+            DWRITE_TEXT_ALIGNMENT_JUSTIFIED => TextAlignment::Justified,
+            _ => return Err(()),
+        };
+        Ok(dest)
+    }
+}
+
 #[derive(Clone)]
-pub struct TextFormat{
+pub struct TextFormat {
     format: IDWriteTextFormat,
     font_name: String,
     size: f32,
@@ -192,7 +208,9 @@ impl TextLayout {
             });
             layout.SetMaxWidth(size.width).unwrap();
             layout.SetMaxHeight(size.height).unwrap();
-            layout.SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _)).unwrap();
+            layout
+                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
+                .unwrap();
             layout
                 .SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
                 .unwrap();
@@ -230,8 +248,32 @@ impl TextLayout {
     }
 
     #[inline]
+    pub fn alignment(&self) -> TextAlignment {
+        unsafe { self.layout.GetTextAlignment().try_into().unwrap() }
+    }
+
+    #[inline]
     pub fn size(&self) -> Size {
         self.size
+    }
+
+    #[inline]
+    pub fn set_alignment(&self, alignment: TextAlignment) {
+        unsafe {
+            self.layout
+                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
+                .unwrap();
+        }
+    }
+
+    #[inline]
+    pub fn reset_size(&self) {
+        let size: Size = unsafe {
+            let mut metrics = Default::default();
+            self.layout.GetMetrics(&mut metrics).unwrap();
+            (metrics.width, metrics.height).into()
+        };
+        self.set_size(size);
     }
 
     #[inline]
