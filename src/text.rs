@@ -83,8 +83,13 @@ pub enum TextAlignment {
     Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED.0,
 }
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct TextFormat(IDWriteTextFormat);
+#[derive(Clone)]
+pub struct TextFormat{
+    format: IDWriteTextFormat,
+    font_name: String,
+    size: f32,
+    style: TextStyle,
+}
 
 impl TextFormat {
     #[inline]
@@ -94,9 +99,9 @@ impl TextFormat {
         size: f32,
         style: Option<&TextStyle>,
     ) -> windows::Result<Self> {
+        let style = style.cloned().unwrap_or_default();
         let format = unsafe {
             let mut p = None;
-            let style = style.cloned().unwrap_or_default();
             factory
                 .CreateTextFormat(
                     font_name,
@@ -110,14 +115,43 @@ impl TextFormat {
                 )
                 .and_some(p)?
         };
-        Ok(Self(format))
+        Ok(Self {
+            format,
+            font_name: font_name.into(),
+            size,
+            style,
+        })
+    }
+
+    #[inline]
+    pub fn font_name(&self) -> &str {
+        &self.font_name
+    }
+
+    #[inline]
+    pub fn font_size(&self) -> f32 {
+        self.size
+    }
+
+    #[inline]
+    pub fn style(&self) -> &TextStyle {
+        &self.style
     }
 }
+
+impl PartialEq for TextFormat {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.format == other.format
+    }
+}
+
+impl Eq for TextFormat {}
 
 impl std::hash::Hash for TextFormat {
     #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.abi().hash(state);
+        self.format.abi().hash(state);
     }
 }
 
@@ -145,7 +179,7 @@ impl TextLayout {
                 .CreateTextLayout(
                     PWSTR(text.as_ptr() as _),
                     text.len() as _,
-                    &format.0,
+                    &format.format,
                     std::f32::MAX,
                     std::f32::MAX,
                     &mut p,
@@ -207,5 +241,21 @@ impl TextLayout {
             self.layout.SetMaxWidth(size.width).unwrap();
             self.layout.SetMaxHeight(size.height).unwrap();
         }
+    }
+}
+
+impl PartialEq for TextLayout {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.layout == other.layout
+    }
+}
+
+impl Eq for TextLayout {}
+
+impl std::hash::Hash for TextLayout {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.layout.abi().hash(state);
     }
 }
