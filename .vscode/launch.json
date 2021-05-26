@@ -20,6 +20,16 @@
             "cwd": "${workspaceFolder}/examples",
             "console": "integratedTerminal",
             "preLaunchTask": "debug d3d12"
+        },
+        {
+            "name": "debug winit d2d",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/winit_d2d.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/examples",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug winit_d2d"
         }
     ]
 }
