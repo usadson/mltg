@@ -16,7 +16,7 @@ impl<'a> Command<'a> {
 
     #[inline]
     pub fn fill(&self, object: &impl Fill, brush: &Brush) {
-        object.fill(self.0, &brush.0);
+        object.fill(self.0, &brush.handle());
     }
 
     #[inline]
@@ -27,7 +27,7 @@ impl<'a> Command<'a> {
         width: f32,
         style: Option<&StrokeStyle>,
     ) {
-        object.stroke(self.0, &brush.0, width, style.map(|s| s.0.clone()));
+        object.stroke(self.0, &brush.handle(), width, style.map(|s| s.0.clone()));
     }
 
     #[inline]
@@ -117,16 +117,46 @@ where
     }
 
     #[inline]
+    pub fn create_gradient_stop_collection<U>(
+        &self,
+        stops: &[U],
+    ) -> windows::Result<GradientStopCollection>
+    where
+        U: Into<GradientStop> + Clone,
+    {
+        GradientStopCollection::new(self.backend.device_context(), stops)
+    }
+
+    #[inline]
     pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> windows::Result<Brush> {
-        let color: D2D1_COLOR_F = color.into().into();
-        let brush = unsafe {
-            let mut p = None;
-            self.backend
-                .device_context()
-                .CreateSolidColorBrush(&color, std::ptr::null(), &mut p)
-                .and_some(p)?
-        };
-        Ok(Brush(brush.into()))
+        Brush::solid_color(self.backend.device_context(), color)
+    }
+
+    #[inline]
+    pub fn create_linear_gradient_brush(
+        &self,
+        start: impl Into<Point>,
+        end: impl Into<Point>,
+        stop_collection: &GradientStopCollection,
+    ) -> windows::Result<Brush> {
+        Brush::linear_gradient(self.backend.device_context(), start, end, stop_collection)
+    }
+
+    #[inline]
+    pub fn create_radial_gradient_brush(
+        &self,
+        center: impl Into<Point>,
+        offset: impl Into<Point>,
+        radius: impl Into<Vector>,
+        stop_collection: &GradientStopCollection,
+    ) -> windows::Result<Brush> {
+        Brush::radial_gradient(
+            self.backend.device_context(),
+            center,
+            offset,
+            radius,
+            stop_collection,
+        )
     }
 
     #[inline]

@@ -1,6 +1,7 @@
 mod bindings {
     ::windows::include_bindings!();
 }
+mod brush;
 mod context;
 pub mod d2d;
 pub mod d3d11;
@@ -13,6 +14,7 @@ mod text;
 mod utility;
 
 use bindings::Windows::Win32::Graphics::Direct2D::*;
+pub use brush::*;
 pub use context::*;
 pub use d2d::Direct2D;
 pub use d3d11::Direct3D11;
@@ -25,9 +27,6 @@ pub use shape::*;
 pub use stroke_style::*;
 pub use text::*;
 pub use utility::*;
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Brush(ID2D1Brush);
 
 pub trait Target {
     fn bitmap(&self) -> &ID2D1Bitmap1;

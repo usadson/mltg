@@ -231,7 +231,7 @@ impl TextLayout {
             dc.DrawTextLayout(
                 origin,
                 &self.layout,
-                &brush.0,
+                &brush.handle(),
                 D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT | D2D1_DRAW_TEXT_OPTIONS_CLIP,
             );
         }

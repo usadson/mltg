@@ -2,6 +2,7 @@ struct Application {
     back_buffer: Vec<mltg::d2d::RenderTarget>,
     context: mltg::Context<mltg::Direct2D>,
     white_brush: mltg::Brush,
+    grad: mltg::GradientStopCollection,
     text: mltg::TextLayout,
     text2: mltg::TextLayout,
     stroke_style: mltg::StrokeStyle,
@@ -17,6 +18,10 @@ impl Application {
         let context = mltg::Context::new(backend)?;
         let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
         let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
+        let grad = context.create_gradient_stop_collection(&[
+            (0.0, (1.0, 0.0, 0.0, 1.0)),
+            (1.0, (0.0, 1.0, 0.0, 1.0)),
+        ])?;
         let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
         let text = context.create_text_layout(
             "abcdefghijklmnopqrstuvwxyz",
@@ -45,6 +50,7 @@ impl Application {
             back_buffer,
             context,
             white_brush,
+            grad,
             text,
             text2,
             stroke_style,
@@ -58,7 +64,7 @@ impl wita::EventHandler for Application {
         let window_size = window.inner_size().to_logical(window.dpi());
         let hw = window_size.width as f32 / 2.0;
         let hh = window_size.height as f32 / 2.0;
-        let white_rect = {
+        let rect = {
             let margin = 30.0;
             let pos = mltg::point(margin, margin);
             let pos2 = pos.x * 2.0;
@@ -81,9 +87,13 @@ impl wita::EventHandler for Application {
             let size = self.image.size();
             (size.width as f32 / 4.0, size.height as f32 / 4.0)
         };
+        let linear_grad_brush = self
+            .context
+            .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
+            .unwrap();
         self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear((0.0, 0.0, 0.3, 0.0));
-            cmd.fill(&white_rect, &self.white_brush);
+            cmd.fill(&rect, &linear_grad_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
             cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
             cmd.stroke(&text_box2, &self.white_brush, 2.0, None);
