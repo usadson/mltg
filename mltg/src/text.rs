@@ -115,6 +115,14 @@ impl Font {
     pub fn file(path: impl AsRef<std::path::Path>, name: impl AsRef<str>) -> Self {
         Self::File(path.as_ref().to_path_buf(), name.as_ref().to_string())
     }
+
+    #[inline]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::System(name) => name.as_str(),
+            Self::File(_, name) => name.as_str(),
+        }
+    }
 }
 
 #[derive(Clone)]
