@@ -22,7 +22,11 @@ impl Application {
             (0.0, (1.0, 0.0, 0.0, 1.0)),
             (1.0, (0.0, 1.0, 0.0, 1.0)),
         ])?;
-        let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
+        let text_format = context.create_text_format(
+            &mltg::Font::system("Meiryo"),
+            mltg::font_point(14.0),
+            None,
+        )?;
         let text = context.create_text_layout(
             "abcdefghijklmnopqrstuvwxyz",
             &text_format,

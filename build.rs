@@ -17,6 +17,7 @@ fn main() {
         },
         Windows::Win32::System::WindowsProgramming::{
             INFINITE,
+            FILETIME,
         },
     );
 }

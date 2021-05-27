@@ -73,7 +73,7 @@ pub trait Backend {
 
 pub struct Context<T> {
     backend: T,
-    dwrite_factory: IDWriteFactory,
+    dwrite_factory: IDWriteFactory5,
     wic_imaging_factory: IWICImagingFactory,
 }
 
@@ -88,7 +88,7 @@ where
                 let mut p = None;
                 DWriteCreateFactory(
                     DWRITE_FACTORY_TYPE_SHARED,
-                    &IDWriteFactory::IID,
+                    &IDWriteFactory5::IID,
                     p.set_abi() as _,
                 )
                 .and_some(p)?
@@ -183,11 +183,11 @@ where
     #[inline]
     pub fn create_text_format(
         &self,
-        font_name: impl AsRef<str>,
+        font: &Font,
         size: impl Into<f32>,
         style: Option<&TextStyle>,
     ) -> windows::Result<TextFormat> {
-        TextFormat::new(&self.dwrite_factory, font_name.as_ref(), size.into(), style)
+        TextFormat::new(&self.dwrite_factory, font, size.into(), style)
     }
 
     #[inline]
@@ -198,7 +198,13 @@ where
         alignment: TextAlignment,
         size: Option<Size>,
     ) -> windows::Result<TextLayout> {
-        TextLayout::new(&self.dwrite_factory, text.as_ref(), format, alignment, size)
+        TextLayout::new(
+            &self.dwrite_factory.clone().into(),
+            text.as_ref(),
+            format,
+            alignment,
+            size,
+        )
     }
 
     #[inline]

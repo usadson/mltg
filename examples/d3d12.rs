@@ -97,7 +97,11 @@ impl Application {
             let context =
                 mltg::Context::new(mltg::Direct3D12::new(&d3d12_device, &command_queue)?)?;
             let bitmaps = context.create_back_buffers(&swap_chain)?;
-            let text_format = context.create_text_format("Meiryo", mltg::font_point(14.0), None)?;
+            let text_format = context.create_text_format(
+                &mltg::Font::system("Meiryo"),
+                mltg::font_point(14.0),
+                None,
+            )?;
             let text = context.create_text_layout(
                 "abcdefghijklmnopqrstuvwxyz",
                 &text_format,

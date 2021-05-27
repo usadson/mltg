@@ -1,7 +1,7 @@
 use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, System::SystemServices::*};
 use crate::*;
 use std::convert::TryInto;
-use windows::Abi;
+use windows::{Abi, Interface};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -99,10 +99,28 @@ impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Font {
+    System(String),
+    File(std::path::PathBuf, String),
+}
+
+impl Font {
+    #[inline]
+    pub fn system(name: impl AsRef<str>) -> Self {
+        Self::System(name.as_ref().to_string())
+    }
+
+    #[inline]
+    pub fn file(path: impl AsRef<std::path::Path>, name: impl AsRef<str>) -> Self {
+        Self::File(path.as_ref().to_path_buf(), name.as_ref().to_string())
+    }
+}
+
 #[derive(Clone)]
 pub struct TextFormat {
     format: IDWriteTextFormat,
-    font_name: String,
+    font: Font,
     size: f32,
     style: TextStyle,
 }
@@ -110,18 +128,52 @@ pub struct TextFormat {
 impl TextFormat {
     #[inline]
     pub(crate) fn new(
-        factory: &IDWriteFactory,
-        font_name: &str,
+        factory: &IDWriteFactory5,
+        font: &Font,
         size: f32,
         style: Option<&TextStyle>,
     ) -> windows::Result<Self> {
         let style = style.cloned().unwrap_or_default();
+        let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
+            Font::System(font_name) => (font_name, None),
+            Font::File(path, font_name) => unsafe {
+                let set_builder = {
+                    let mut p = None;
+                    factory
+                        .CreateFontSetBuilder(&mut p)
+                        .and_some(p)?
+                        .cast::<IDWriteFontSetBuilder1>()?
+                };
+                let font_file = {
+                    let mut p = None;
+                    factory
+                        .CreateFontFileReference(
+                            path.as_path().to_string_lossy().as_ref(),
+                            std::ptr::null(),
+                            &mut p,
+                        )
+                        .and_some(p)?
+                };
+                set_builder.AddFontFile(&font_file).ok()?;
+                let font_set = {
+                    let mut p = None;
+                    set_builder.CreateFontSet(&mut p).and_some(p)?
+                };
+                let font_collection = {
+                    let mut p = None;
+                    factory
+                        .CreateFontCollectionFromFontSet(&font_set, &mut p)
+                        .and_some(p)?
+                };
+                (font_name, Some(font_collection.into()))
+            },
+        };
         let format = unsafe {
             let mut p = None;
             factory
                 .CreateTextFormat(
-                    font_name,
-                    None,
+                    font_name.as_str(),
+                    font_collection,
                     DWRITE_FONT_WEIGHT(style.weight as _),
                     DWRITE_FONT_STYLE(style.style as _),
                     DWRITE_FONT_STRETCH(style.stretch as _),
@@ -133,15 +185,15 @@ impl TextFormat {
         };
         Ok(Self {
             format,
-            font_name: font_name.into(),
+            font: font.clone(),
             size,
             style,
         })
     }
 
     #[inline]
-    pub fn font_name(&self) -> &str {
-        &self.font_name
+    pub fn font(&self) -> &Font {
+        &self.font
     }
 
     #[inline]
@@ -299,5 +351,34 @@ impl std::hash::Hash for TextLayout {
     #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.layout.abi().hash(state);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_file() {
+        let factory: IDWriteFactory5 = unsafe {
+            let mut p = None;
+            DWriteCreateFactory(
+                DWRITE_FACTORY_TYPE_SHARED,
+                &IDWriteFactory5::IID,
+                p.set_abi() as _,
+            )
+            .and_some(p)
+            .unwrap()
+        };
+        TextFormat::new(
+            &factory,
+            &Font::file(
+                "./test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf",
+                "Inconsolata",
+            ),
+            14.0,
+            None,
+        )
+        .unwrap();
     }
 }
