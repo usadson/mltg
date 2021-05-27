@@ -1,7 +1,4 @@
-mod bindings {
-    ::windows::include_bindings!();
-}
-use bindings::Windows::Win32::{
+use mltg_bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
     System::{SystemServices::*, Threading::*, WindowsProgramming::*},
     UI::{DisplayDevices::*, WindowsAndMessaging::*},

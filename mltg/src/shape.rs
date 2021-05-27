@@ -24,8 +24,8 @@ impl Stroke for Line {
         width: f32,
         style: Option<ID2D1StrokeStyle>,
     ) {
-        let x0: D2D_POINT_2F = self.0.into();
-        let x1: D2D_POINT_2F = self.1.into();
+        let x0: D2D_POINT_2F = Inner(self.0).into();
+        let x1: D2D_POINT_2F = Inner(self.1).into();
         unsafe {
             dc.DrawLine(x0, x1, brush, width, style);
         }
@@ -36,7 +36,7 @@ impl Fill for Rect {
     #[inline]
     fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
         unsafe {
-            dc.FillRectangle(&D2D_RECT_F::from(*self), brush);
+            dc.FillRectangle(&D2D_RECT_F::from(Inner(*self)), brush);
         }
     }
 }
@@ -51,7 +51,7 @@ impl Stroke for Rect {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawRectangle(&D2D_RECT_F::from(*self), brush, width, style);
+            dc.DrawRectangle(&D2D_RECT_F::from(Inner(*self)), brush, width, style);
         }
     }
 }
@@ -66,7 +66,7 @@ impl From<Ellipse> for D2D1_ELLIPSE {
     #[inline]
     fn from(src: Ellipse) -> D2D1_ELLIPSE {
         D2D1_ELLIPSE {
-            point: src.center.into(),
+            point: Inner(src.center).into(),
             radiusX: src.radius.x,
             radiusY: src.radius.y,
         }
@@ -101,7 +101,7 @@ impl Fill for Circle {
     #[inline]
     fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
         unsafe {
-            dc.FillEllipse(&D2D1_ELLIPSE::from(*self), brush);
+            dc.FillEllipse(&D2D1_ELLIPSE::from(Inner(*self)), brush);
         }
     }
 }
@@ -116,7 +116,7 @@ impl Stroke for Circle {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style);
+            dc.DrawEllipse(&D2D1_ELLIPSE::from(Inner(*self)), brush, width, style);
         }
     }
 }
@@ -141,7 +141,7 @@ impl From<RoundedRect> for D2D1_ROUNDED_RECT {
     #[inline]
     fn from(src: RoundedRect) -> D2D1_ROUNDED_RECT {
         D2D1_ROUNDED_RECT {
-            rect: src.rect.into(),
+            rect: Inner(src.rect).into(),
             radiusX: src.radius.x,
             radiusY: src.radius.y,
         }

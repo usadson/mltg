@@ -35,8 +35,8 @@ impl Image {
         src_rect: Option<Rect>,
         interpolation: Interpolation,
     ) {
-        let dest = dest_rect.into();
-        let src = src_rect.map(|src| src.into());
+        let dest = Inner(dest_rect).into();
+        let src = src_rect.map(|src| Inner(src).into());
         unsafe {
             dc.DrawBitmap2(
                 &self.0,

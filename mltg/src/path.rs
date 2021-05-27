@@ -1,4 +1,3 @@
-use crate::bindings::Windows::Win32::Graphics::Direct2D::*;
 use crate::*;
 
 #[derive(Clone, PartialEq, Eq)]
@@ -60,7 +59,7 @@ impl PathBuilder {
     #[inline]
     pub fn begin(self, point: impl Into<Point>) -> Figure {
         unsafe {
-            let point: D2D_POINT_2F = point.into().into();
+            let point: D2D_POINT_2F = Inner(point.into()).into();
             self.sink.BeginFigure(&point, D2D1_FIGURE_BEGIN_FILLED);
             Figure {
                 geometry: self.geometry,
@@ -82,7 +81,7 @@ impl Figure {
     #[inline]
     pub fn line_to(self, point: impl Into<Point>) -> Self {
         unsafe {
-            let point: D2D_POINT_2F = point.into().into();
+            let point: D2D_POINT_2F = Inner(point.into()).into();
             self.sink.AddLine(point);
             self
         }
@@ -91,8 +90,8 @@ impl Figure {
     #[inline]
     pub fn quadratic_bezier_to(self, ctrl: impl Into<Point>, to: impl Into<Point>) -> Self {
         unsafe {
-            let ctrl: D2D_POINT_2F = ctrl.into().into();
-            let to: D2D_POINT_2F = to.into().into();
+            let ctrl: D2D_POINT_2F = Inner(ctrl.into()).into();
+            let to: D2D_POINT_2F = Inner(to.into()).into();
             self.sink
                 .AddQuadraticBezier(&D2D1_QUADRATIC_BEZIER_SEGMENT {
                     point1: ctrl,
@@ -110,9 +109,9 @@ impl Figure {
         to: impl Into<Point>,
     ) -> Self {
         unsafe {
-            let c0: D2D_POINT_2F = c0.into().into();
-            let c1: D2D_POINT_2F = c1.into().into();
-            let to: D2D_POINT_2F = to.into().into();
+            let c0: D2D_POINT_2F = Inner(c0.into()).into();
+            let c1: D2D_POINT_2F = Inner(c1.into()).into();
+            let to: D2D_POINT_2F = Inner(to.into()).into();
             self.sink.AddBezier(&D2D1_BEZIER_SEGMENT {
                 point1: c0,
                 point2: c1,

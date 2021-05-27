@@ -7,7 +7,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/d2d.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}/mltg/examples",
             "console": "integratedTerminal",
             "preLaunchTask": "debug d2d"
         },
@@ -17,7 +17,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/d3d12.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}/mltg/examples",
             "console": "integratedTerminal",
             "preLaunchTask": "debug d3d12"
         },
@@ -27,7 +27,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/winit_d2d.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}/mltg/examples",
             "console": "integratedTerminal",
             "preLaunchTask": "debug winit_d2d"
         }

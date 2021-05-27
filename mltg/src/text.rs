@@ -279,7 +279,7 @@ impl TextLayout {
     #[inline]
     pub(crate) fn draw(&self, dc: &ID2D1DeviceContext, brush: &Brush, origin: Point) {
         unsafe {
-            let origin: D2D_POINT_2F = origin.into();
+            let origin: D2D_POINT_2F = Inner(origin).into();
             dc.DrawTextLayout(
                 origin,
                 &self.layout,

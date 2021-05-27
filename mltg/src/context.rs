@@ -1,4 +1,4 @@
-use crate::bindings::Windows::Win32::Graphics::{Direct2D::*, DirectWrite::*, Dxgi::*, Imaging::*};
+use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*};
 use crate::utility::*;
 use crate::*;
 use windows::{Abi, Interface};
@@ -9,7 +9,7 @@ impl<'a> Command<'a> {
     #[inline]
     pub fn clear(&self, color: impl Into<Rgba>) {
         unsafe {
-            let color: D2D1_COLOR_F = color.into().into();
+            let color: D2D1_COLOR_F = Inner(color.into()).into();
             self.0.Clear(&color);
         }
     }
@@ -48,7 +48,7 @@ impl<'a> Command<'a> {
 
     #[inline]
     pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&Command)) {
-        let rect: D2D_RECT_F = rect.into().into();
+        let rect: D2D_RECT_F = Inner(rect.into()).into();
         unsafe {
             self.0
                 .PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);

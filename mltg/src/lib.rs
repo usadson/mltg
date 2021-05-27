@@ -1,6 +1,3 @@
-mod bindings {
-    ::windows::include_bindings!();
-}
 mod brush;
 mod context;
 pub mod d2d;
@@ -12,6 +9,8 @@ mod shape;
 mod stroke_style;
 mod text;
 mod utility;
+
+use mltg_bindings as bindings;
 
 use bindings::Windows::Win32::Graphics::Direct2D::*;
 pub use brush::*;

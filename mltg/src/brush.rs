@@ -24,7 +24,7 @@ impl From<GradientStop> for D2D1_GRADIENT_STOP {
     fn from(src: GradientStop) -> D2D1_GRADIENT_STOP {
         D2D1_GRADIENT_STOP {
             position: src.position,
-            color: src.color.into(),
+            color: Inner(src.color).into(),
         }
     }
 }
@@ -89,7 +89,7 @@ impl Brush {
         dc: &ID2D1DeviceContext,
         color: impl Into<Rgba>,
     ) -> windows::Result<Self> {
-        let color: D2D1_COLOR_F = color.into().into();
+        let color: D2D1_COLOR_F = Inner(color.into()).into();
         let brush = unsafe {
             let mut p = None;
             dc.CreateSolidColorBrush(&color, std::ptr::null(), &mut p)
@@ -111,8 +111,8 @@ impl Brush {
             let mut p = None;
             dc.CreateLinearGradientBrush(
                 &D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES {
-                    startPoint: start.into(),
-                    endPoint: end.into(),
+                    startPoint: Inner(start).into(),
+                    endPoint: Inner(end).into(),
                 },
                 std::ptr::null(),
                 &stop_collection.0,
@@ -138,8 +138,8 @@ impl Brush {
             let mut p = None;
             dc.CreateRadialGradientBrush(
                 &D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES {
-                    center: center.into(),
-                    gradientOriginOffset: offset.into(),
+                    center: Inner(center).into(),
+                    gradientOriginOffset: Inner(offset).into(),
                     radiusX: radius.x,
                     radiusY: radius.y,
                 },
