@@ -17,10 +17,10 @@ impl Application {
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
         let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
-        let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
+        let white_brush = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let grad = context.create_gradient_stop_collection(&[
-            (0.0, (1.0, 0.0, 0.0, 1.0)),
-            (1.0, (0.0, 1.0, 0.0, 1.0)),
+            (0.0, [1.0, 0.0, 0.0, 1.0]),
+            (1.0, [0.0, 1.0, 0.0, 1.0]),
         ])?;
         let text_format = context.create_text_format(
             &mltg::Font::system("Meiryo"),
@@ -96,7 +96,7 @@ impl wita::EventHandler for Application {
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
         self.context.draw(&self.back_buffer[0], |cmd| {
-            cmd.clear((0.0, 0.0, 0.3, 0.0));
+            cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.fill(&rect, &linear_grad_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
             cmd.draw_text(&self.text, &self.white_brush, (hw, hh));

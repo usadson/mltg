@@ -155,11 +155,9 @@ impl Application {
                     .CreatePixelShader(ps_blob.as_ptr() as _, ps_blob.len() as _, None, &mut p)
                     .and_some(p)?
             };
-            let position_name = std::ffi::CString::new("POSITION").unwrap();
-            let texcoord_name = std::ffi::CString::new("TEXCOORD").unwrap();
             let descs = [
                 D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: PSTR(position_name.as_ptr() as _),
+                    SemanticName: PSTR(b"POSITION\0".as_ptr() as _),
                     SemanticIndex: 0,
                     Format: DXGI_FORMAT_R32G32B32_FLOAT,
                     InputSlot: 0,
@@ -168,7 +166,7 @@ impl Application {
                     InstanceDataStepRate: 0,
                 },
                 D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: PSTR(texcoord_name.as_ptr() as _),
+                    SemanticName: PSTR(b"TEXCOORD\0".as_ptr() as _),
                     SemanticIndex: 0,
                     Format: DXGI_FORMAT_R32G32_FLOAT,
                     InputSlot: 0,

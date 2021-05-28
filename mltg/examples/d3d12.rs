@@ -105,10 +105,10 @@ impl Application {
                 mltg::TextAlignment::Leading,
                 None,
             )?;
-            let white_brush = context.create_solid_color_brush((1.0, 1.0, 1.0, 1.0))?;
+            let white_brush = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
             let grad = context.create_gradient_stop_collection(&[
-                (0.0, (1.0, 0.0, 0.0, 1.0)),
-                (1.0, (0.0, 1.0, 0.0, 1.0)),
+                (0.0, [1.0, 0.0, 0.0, 1.0]),
+                (1.0, [0.0, 1.0, 0.0, 1.0]),
             ])?;
             let image = context.create_image("ferris.png")?;
             context.set_dpi(window.dpi() as _);

@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
                 let image_size = image.size().cast::<f32>().unwrap();
                 let size = (hw, image_size.height * hw / image_size.width);
                 context.draw(&back_buffers[0], |cmd| {
-                    cmd.clear((0.0, 0.0, 0.3, 0.0));
+                    cmd.clear([0.0, 0.0, 0.3, 0.0]);
                     cmd.draw_image(
                         &image,
                         mltg::Rect::new((hw - hw / 2.0, hh - size.1 / 2.0), size),
