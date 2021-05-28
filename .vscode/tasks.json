@@ -31,5 +31,25 @@
 			"group": "build",
 			"label": "debug winit_d2d"
 		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "texture_d3d11"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug texture_d3d11"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "texture_d3d12"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug texture_d3d12"
+		}
 	]
 }

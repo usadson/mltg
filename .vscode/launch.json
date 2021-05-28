@@ -30,6 +30,26 @@
             "cwd": "${workspaceFolder}/mltg/examples",
             "console": "integratedTerminal",
             "preLaunchTask": "debug winit_d2d"
+        },
+        {
+            "name": "debug texture d3d11",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/texture_d3d11.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/mltg/examples",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug texture_d3d11"
+        },
+        {
+            "name": "debug texture d3d12",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/texture_d3d12.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/mltg/examples",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug texture_d3d12"
         }
     ]
 }

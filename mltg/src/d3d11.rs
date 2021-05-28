@@ -3,7 +3,7 @@ use crate::*;
 use windows::{Abi, Interface};
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct RenderTarget(ID2D1Bitmap1);
+pub struct RenderTarget(pub(crate) ID2D1Bitmap1);
 
 impl Target for RenderTarget {
     fn bitmap(&self) -> &ID2D1Bitmap1 {
@@ -100,6 +100,40 @@ impl Backend for Direct3D11 {
             };
             Ok(vec![RenderTarget(bitmap)])
         }
+    }
+
+    fn render_target(
+        &self,
+        target: &impl windows::Interface,
+    ) -> windows::Result<Self::RenderTarget> {
+        let texture: ID3D11Texture2D = target.cast().expect("cannot cast to ID3D11Texture2D");
+        let desc = unsafe {
+            let mut desc = D3D11_TEXTURE2D_DESC::default();
+            texture.GetDesc(&mut desc);
+            desc
+        };
+        if cfg!(debug_assertions) {
+            assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET.0 as u32) != 0);
+        }
+        let surface: IDXGISurface = target.cast()?;
+        let bitmap = unsafe {
+            let mut p = None;
+            self.device_context
+                .CreateBitmapFromDxgiSurface(
+                    &surface,
+                    &D2D1_BITMAP_PROPERTIES1 {
+                        pixelFormat: D2D1_PIXEL_FORMAT {
+                            format: desc.Format,
+                            alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
+                        },
+                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                        ..Default::default()
+                    },
+                    &mut p,
+                )
+                .and_some(p)?
+        };
+        Ok(RenderTarget(bitmap))
     }
 
     fn begin_draw(&self, _target: &RenderTarget) {}

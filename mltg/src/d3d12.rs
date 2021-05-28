@@ -117,7 +117,7 @@ impl Backend for Direct3D12 {
             let bmp_props = D2D1_BITMAP_PROPERTIES1 {
                 pixelFormat: D2D1_PIXEL_FORMAT {
                     format: desc.Format,
-                    alphaMode: D2D1_ALPHA_MODE_IGNORE,
+                    alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
                 },
                 bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                 ..Default::default()
@@ -145,6 +145,50 @@ impl Backend for Direct3D12 {
                 targets.push(RenderTarget { wrapper, bitmap });
             }
             Ok(targets)
+        }
+    }
+
+    fn render_target(
+        &self,
+        target: &impl windows::Interface,
+    ) -> windows::Result<Self::RenderTarget> {
+        unsafe {
+            let resource: ID3D12Resource = target.cast().expect("cannot cast to ID3D12Resource");
+            let desc = resource.GetDesc();
+            if cfg!(debug_assertions) {
+                assert!((desc.Flags.0 & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0) != 0);
+            }
+            let wrapper: ID3D11Resource = {
+                self.d3d11on12_device.CreateWrappedResource(
+                    &resource,
+                    &D3D11_RESOURCE_FLAGS {
+                        BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
+                        ..Default::default()
+                    },
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_COMMON,
+                )?
+            };
+            let surface: IDXGISurface = wrapper.cast()?;
+            let bitmap = {
+                let mut p = None;
+                self.d2d1_device_context
+                    .CreateBitmapFromDxgiSurface(
+                        &surface,
+                        &D2D1_BITMAP_PROPERTIES1 {
+                            pixelFormat: D2D1_PIXEL_FORMAT {
+                                format: desc.Format,
+                                alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
+                            },
+                            bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET
+                                | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                            ..Default::default()
+                        },
+                        &mut p,
+                    )
+                    .and_some(p)?
+            };
+            Ok(RenderTarget { wrapper, bitmap })
         }
     }
 

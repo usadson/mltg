@@ -14,7 +14,10 @@ pub(crate) struct Inner<T>(pub(crate) T);
 impl From<Inner<Point>> for D2D_POINT_2F {
     #[inline]
     fn from(src: Inner<Point>) -> D2D_POINT_2F {
-        D2D_POINT_2F { x: src.0.x, y: src.0.y }
+        D2D_POINT_2F {
+            x: src.0.x,
+            y: src.0.y,
+        }
     }
 }
 
@@ -44,7 +47,10 @@ impl From<Inner<Rect>> for D2D_RECT_F {
 impl From<Inner<Vector>> for D2D_POINT_2F {
     #[inline]
     fn from(src: Inner<Vector>) -> D2D_POINT_2F {
-        D2D_POINT_2F { x: src.0.x, y: src.0.y }
+        D2D_POINT_2F {
+            x: src.0.x,
+            y: src.0.y,
+        }
     }
 }
 

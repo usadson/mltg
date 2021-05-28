@@ -67,6 +67,10 @@ pub trait Backend {
         &self,
         swap_chain: &IDXGISwapChain1,
     ) -> windows::Result<Vec<Self::RenderTarget>>;
+    fn render_target(
+        &self,
+        target: &impl windows::Interface,
+    ) -> windows::Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -114,6 +118,14 @@ where
     ) -> windows::Result<Vec<T::RenderTarget>> {
         self.backend
             .back_buffers(&swap_chain.cast().expect("cannot cast to IDXGISwapChain1"))
+    }
+
+    #[inline]
+    pub fn create_render_target(
+        &self,
+        target: &impl windows::Interface,
+    ) -> windows::Result<T::RenderTarget> {
+        self.backend.render_target(target)
     }
 
     #[inline]
