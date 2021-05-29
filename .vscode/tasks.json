@@ -4,6 +4,16 @@
 		{
 			"type": "cargo",
 			"command": "build",
+			"args": ["--example", "hello"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug hello"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
 			"args": ["--example", "d2d"],
 			"problemMatcher": [
 				"$rustc"

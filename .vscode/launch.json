@@ -2,6 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "debug hello",
+            "request": "launch",
+            "type": "cppvsdbg",
+            "program": "${workspaceFolder}/target/debug/examples/hello.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/mltg/examples",
+            "console": "integratedTerminal",
+            "preLaunchTask": "debug hello"
+        },
+        {
             "name": "debug d2d",
             "request": "launch",
             "type": "cppvsdbg",
