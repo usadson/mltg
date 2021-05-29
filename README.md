@@ -4,4 +4,7 @@
 
 Direct2D wrapper library
 
+* [Document](https://lnseab.github.io/mltg)
+* [API Reference](https://lnseab.github.io/mltg/api/mltg/index.html)
+
 Copyright (c) 2021 LNSEAB

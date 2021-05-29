@@ -1,0 +1,6 @@
+[book]
+authors = ["LNSEAB"]
+language = "jp"
+multilingual = false
+src = "src"
+title = "mltg"
