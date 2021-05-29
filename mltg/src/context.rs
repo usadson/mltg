@@ -97,7 +97,14 @@ where
                 )
                 .and_some(p)?
             };
-            let wic_imaging_factory = windows::create_instance(&CLSID_WICImagingFactory)?;
+            let wic_imaging_factory = windows::create_instance(&CLSID_WICImagingFactory)
+                .or_else(|e| {
+                    if e.code().0 != 0x800401F0 {
+                        return Err(e);
+                    }
+                    windows::initialize_sta()?;
+                    windows::create_instance(&CLSID_WICImagingFactory)
+                })?;
             Ok(Self {
                 backend,
                 dwrite_factory,

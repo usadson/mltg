@@ -565,6 +565,5 @@ impl wita::EventHandler for Application {
 }
 
 fn main() {
-    windows::initialize_sta().unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }

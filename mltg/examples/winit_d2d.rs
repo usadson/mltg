@@ -7,7 +7,6 @@ use winit::{
 };
 
 fn main() -> anyhow::Result<()> {
-    windows::initialize_sta()?;
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("mltg winit d2d")
