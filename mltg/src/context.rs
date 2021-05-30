@@ -3,9 +3,9 @@ use crate::utility::*;
 use crate::*;
 use windows::{Abi, Interface};
 
-pub struct Command<'a>(&'a ID2D1DeviceContext);
+pub struct DrawCommand<'a>(&'a ID2D1DeviceContext);
 
-impl<'a> Command<'a> {
+impl<'a> DrawCommand<'a> {
     #[inline]
     pub fn clear(&self, color: impl Into<Rgba>) {
         unsafe {
@@ -47,7 +47,7 @@ impl<'a> Command<'a> {
     }
 
     #[inline]
-    pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&Command)) {
+    pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&DrawCommand)) {
         let rect: D2D_RECT_F = Inner(rect.into()).into();
         unsafe {
             self.0
@@ -242,13 +242,13 @@ where
         }
     }
 
-    pub fn draw(&self, target: &T::RenderTarget, f: impl FnOnce(&Command)) {
+    pub fn draw(&self, target: &T::RenderTarget, f: impl FnOnce(&DrawCommand)) {
         let device_context = self.backend.device_context();
         unsafe {
             self.backend.begin_draw(target);
             device_context.SetTarget(target.bitmap());
             device_context.BeginDraw();
-            f(&Command(self.backend.device_context()));
+            f(&DrawCommand(self.backend.device_context()));
             device_context
                 .EndDraw(std::ptr::null_mut(), std::ptr::null_mut())
                 .unwrap();
