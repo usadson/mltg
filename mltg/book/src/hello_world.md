@@ -1,6 +1,6 @@
 # Hello, world!
 
-mltgの`exmples`にある`hello.rs`を例にmltgの使い方を見ていきましょう。
+mltgの`examples`にある`hello.rs`を例にmltgの使い方を見ていきましょう。
 `hello.rs`は単純に青い背景にHello, world!と表示するだけのプログラムとなります。
 
 [ソースコード](https://github.com/LNSEAB/mltg/blob/master/mltg/examples/hello.rs)
