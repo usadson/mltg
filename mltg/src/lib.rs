@@ -29,6 +29,8 @@ pub use utility::*;
 
 pub trait Target {
     fn bitmap(&self) -> &ID2D1Bitmap1;
+    fn size(&self) -> Size;
+    fn physical_size(&self) -> gecl::Size<u32>;
 }
 
 pub trait Fill {

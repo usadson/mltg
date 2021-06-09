@@ -12,6 +12,20 @@ impl Target for RenderTarget {
     fn bitmap(&self) -> &ID2D1Bitmap1 {
         &self.bitmap
     }
+
+    fn size(&self) -> Size {
+        unsafe {
+            let size = self.bitmap.GetSize();
+            Size::new(size.width, size.height)
+        }
+    }
+
+    fn physical_size(&self) -> gecl::Size<u32> {
+        unsafe {
+            let size = self.bitmap.GetPixelSize();
+            gecl::Size::new(size.width, size.height)
+        }
+    }
 }
 
 pub struct Direct3D12 {
