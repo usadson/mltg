@@ -1,7 +1,6 @@
 use mltg_bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Dxgi::*},
-    System::SystemServices::*,
-    UI::WindowsAndMessaging::*,
+    Foundation::*,
 };
 
 #[repr(C)]
@@ -195,7 +194,7 @@ impl Application {
                 .CreateTexture2D(
                     &D3D11_TEXTURE2D_DESC {
                         Usage: D3D11_USAGE_DEFAULT,
-                        BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as _,
+                        BindFlags: D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
                         Width: window_size.width,
                         Height: window_size.height,
                         ArraySize: 1,
@@ -238,7 +237,7 @@ impl Application {
         };
         let blend = unsafe {
             let rt = D3D11_RENDER_TARGET_BLEND_DESC {
-                BlendEnable: TRUE,
+                BlendEnable: true.into(),
                 SrcBlend: D3D11_BLEND_SRC_ALPHA,
                 DestBlend: D3D11_BLEND_INV_SRC_ALPHA,
                 BlendOp: D3D11_BLEND_OP_ADD,

@@ -1,7 +1,8 @@
 use mltg_bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::{SystemServices::*, Threading::*, WindowsProgramming::*},
-    UI::{DisplayDevices::*, WindowsAndMessaging::*},
+    Foundation::*,
+    System::WindowsProgramming::*,
+    System::Threading::*,
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -138,7 +139,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), FALSE, FALSE, PWSTR::NULL);
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::NULL);
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
             }

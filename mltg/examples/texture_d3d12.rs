@@ -1,7 +1,7 @@
 use mltg_bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::{SystemServices::*, Threading::*, WindowsProgramming::*},
-    UI::{DisplayDevices::*, WindowsAndMessaging::*},
+    System::{Threading::*, WindowsProgramming::*},
+    Foundation::*,
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -318,8 +318,8 @@ impl Application {
                     },
                 ];
                 let render_target_blend = D3D12_RENDER_TARGET_BLEND_DESC {
-                    BlendEnable: TRUE,
-                    LogicOpEnable: FALSE,
+                    BlendEnable: true.into(),
+                    LogicOpEnable: false.into(),
                     SrcBlend: D3D12_BLEND_SRC_ALPHA,
                     DestBlend: D3D12_BLEND_INV_SRC_ALPHA,
                     BlendOp: D3D12_BLEND_OP_ADD,
@@ -346,8 +346,8 @@ impl Application {
                         NumElements: input_layout.len() as _,
                     },
                     BlendState: D3D12_BLEND_DESC {
-                        AlphaToCoverageEnable: FALSE,
-                        IndependentBlendEnable: FALSE,
+                        AlphaToCoverageEnable: false.into(),
+                        IndependentBlendEnable: false.into(),
                         RenderTarget: [render_target_blend; 8],
                     },
                     RasterizerState: D3D12_RASTERIZER_DESC {
@@ -402,7 +402,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), FALSE, FALSE, PWSTR::NULL);
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::NULL);
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
             }
@@ -497,7 +497,7 @@ impl wita::EventHandler for Application {
             self.command_list.OMSetRenderTargets(
                 1,
                 [rtv_handle.clone()].as_ptr(),
-                FALSE,
+                false,
                 std::ptr::null(),
             );
             self.command_list

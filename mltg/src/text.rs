@@ -1,4 +1,4 @@
-use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, System::SystemServices::*};
+use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, Foundation::*};
 use crate::*;
 use std::convert::TryInto;
 use windows::{Abi, Interface};

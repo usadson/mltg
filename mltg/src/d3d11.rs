@@ -127,7 +127,7 @@ impl Backend for Direct3D11 {
             desc
         };
         if cfg!(debug_assertions) {
-            assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET.0 as u32) != 0);
+            assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET) == D3D11_BIND_RENDER_TARGET);
         }
         let surface: IDXGISurface = target.cast()?;
         let bitmap = unsafe {

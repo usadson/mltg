@@ -1,7 +1,6 @@
 use crate::bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Dxgi::*},
-    System::SystemServices::*,
-    UI::WindowsAndMessaging::*,
+    Foundation::*,
 };
 use crate::d3d11;
 use crate::*;
