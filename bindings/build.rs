@@ -11,7 +11,17 @@ fn main() {
             WaitForSingleObject,
         },
         Windows::Win32::Foundation::{
+            PSTR,
+            PWSTR,
+            HWND,
+            HINSTANCE,
             FILETIME,
+        },
+        Windows::Win32::System::SystemServices::{
+            GENERIC_READ,
+        },
+        Windows::Win32::System::WindowsProgramming::{
+            INFINITE,
         },
     );
 }
