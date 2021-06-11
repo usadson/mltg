@@ -10,13 +10,7 @@ fn main() {
             CreateEventW,
             WaitForSingleObject,
         },
-        Windows::Win32::System::SystemServices::{
-            TRUE,
-            FALSE,
-            GENERIC_READ,
-        },
-        Windows::Win32::System::WindowsProgramming::{
-            INFINITE,
+        Windows::Win32::Foundation::{
             FILETIME,
         },
     );
