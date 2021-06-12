@@ -1,4 +1,5 @@
 use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*};
+use crate::bindings::Windows::Foundation::Numerics::*;
 use crate::utility::*;
 use crate::*;
 use windows::{Abi, Interface};
@@ -47,13 +48,22 @@ impl<'a> DrawCommand<'a> {
     }
 
     #[inline]
-    pub fn clip(&self, rect: impl Into<Rect>, f: impl Fn(&DrawCommand)) {
+    pub fn clip(&self, rect: impl Into<Rect>, f: impl FnOnce(&DrawCommand)) {
         let rect: D2D_RECT_F = Inner(rect.into()).into();
         unsafe {
             self.0
                 .PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
             f(self);
             self.0.PopAxisAlignedClip();
+        }
+    }
+
+    #[inline]
+    pub fn set_offset(&self, point: impl Into<Point>) {
+        let point = point.into();
+        let m = Matrix3x2::translation(point.x, point.y);
+        unsafe {
+            self.0.SetTransform(&m);
         }
     }
 }
