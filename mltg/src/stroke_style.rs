@@ -111,12 +111,7 @@ impl StrokeStyle {
             dashStyle: dash_style,
             dashOffset: dash_offset,
         };
-        let stroke_style = unsafe {
-            let mut p = None;
-            factory
-                .CreateStrokeStyle(&props, dashes, dashes_len as _, &mut p)
-                .and_some(p)?
-        };
+        let stroke_style = unsafe { factory.CreateStrokeStyle(&props, dashes, dashes_len as _)? };
         Ok(StrokeStyle(stroke_style))
     }
 }

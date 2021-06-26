@@ -1,8 +1,8 @@
 use mltg_bindings::Windows::Win32::{
-    Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
     Foundation::*,
-    System::WindowsProgramming::*,
+    Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
     System::Threading::*,
+    System::WindowsProgramming::*,
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -47,7 +47,6 @@ impl Application {
             command_list.Close().unwrap();
             let dxgi_factory: IDXGIFactory4 = CreateDXGIFactory1()?;
             let swap_chain: IDXGISwapChain4 = {
-                let mut p = None;
                 dxgi_factory
                     .CreateSwapChainForHwnd(
                         &command_queue,
@@ -66,9 +65,7 @@ impl Application {
                         },
                         std::ptr::null(),
                         None,
-                        &mut p,
-                    )
-                    .and_some(p)?
+                    )?
                     .cast()?
             };
             let rtv_heap: ID3D12DescriptorHeap =

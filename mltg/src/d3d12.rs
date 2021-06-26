@@ -63,7 +63,7 @@ impl Direct3D12 {
                     &mut dc,
                     std::ptr::null_mut(),
                 )
-                .and_then(|| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
+                .map(|_| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
             };
             let d2d1_factory = {
                 let mut p: Option<ID2D1Factory1> = None;
@@ -73,21 +73,12 @@ impl Direct3D12 {
                     std::ptr::null(),
                     p.set_abi(),
                 )
-                .and_some(p)?
+                .map(|_| p.unwrap())?
             };
             let dxgi_device = d3d11on12_device.cast::<IDXGIDevice>()?;
-            let d2d1_device = {
-                let mut p = None;
-                d2d1_factory
-                    .CreateDevice(&dxgi_device, &mut p)
-                    .and_some(p)?
-            };
-            let d2d1_device_context = {
-                let mut p = None;
-                d2d1_device
-                    .CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &mut p)
-                    .and_some(p)?
-            };
+            let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
+            let d2d1_device_context =
+                { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
             Ok(Self {
                 d3d11on12_device,
                 d2d1_factory,
@@ -123,11 +114,7 @@ impl Backend for Direct3D12 {
         swap_chain: &IDXGISwapChain1,
     ) -> windows::Result<Vec<Self::RenderTarget>> {
         unsafe {
-            let desc = {
-                let mut desc = Default::default();
-                swap_chain.GetDesc1(&mut desc).ok()?;
-                desc
-            };
+            let desc = swap_chain.GetDesc1()?;
             let bmp_props = D2D1_BITMAP_PROPERTIES1 {
                 pixelFormat: D2D1_PIXEL_FORMAT {
                     format: desc.Format,
@@ -151,10 +138,8 @@ impl Backend for Direct3D12 {
                 )?;
                 let surface = wrapper.cast::<IDXGISurface>()?;
                 let bitmap = {
-                    let mut p = None;
                     self.d2d1_device_context
-                        .CreateBitmapFromDxgiSurface(&surface, &bmp_props, &mut p)
-                        .and_some(p)?
+                        .CreateBitmapFromDxgiSurface(&surface, &bmp_props)?
                 };
                 targets.push(RenderTarget { wrapper, bitmap });
             }
@@ -185,22 +170,17 @@ impl Backend for Direct3D12 {
             };
             let surface: IDXGISurface = wrapper.cast()?;
             let bitmap = {
-                let mut p = None;
-                self.d2d1_device_context
-                    .CreateBitmapFromDxgiSurface(
-                        &surface,
-                        &D2D1_BITMAP_PROPERTIES1 {
-                            pixelFormat: D2D1_PIXEL_FORMAT {
-                                format: desc.Format,
-                                alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
-                            },
-                            bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET
-                                | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                            ..Default::default()
+                self.d2d1_device_context.CreateBitmapFromDxgiSurface(
+                    &surface,
+                    &D2D1_BITMAP_PROPERTIES1 {
+                        pixelFormat: D2D1_PIXEL_FORMAT {
+                            format: desc.Format,
+                            alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
                         },
-                        &mut p,
-                    )
-                    .and_some(p)?
+                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                        ..Default::default()
+                    },
+                )?
             };
             Ok(RenderTarget { wrapper, bitmap })
         }

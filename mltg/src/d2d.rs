@@ -1,6 +1,6 @@
 use crate::bindings::Windows::Win32::{
-    Graphics::{Direct3D11::*, Dxgi::*},
     Foundation::*,
+    Graphics::{Direct3D11::*, Dxgi::*},
 };
 use crate::d3d11;
 use crate::*;
@@ -34,35 +34,31 @@ impl Direct2D {
                     std::ptr::null_mut(),
                     std::ptr::null_mut(),
                 )
-                .and_some(p)?
+                .map(|_| p.unwrap())?
             };
             let dxgi_factory: IDXGIFactory2 = { CreateDXGIFactory1()? };
             let swap_chain = {
                 let hwnd = HWND(hwnd as _);
                 let size = size.into();
-                let mut p = None;
-                dxgi_factory
-                    .CreateSwapChainForHwnd(
-                        &d3d11_device,
-                        hwnd,
-                        &DXGI_SWAP_CHAIN_DESC1 {
-                            Width: size.width,
-                            Height: size.height,
-                            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
-                            BufferCount: 2,
-                            BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                            SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
-                            SampleDesc: DXGI_SAMPLE_DESC {
-                                Count: 1,
-                                Quality: 0,
-                            },
-                            ..Default::default()
+                dxgi_factory.CreateSwapChainForHwnd(
+                    &d3d11_device,
+                    hwnd,
+                    &DXGI_SWAP_CHAIN_DESC1 {
+                        Width: size.width,
+                        Height: size.height,
+                        Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                        BufferCount: 2,
+                        BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
+                        SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                        SampleDesc: DXGI_SAMPLE_DESC {
+                            Count: 1,
+                            Quality: 0,
                         },
-                        std::ptr::null_mut(),
-                        None,
-                        &mut p,
-                    )
-                    .and_some(p)?
+                        ..Default::default()
+                    },
+                    std::ptr::null_mut(),
+                    None,
+                )?
             };
             let object = d3d11::Direct3D11::new(&d3d11_device)?;
             Ok(Self {
@@ -82,7 +78,6 @@ impl Direct2D {
             let size = size.into();
             self.swap_chain
                 .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
-                .ok()
                 .ok();
         }
     }
@@ -130,7 +125,7 @@ impl Backend for Direct2D {
     fn end_draw(&self, target: &Self::RenderTarget) {
         self.object.end_draw(target);
         unsafe {
-            self.swap_chain.Present(1, 0).ok().ok();
+            self.swap_chain.Present(1, 0).ok();
         }
     }
 }

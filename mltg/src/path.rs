@@ -48,10 +48,7 @@ impl PathBuilder {
     #[inline]
     pub(crate) fn new(geometry: ID2D1PathGeometry) -> Self {
         unsafe {
-            let sink = {
-                let mut p = None;
-                geometry.Open(&mut p).and_some(p).unwrap()
-            };
+            let sink = { geometry.Open().unwrap() };
             Self { geometry, sink }
         }
     }

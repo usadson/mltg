@@ -56,15 +56,12 @@ impl GradientStopCollection {
             .map(|stop| stop.into().into())
             .collect::<Vec<_>>();
         let collection = unsafe {
-            let mut p = None;
             dc.CreateGradientStopCollection(
                 stops.as_ptr(),
                 stops.len() as _,
                 D2D1_GAMMA_2_2,
                 D2D1_EXTEND_MODE_WRAP,
-                &mut p,
-            )
-            .and_some(p)?
+            )?
         };
         Ok(Self(collection))
     }
@@ -90,11 +87,7 @@ impl Brush {
         color: impl Into<Rgba>,
     ) -> windows::Result<Self> {
         let color: D2D1_COLOR_F = Inner(color.into()).into();
-        let brush = unsafe {
-            let mut p = None;
-            dc.CreateSolidColorBrush(&color, std::ptr::null(), &mut p)
-                .and_some(p)?
-        };
+        let brush = unsafe { dc.CreateSolidColorBrush(&color, std::ptr::null())? };
         Ok(Self::SolidColor(SolidColorBrush(brush)))
     }
 
@@ -108,7 +101,6 @@ impl Brush {
         let start = start.into();
         let end = end.into();
         let brush = unsafe {
-            let mut p = None;
             dc.CreateLinearGradientBrush(
                 &D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES {
                     startPoint: Inner(start).into(),
@@ -116,9 +108,7 @@ impl Brush {
                 },
                 std::ptr::null(),
                 &stop_collection.0,
-                &mut p,
-            )
-            .and_some(p)?
+            )?
         };
         Ok(Self::LinearGradient(LinearGradientBrush(brush)))
     }
@@ -135,7 +125,6 @@ impl Brush {
         let offset = offset.into();
         let radius = radius.into();
         let brush = unsafe {
-            let mut p = None;
             dc.CreateRadialGradientBrush(
                 &D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES {
                     center: Inner(center).into(),
@@ -145,9 +134,7 @@ impl Brush {
                 },
                 std::ptr::null(),
                 &stop_collection.0,
-                &mut p,
-            )
-            .and_some(p)?
+            )?
         };
         Ok(Self::RadialGradient(RadialGradientBrush(brush)))
     }

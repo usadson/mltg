@@ -1,4 +1,4 @@
-use crate::bindings::Windows::Win32::{Graphics::DirectWrite::*, Foundation::*};
+use crate::bindings::Windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 use crate::*;
 use std::convert::TryInto;
 use windows::{Abi, Interface};
@@ -145,51 +145,30 @@ impl TextFormat {
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
             Font::System(font_name) => (font_name, None),
             Font::File(path, font_name) => unsafe {
-                let set_builder = {
-                    let mut p = None;
-                    factory
-                        .CreateFontSetBuilder(&mut p)
-                        .and_some(p)?
-                        .cast::<IDWriteFontSetBuilder1>()?
-                };
+                let set_builder: IDWriteFontSetBuilder1 =
+                    { factory.CreateFontSetBuilder()?.cast()? };
                 let font_file = {
-                    let mut p = None;
-                    factory
-                        .CreateFontFileReference(
-                            path.as_path().to_string_lossy().as_ref(),
-                            std::ptr::null(),
-                            &mut p,
-                        )
-                        .and_some(p)?
+                    factory.CreateFontFileReference(
+                        path.as_path().to_string_lossy().as_ref(),
+                        std::ptr::null(),
+                    )?
                 };
-                set_builder.AddFontFile(&font_file).ok()?;
-                let font_set = {
-                    let mut p = None;
-                    set_builder.CreateFontSet(&mut p).and_some(p)?
-                };
-                let font_collection = {
-                    let mut p = None;
-                    factory
-                        .CreateFontCollectionFromFontSet(&font_set, &mut p)
-                        .and_some(p)?
-                };
+                set_builder.AddFontFile(&font_file)?;
+                let font_set = { set_builder.CreateFontSet()? };
+                let font_collection = { factory.CreateFontCollectionFromFontSet(&font_set)? };
                 (font_name, Some(font_collection.into()))
             },
         };
         let format = unsafe {
-            let mut p = None;
-            factory
-                .CreateTextFormat(
-                    font_name.as_str(),
-                    font_collection,
-                    DWRITE_FONT_WEIGHT(style.weight as _),
-                    DWRITE_FONT_STYLE(style.style as _),
-                    DWRITE_FONT_STRETCH(style.stretch as _),
-                    size,
-                    "",
-                    &mut p,
-                )
-                .and_some(p)?
+            factory.CreateTextFormat(
+                font_name.as_str(),
+                font_collection,
+                DWRITE_FONT_WEIGHT(style.weight as _),
+                DWRITE_FONT_STYLE(style.style as _),
+                DWRITE_FONT_STRETCH(style.stretch as _),
+                size,
+                "",
+            )?
         };
         Ok(Self {
             format,
@@ -250,20 +229,15 @@ impl TextLayout {
     ) -> windows::Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
-            let mut p = None;
-            let layout = factory
-                .CreateTextLayout(
-                    PWSTR(text.as_ptr() as _),
-                    text.len() as _,
-                    &format.format,
-                    std::f32::MAX,
-                    std::f32::MAX,
-                    &mut p,
-                )
-                .and_some(p)?;
+            let layout = factory.CreateTextLayout(
+                PWSTR(text.as_ptr() as _),
+                text.len() as _,
+                &format.format,
+                std::f32::MAX,
+                std::f32::MAX,
+            )?;
             let size = size.unwrap_or_else(|| {
-                let mut metrics = Default::default();
-                layout.GetMetrics(&mut metrics).unwrap();
+                let metrics = layout.GetMetrics().unwrap();
                 (metrics.width, metrics.height).into()
             });
             layout.SetMaxWidth(size.width).unwrap();
@@ -329,8 +303,7 @@ impl TextLayout {
     #[inline]
     pub fn reset_size(&self) {
         let size: Size = unsafe {
-            let mut metrics = Default::default();
-            self.layout.GetMetrics(&mut metrics).unwrap();
+            let metrics = self.layout.GetMetrics().unwrap();
             (metrics.width, metrics.height).into()
         };
         self.set_size(size);
@@ -369,14 +342,10 @@ mod tests {
     #[test]
     fn from_file() {
         let factory: IDWriteFactory5 = unsafe {
-            let mut p = None;
-            DWriteCreateFactory(
-                DWRITE_FACTORY_TYPE_SHARED,
-                &IDWriteFactory5::IID,
-                p.set_abi() as _,
-            )
-            .and_some(p)
-            .unwrap()
+            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
+                .unwrap()
+                .cast()
+                .unwrap()
         };
         TextFormat::new(
             &factory,

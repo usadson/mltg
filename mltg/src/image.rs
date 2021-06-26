@@ -75,41 +75,29 @@ impl<'a> ImageLoader for &'a Path {
     ) -> windows::Result<Image> {
         unsafe {
             let decoder = {
-                let mut p = None;
-                factory
-                    .CreateDecoderFromFilename(
-                        self.to_str().unwrap(),
-                        std::ptr::null(),
-                        GENERIC_READ,
-                        WICDecodeMetadataCacheOnDemand,
-                        &mut p,
-                    )
-                    .and_some(p)?
+                factory.CreateDecoderFromFilename(
+                    self.to_str().unwrap(),
+                    std::ptr::null(),
+                    GENERIC_READ,
+                    WICDecodeMetadataCacheOnDemand,
+                )?
             };
-            let frame = {
-                let mut p = None;
-                decoder.GetFrame(0, &mut p).and_some(p)?
-            };
+            let frame = decoder.GetFrame(0)?;
             let converter = {
-                let mut p = None;
-                let converter = factory.CreateFormatConverter(&mut p).and_some(p)?;
+                let converter = factory.CreateFormatConverter()?;
                 let mut guid = GUID_WICPixelFormat32bppPBGRA.clone();
-                converter
-                    .Initialize(
-                        &frame,
-                        &mut guid,
-                        WICBitmapDitherTypeNone,
-                        None,
-                        1.0,
-                        WICBitmapPaletteTypeMedianCut,
-                    )
-                    .ok()?;
+                converter.Initialize(
+                    &frame,
+                    &mut guid,
+                    WICBitmapDitherTypeNone,
+                    None,
+                    1.0,
+                    WICBitmapPaletteTypeMedianCut,
+                )?;
                 converter
             };
             let bitmap = {
-                let mut p = None;
-                dc.CreateBitmapFromWicBitmap(&converter, std::ptr::null(), &mut p)
-                    .and_some(p)?
+                dc.CreateBitmapFromWicBitmap(&converter, std::ptr::null())?
                     .cast()?
             };
             Ok(Image(bitmap))

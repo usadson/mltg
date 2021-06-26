@@ -1,8 +1,8 @@
-use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*};
 use crate::bindings::Windows::Foundation::Numerics::*;
+use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*};
 use crate::utility::*;
 use crate::*;
-use windows::{Abi, Interface};
+use windows::Interface;
 
 pub struct DrawCommand<'a>(&'a ID2D1DeviceContext);
 
@@ -99,16 +99,10 @@ where
     pub fn new(backend: T) -> windows::Result<Self> {
         unsafe {
             let dwrite_factory = {
-                let mut p = None;
-                DWriteCreateFactory(
-                    DWRITE_FACTORY_TYPE_SHARED,
-                    &IDWriteFactory5::IID,
-                    p.set_abi() as _,
-                )
-                .and_some(p)?
+                DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?
             };
-            let wic_imaging_factory = windows::create_instance(&CLSID_WICImagingFactory)
-                .or_else(|e| {
+            let wic_imaging_factory =
+                windows::create_instance(&CLSID_WICImagingFactory).or_else(|e| {
                     if e.code().0 != 0x800401F0 {
                         return Err(e);
                     }
@@ -190,14 +184,7 @@ where
 
     #[inline]
     pub fn create_path(&self) -> PathBuilder {
-        let geometry = unsafe {
-            let mut p = None;
-            self.backend
-                .d2d1_factory()
-                .CreatePathGeometry(&mut p)
-                .and_some(p)
-                .unwrap()
-        };
+        let geometry = unsafe { self.backend.d2d1_factory().CreatePathGeometry().unwrap() };
         PathBuilder::new(geometry)
     }
 

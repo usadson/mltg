@@ -45,21 +45,12 @@ impl Direct3D11 {
                     },
                     p.set_abi(),
                 )
-                .and_some(p)?
+                .map(|_| p.unwrap())?
             };
             let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
-            let d2d1_device = {
-                let mut p = None;
-                d2d1_factory
-                    .CreateDevice(&dxgi_device, &mut p)
-                    .and_some(p)?
-            };
-            let device_context = {
-                let mut p = None;
-                d2d1_device
-                    .CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &mut p)
-                    .and_some(p)?
-            };
+            let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
+            let device_context =
+                { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
             Ok(Self {
                 d2d1_factory,
                 device_context,
@@ -86,31 +77,22 @@ impl Backend for Direct3D11 {
         swap_chain: &IDXGISwapChain1,
     ) -> windows::Result<Vec<Self::RenderTarget>> {
         unsafe {
-            let desc = {
-                let mut desc = Default::default();
-                swap_chain.GetDesc1(&mut desc).ok()?;
-                desc
-            };
+            let desc = { swap_chain.GetDesc1()? };
             let surface: IDXGISurface = swap_chain.GetBuffer(0)?;
             let bitmap = {
-                let mut p = None;
-                self.device_context
-                    .CreateBitmapFromDxgiSurface(
-                        &surface,
-                        &D2D1_BITMAP_PROPERTIES1 {
-                            pixelFormat: D2D1_PIXEL_FORMAT {
-                                format: desc.Format,
-                                alphaMode: D2D1_ALPHA_MODE_IGNORE,
-                            },
-                            bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET
-                                | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                            dpiX: 96.0,
-                            dpiY: 96.0,
-                            ..Default::default()
+                self.device_context.CreateBitmapFromDxgiSurface(
+                    &surface,
+                    &D2D1_BITMAP_PROPERTIES1 {
+                        pixelFormat: D2D1_PIXEL_FORMAT {
+                            format: desc.Format,
+                            alphaMode: D2D1_ALPHA_MODE_IGNORE,
                         },
-                        &mut p,
-                    )
-                    .and_some(p)?
+                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                        dpiX: 96.0,
+                        dpiY: 96.0,
+                        ..Default::default()
+                    },
+                )?
             };
             Ok(vec![RenderTarget(bitmap)])
         }
@@ -131,21 +113,17 @@ impl Backend for Direct3D11 {
         }
         let surface: IDXGISurface = target.cast()?;
         let bitmap = unsafe {
-            let mut p = None;
-            self.device_context
-                .CreateBitmapFromDxgiSurface(
-                    &surface,
-                    &D2D1_BITMAP_PROPERTIES1 {
-                        pixelFormat: D2D1_PIXEL_FORMAT {
-                            format: desc.Format,
-                            alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
-                        },
-                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                        ..Default::default()
+            self.device_context.CreateBitmapFromDxgiSurface(
+                &surface,
+                &D2D1_BITMAP_PROPERTIES1 {
+                    pixelFormat: D2D1_PIXEL_FORMAT {
+                        format: desc.Format,
+                        alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
                     },
-                    &mut p,
-                )
-                .and_some(p)?
+                    bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                    ..Default::default()
+                },
+            )?
         };
         Ok(RenderTarget(bitmap))
     }
