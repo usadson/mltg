@@ -17,7 +17,7 @@ all-featurse = true
 [dependencies]
 gecl = "0.0.2"
 windows = "0.13.0"
-mltg_bindings = { path = "../bindings" }
+mltg_bindings = "0.0.2"
 
 [build-dependencies]
 windows = "0.13.0"
