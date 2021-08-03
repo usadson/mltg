@@ -23,5 +23,9 @@ fn main() {
         Windows::Win32::System::WindowsProgramming::{
             INFINITE,
         },
+        Windows::Win32::System::Com::{
+            CoCreateInstance,
+            CoInitialize,
+        },
     );
 }
