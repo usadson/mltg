@@ -1,5 +1,6 @@
 use crate::bindings::Windows::Foundation::Numerics::*;
 use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*};
+use crate::bindings::Windows::Win32::System::Com::*;
 use crate::utility::*;
 use crate::*;
 use windows::Interface;
@@ -102,12 +103,12 @@ where
                 DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?
             };
             let wic_imaging_factory =
-                windows::create_instance(&CLSID_WICImagingFactory).or_else(|e| {
+                CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER).or_else(|e| {
                     if e.code().0 != 0x800401F0 {
                         return Err(e);
                     }
-                    windows::initialize_sta()?;
-                    windows::create_instance(&CLSID_WICImagingFactory)
+                    CoInitialize(std::ptr::null_mut())?;
+                    CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)
                 })?;
             Ok(Self {
                 backend,

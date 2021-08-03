@@ -16,13 +16,13 @@ all-featurse = true
 
 [dependencies]
 gecl = "0.0.2"
-windows = "0.13.0"
-mltg_bindings = "0.0.2"
+windows = "0.18.0"
+mltg_bindings = "0.0.3"
 
 [build-dependencies]
-windows = "0.13.0"
+windows = "0.18.0"
 
 [dev-dependencies]
-anyhow = "1.0.41"
+anyhow = "1.0.42"
 winit = "0.25.0"
-wita = "0.10.3"
+wita = "0.10.5"
