@@ -147,10 +147,10 @@ impl Backend for Direct3D12 {
 
     fn render_target(
         &self,
-        target: &impl windows::Interface,
+        target: *mut std::ffi::c_void,
     ) -> windows::Result<Self::RenderTarget> {
         unsafe {
-            let resource: ID3D12Resource = target.cast().expect("cannot cast to ID3D12Resource");
+            let resource = ID3D12Resource::from_abi(target)?;
             let desc = resource.GetDesc();
             if cfg!(debug_assertions) {
                 assert!((desc.Flags.0 & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0) != 0);
@@ -180,6 +180,7 @@ impl Backend for Direct3D12 {
                     },
                 )?
             };
+            std::mem::forget(resource);
             Ok(RenderTarget { wrapper, bitmap })
         }
     }

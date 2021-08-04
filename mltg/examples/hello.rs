@@ -1,3 +1,5 @@
+use windows::Abi;
+
 struct Application {
     context: mltg::Context<mltg::Direct2D>,
     back_buffer: Vec<mltg::d2d::RenderTarget>,
@@ -12,7 +14,7 @@ impl Application {
         let backend =
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
-        let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
+        let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi())?;
         let white = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let text_format = context.create_text_format(
             &mltg::Font::system("Yu Gothic UI"),
@@ -47,7 +49,7 @@ impl wita::EventHandler for Application {
         self.context.backend().resize((size.width, size.height));
         self.back_buffer = self
             .context
-            .create_back_buffers(self.context.backend().swap_chain())
+            .create_back_buffers(self.context.backend().swap_chain().abi())
             .unwrap();
         window.redraw();
     }

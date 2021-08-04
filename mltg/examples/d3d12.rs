@@ -91,7 +91,7 @@ impl Application {
             let fence = d3d12_device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
             let context =
                 mltg::Context::new(mltg::Direct3D12::new(d3d12_device.abi(), command_queue.abi())?)?;
-            let bitmaps = context.create_back_buffers(&swap_chain)?;
+            let bitmaps = context.create_back_buffers(swap_chain.abi())?;
             let text_format = context.create_text_format(
                 &mltg::Font::system("Meiryo"),
                 mltg::font_point(14.0),
@@ -281,7 +281,7 @@ impl wita::EventHandler for Application {
             }
             buffers
         };
-        self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
+        self.bitmaps = self.context.create_back_buffers(self.swap_chain.abi()).unwrap();
         window.redraw();
     }
 }

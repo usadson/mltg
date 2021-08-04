@@ -210,7 +210,7 @@ impl Application {
             })?
         };
         let context = mltg::Context::new(mltg::Direct3D11::new(device.abi())?)?;
-        let target = context.create_render_target(&tex)?;
+        let target = context.create_render_target(tex.abi())?;
         let image = context.create_image("ferris.png")?;
         Ok(Self {
             device,

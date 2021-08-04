@@ -367,7 +367,7 @@ impl Application {
             let fence = device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
             let context = mltg::Context::new(mltg::Direct3D12::new(device.abi(), command_queue.abi())?)?;
             let image = context.create_image("ferris.png")?;
-            let target = context.create_render_target(&tex)?;
+            let target = context.create_render_target(tex.abi())?;
             Ok(Self {
                 device,
                 command_queue,

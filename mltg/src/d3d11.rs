@@ -100,9 +100,11 @@ impl Backend for Direct3D11 {
 
     fn render_target(
         &self,
-        target: &impl windows::Interface,
+        target: *mut std::ffi::c_void,
     ) -> windows::Result<Self::RenderTarget> {
-        let texture: ID3D11Texture2D = target.cast().expect("cannot cast to ID3D11Texture2D");
+        let texture = unsafe {
+            ID3D11Texture2D::from_abi(target)?
+        };
         let desc = unsafe {
             let mut desc = D3D11_TEXTURE2D_DESC::default();
             texture.GetDesc(&mut desc);
@@ -111,7 +113,7 @@ impl Backend for Direct3D11 {
         if cfg!(debug_assertions) {
             assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET) == D3D11_BIND_RENDER_TARGET);
         }
-        let surface: IDXGISurface = target.cast()?;
+        let surface: IDXGISurface = texture.cast()?;
         let bitmap = unsafe {
             self.device_context.CreateBitmapFromDxgiSurface(
                 &surface,
@@ -125,6 +127,7 @@ impl Backend for Direct3D11 {
                 },
             )?
         };
+        std::mem::forget(texture);
         Ok(RenderTarget(bitmap))
     }
 

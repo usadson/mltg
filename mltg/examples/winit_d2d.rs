@@ -5,6 +5,7 @@ use winit::{
     platform::windows::WindowExtWindows,
     window::WindowBuilder,
 };
+use windows::Abi;
 
 fn main() -> anyhow::Result<()> {
     let event_loop = EventLoop::new();
@@ -17,7 +18,7 @@ fn main() -> anyhow::Result<()> {
         window.hwnd(),
         (window_size.width, window_size.height),
     )?)?;
-    let mut back_buffers = context.create_back_buffers(context.backend().swap_chain())?;
+    let mut back_buffers = context.create_back_buffers(context.backend().swap_chain().abi())?;
     let image = context.create_image("ferris.png")?;
     context.set_dpi(window.scale_factor() as f32 * 96.0);
     event_loop.run(move |event, _, control_flow| {
@@ -46,7 +47,7 @@ fn main() -> anyhow::Result<()> {
                 back_buffers.clear();
                 context.backend().resize((size.width, size.height));
                 back_buffers = context
-                    .create_back_buffers(context.backend().swap_chain())
+                    .create_back_buffers(context.backend().swap_chain().abi())
                     .unwrap();
                 window.request_redraw();
             }

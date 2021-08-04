@@ -108,13 +108,13 @@ impl Backend for Direct2D {
     #[inline]
     fn render_target(
         &self,
-        target: &impl windows::Interface,
+        target: *mut std::ffi::c_void,
     ) -> windows::Result<Self::RenderTarget> {
-        Ok(d3d11::RenderTarget(
-            target
-                .cast::<ID2D1Bitmap1>()
-                .expect("cannot cast to ID2D1Bitmap1"),
-        ))
+        unsafe {
+            Ok(d3d11::RenderTarget(
+                ID2D1Bitmap1::from_abi(target)?
+            ))
+        }
     }
 
     #[inline]
