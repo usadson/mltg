@@ -37,16 +37,12 @@ pub struct Direct3D12 {
 
 impl Direct3D12 {
     pub fn new(
-        d3d12_device: &impl windows::Interface,
-        command_queue: &impl windows::Interface,
+        d3d12_device: *mut std::ffi::c_void,
+        command_queue: *mut std::ffi::c_void,
     ) -> windows::Result<Self> {
         unsafe {
-            let d3d12_device = d3d12_device
-                .cast::<ID3D12Device>()
-                .expect("cannot cast to ID3D12Device");
-            let command_queue = command_queue
-                .cast::<ID3D12CommandQueue>()
-                .expect("cannot cast to ID3D12CommandQueue");
+            let d3d12_device = ID3D12Device::from_abi(d3d12_device)?;
+            let command_queue = ID3D12CommandQueue::from_abi(command_queue)?;
             let (d3d11on12_device, d3d11_device_context) = {
                 let mut queues = [command_queue.cast::<IUnknown>().unwrap()];
                 let mut p = None;
@@ -79,6 +75,8 @@ impl Direct3D12 {
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
             let d2d1_device_context =
                 { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
+            std::mem::forget(d3d12_device);
+            std::mem::forget(command_queue);
             Ok(Self {
                 d3d11on12_device,
                 d2d1_factory,

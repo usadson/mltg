@@ -2,6 +2,7 @@ use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Dxgi::*},
 };
+use windows::Abi;
 
 #[repr(C)]
 struct Vertex {
@@ -208,7 +209,7 @@ impl Application {
                 ..Default::default()
             })?
         };
-        let context = mltg::Context::new(mltg::Direct3D11::new(&device)?)?;
+        let context = mltg::Context::new(mltg::Direct3D11::new(device.abi())?)?;
         let target = context.create_render_target(&tex)?;
         let image = context.create_image("ferris.png")?;
         Ok(Self {

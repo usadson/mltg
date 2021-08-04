@@ -54,7 +54,7 @@ impl Application {
                 debug.EnableDebugLayer();
             }
             let device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;
-            let command_queue = device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
+            let command_queue: ID3D12CommandQueue = device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
                 Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
                 ..Default::default()
             })?;
@@ -365,7 +365,7 @@ impl Application {
                 device.CreateGraphicsPipelineState(&desc)?
             };
             let fence = device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
-            let context = mltg::Context::new(mltg::Direct3D12::new(&device, &command_queue)?)?;
+            let context = mltg::Context::new(mltg::Direct3D12::new(device.abi(), command_queue.abi())?)?;
             let image = context.create_image("ferris.png")?;
             let target = context.create_render_target(&tex)?;
             Ok(Self {

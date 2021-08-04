@@ -31,10 +31,9 @@ pub struct Direct3D11 {
 }
 
 impl Direct3D11 {
-    pub fn new(d3d11_device: &impl windows::Interface) -> windows::Result<Self> {
+    pub fn new(d3d11_device: *mut std::ffi::c_void) -> windows::Result<Self> {
         unsafe {
-            let d3d11_device: ID3D11Device =
-                d3d11_device.cast().expect("cannot cast to ID3D11Device");
+            let d3d11_device = ID3D11Device::from_abi(d3d11_device)?;
             let d2d1_factory: ID2D1Factory1 = {
                 let mut p = None;
                 D2D1CreateFactory(
@@ -51,6 +50,7 @@ impl Direct3D11 {
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
             let device_context =
                 { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
+            std::mem::forget(d3d11_device);
             Ok(Self {
                 d2d1_factory,
                 device_context,

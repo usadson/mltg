@@ -4,6 +4,7 @@ use crate::bindings::Windows::Win32::{
 };
 use crate::d3d11;
 use crate::*;
+use windows::Abi;
 
 pub type RenderTarget = d3d11::RenderTarget;
 
@@ -19,7 +20,7 @@ impl Direct2D {
         size: impl Into<gecl::Size<u32>>,
     ) -> windows::Result<Self> {
         unsafe {
-            let d3d11_device = {
+            let d3d11_device: ID3D11Device = {
                 const FEATURE_LEVELS: [D3D_FEATURE_LEVEL; 1] = [D3D_FEATURE_LEVEL_11_0];
                 let mut p = None;
                 D3D11CreateDevice(
@@ -60,7 +61,7 @@ impl Direct2D {
                     None,
                 )?
             };
-            let object = d3d11::Direct3D11::new(&d3d11_device)?;
+            let object = d3d11::Direct3D11::new(d3d11_device.abi())?;
             Ok(Self {
                 _d3d11_device: d3d11_device,
                 swap_chain,

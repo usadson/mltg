@@ -32,7 +32,7 @@ impl Application {
             let window = wita::WindowBuilder::new().title("mltg d3d12").build()?;
             let window_size = window.inner_size();
             let d3d12_device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;
-            let command_queue = d3d12_device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
+            let command_queue: ID3D12CommandQueue = d3d12_device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
                 Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
                 ..Default::default()
             })?;
@@ -90,7 +90,7 @@ impl Application {
             };
             let fence = d3d12_device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
             let context =
-                mltg::Context::new(mltg::Direct3D12::new(&d3d12_device, &command_queue)?)?;
+                mltg::Context::new(mltg::Direct3D12::new(d3d12_device.abi(), command_queue.abi())?)?;
             let bitmaps = context.create_back_buffers(&swap_chain)?;
             let text_format = context.create_text_format(
                 &mltg::Font::system("Meiryo"),
