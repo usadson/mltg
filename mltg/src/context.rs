@@ -244,18 +244,19 @@ where
         }
     }
 
-    pub fn draw(&self, target: &T::RenderTarget, f: impl FnOnce(&DrawCommand)) {
+    pub fn draw<R>(&self, target: &T::RenderTarget, f: impl FnOnce(&DrawCommand) -> R) -> R {
         let device_context = self.backend.device_context();
         unsafe {
             self.backend.begin_draw(target);
             device_context.SetTarget(target.bitmap());
             device_context.BeginDraw();
-            f(&DrawCommand(self.backend.device_context()));
+            let ret = f(&DrawCommand(self.backend.device_context()));
             device_context
                 .EndDraw(std::ptr::null_mut(), std::ptr::null_mut())
                 .unwrap();
             device_context.SetTarget(None);
             self.backend.end_draw(target);
+            ret
         }
     }
 }
