@@ -227,13 +227,6 @@ impl wita::EventHandler for Application {
                 0,
                 std::ptr::null(),
             );
-            let barrier = resource_barrier(
-                self.render_targets[index].abi(),
-                D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12_RESOURCE_STATE_PRESENT,
-            );
-            self.command_list
-                .ResourceBarrier(barrier.len() as _, barrier.as_ptr());
             self.command_list.Close().unwrap();
             let mut command_lists = [Some(self.command_list.cast::<ID3D12CommandList>().unwrap())];
             self.command_queue
