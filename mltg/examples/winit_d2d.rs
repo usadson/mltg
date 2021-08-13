@@ -6,8 +6,12 @@ use winit::{
     window::WindowBuilder,
 };
 use windows::Abi;
+use mltg_bindings::Windows::Win32::System::Com::*;
 
 fn main() -> anyhow::Result<()> {
+    unsafe {
+        CoInitialize(std::ptr::null_mut())?;
+    }
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("mltg winit d2d")

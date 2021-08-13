@@ -1,8 +1,11 @@
 use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::Threading::*,
-    System::WindowsProgramming::*,
+    System::{
+        Threading::*,
+        Com::*,
+        WindowsProgramming::*,
+    }
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -29,6 +32,7 @@ struct Application {
 impl Application {
     fn new() -> anyhow::Result<Self> {
         unsafe {
+            CoInitialize(std::ptr::null_mut())?;
             let window = wita::WindowBuilder::new().title("mltg d3d12").build()?;
             let window_size = window.inner_size();
             let d3d12_device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;

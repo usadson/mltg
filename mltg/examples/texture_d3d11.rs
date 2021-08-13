@@ -1,6 +1,7 @@
 use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Dxgi::*},
+    System::Com::*,
 };
 use windows::Abi;
 
@@ -37,6 +38,9 @@ struct Application {
 
 impl Application {
     fn new() -> anyhow::Result<Self> {
+        unsafe {
+            CoInitialize(std::ptr::null_mut())?;
+        }
         let window = wita::WindowBuilder::new()
             .title("mltg offscreen d3d11")
             .build()?;

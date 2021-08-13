@@ -1,4 +1,5 @@
 use windows::Abi;
+use mltg_bindings::Windows::Win32::System::Com::*;
 
 struct Application {
     back_buffer: Vec<mltg::d2d::RenderTarget>,
@@ -13,6 +14,9 @@ struct Application {
 
 impl Application {
     pub fn new() -> anyhow::Result<Self> {
+        unsafe {
+            CoInitialize(std::ptr::null_mut())?;
+        }
         let window = wita::WindowBuilder::new().title("mltg d2d").build()?;
         let window_size = window.inner_size();
         let backend =

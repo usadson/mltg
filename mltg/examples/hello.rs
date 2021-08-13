@@ -1,4 +1,5 @@
 use windows::Abi;
+use mltg_bindings::Windows::Win32::System::Com::*;
 
 struct Application {
     context: mltg::Context<mltg::Direct2D>,
@@ -9,6 +10,9 @@ struct Application {
 
 impl Application {
     fn new() -> anyhow::Result<Self> {
+        unsafe {
+            CoInitialize(std::ptr::null_mut())?;
+        }
         let window = wita::WindowBuilder::new().title("mltg hello").build()?;
         let window_size = window.inner_size();
         let backend =

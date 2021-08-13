@@ -25,6 +25,10 @@ impl Target for RenderTarget {
     }
 }
 
+unsafe impl Send for RenderTarget {}
+unsafe impl Sync for RenderTarget {}
+
+#[derive(Clone)]
 pub struct Direct3D11 {
     d2d1_factory: ID2D1Factory1,
     device_context: ID2D1DeviceContext,
@@ -58,6 +62,9 @@ impl Direct3D11 {
         }
     }
 }
+
+unsafe impl Send for Direct3D11 {}
+unsafe impl Sync for Direct3D11 {}
 
 impl Backend for Direct3D11 {
     type RenderTarget = RenderTarget;

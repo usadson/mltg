@@ -8,6 +8,9 @@ pub struct RenderTarget {
     bitmap: ID2D1Bitmap1,
 }
 
+unsafe impl Send for RenderTarget {}
+unsafe impl Sync for RenderTarget {}
+
 impl Target for RenderTarget {
     fn bitmap(&self) -> &ID2D1Bitmap1 {
         &self.bitmap
@@ -28,6 +31,7 @@ impl Target for RenderTarget {
     }
 }
 
+#[derive(Clone)]
 pub struct Direct3D12 {
     d3d11on12_device: ID3D11On12Device,
     d2d1_factory: ID2D1Factory1,
@@ -93,6 +97,9 @@ impl Direct3D12 {
         }
     }
 }
+
+unsafe impl Send for Direct3D12 {}
+unsafe impl Sync for Direct3D12 {}
 
 impl Backend for Direct3D12 {
     type RenderTarget = RenderTarget;

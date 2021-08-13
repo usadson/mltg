@@ -1,7 +1,7 @@
 use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::{Threading::*, WindowsProgramming::*},
+    System::{Threading::*, WindowsProgramming::*, Com::*},
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -45,6 +45,7 @@ struct Application {
 impl Application {
     fn new() -> anyhow::Result<Self> {
         unsafe {
+            CoInitialize(std::ptr::null_mut())?;
             let window = wita::WindowBuilder::new()
                 .title("mltg offscreen d3d12")
                 .build()?;

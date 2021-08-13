@@ -8,6 +8,7 @@ use windows::Abi;
 
 pub type RenderTarget = d3d11::RenderTarget;
 
+#[derive(Clone)]
 pub struct Direct2D {
     _d3d11_device: ID3D11Device,
     swap_chain: IDXGISwapChain1,
@@ -83,6 +84,9 @@ impl Direct2D {
         }
     }
 }
+
+unsafe impl Send for Direct2D {}
+unsafe impl Sync for Direct2D {}
 
 impl Backend for Direct2D {
     type RenderTarget = RenderTarget;

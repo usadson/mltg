@@ -86,6 +86,7 @@ pub trait Backend {
     fn end_draw(&self, target: &Self::RenderTarget);
 }
 
+#[derive(Clone)]
 pub struct Context<T> {
     backend: T,
     dwrite_factory: IDWriteFactory5,
@@ -99,17 +100,9 @@ where
     #[inline]
     pub fn new(backend: T) -> windows::Result<Self> {
         unsafe {
-            let dwrite_factory = {
-                DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?
-            };
+            let dwrite_factory = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?;
             let wic_imaging_factory =
-                CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER).or_else(|e| {
-                    if e.code().0 != 0x800401F0 {
-                        return Err(e);
-                    }
-                    CoInitialize(std::ptr::null_mut())?;
-                    CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)
-                })?;
+                CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)?;
             Ok(Self {
                 backend,
                 dwrite_factory,
