@@ -77,21 +77,15 @@ let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
 > `mltg::Direct3D11`や`mltg::Direct3D12`をバックエンドにした場合は
 > バックエンドの中でスワップチェーンを作らないので、ユーザ側でスワップチェーンを作って`create_back_buffers`に渡してもらうことになります。
 
-### ブラシと文字レイアウトを作る
+### ブラシと文字フォーマットを作る
 
-`mltg::Brush`と`mltg::TextLayout`を作ります。
+`mltg::Brush`と`mltg::TextFormat`を作ります。
 
 ```rust,ignore
 let white = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
 let text_format = context.create_text_format(
     &mltg::Font::system("Yu Gothic UI"),
     mltg::font_point(28.0),
-    None,
-)?;
-let text_layout = context.create_text_layout(
-    "Hello, world!",
-    &text_format,
-    mltg::TextAlignment::Leading,
     None,
 )?;
 ```
@@ -113,7 +107,7 @@ Direct2DとDirectWriteの関数とほぼ一緒です。
 fn draw(&mut self, _window: &wita::Window) {
     self.context.draw(&self.back_buffer[0], |cmd| {
         cmd.clear([0.0, 0.0, 0.3, 0.0]);
-        cmd.draw_text(&self.text_layout, &self.white, (0.0, 0.0));
+        cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
     });
 }
 ```
