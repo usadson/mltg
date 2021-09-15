@@ -61,12 +61,28 @@ pub fn draw_image(
 )
 ```
 
-## draw_text -- 文字列
+## draw_text -- 文字列の描画
 
-`mltg::DrawCommand::draw_text`は`mltg::Context::create_text_layout`で作った文字列を描画するための関数です。
+`mltg::DrawCommand::draw_text`は文字列を描画するための関数です。
 
 ```rust,ignore
 pub fn draw_text(
+    &self,
+    text: &str,
+    format: &TextFormat,
+    brush: &Brush,
+    origin: impl Into<Point>
+)
+```
+
+`mltg::DrawCommand::draw_text`は呼び出すたびに内部で`mltg::TextLayout`を作って描画します。
+
+## draw_text_layout -- レイアウト文字列の描画
+
+`mltg::DrawCommand::draw_text_layout`は`mltg::Context::create_text_layout`で作った文字列を描画するための関数です。
+
+```rust,ignore
+pub fn draw_text_layout(
     &self,
     layout: &TextLayout,
     brush: &Brush,
