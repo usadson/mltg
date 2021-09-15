@@ -1,3 +1,5 @@
+use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Abi;
 use winit::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
@@ -5,8 +7,6 @@ use winit::{
     platform::windows::WindowExtWindows,
     window::WindowBuilder,
 };
-use windows::Abi;
-use mltg_bindings::Windows::Win32::System::Com::*;
 
 fn main() -> anyhow::Result<()> {
     unsafe {
@@ -23,7 +23,10 @@ fn main() -> anyhow::Result<()> {
         (window_size.width, window_size.height),
     )?)?;
     let mut back_buffers = context.create_back_buffers(context.backend().swap_chain().abi())?;
-    let image = context.create_image("ferris.png")?;
+    let image = {
+        let factory = context.create_factory();
+        factory.create_image("ferris.png")?
+    };
     context.set_dpi(window.scale_factor() as f32 * 96.0);
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;

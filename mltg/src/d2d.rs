@@ -110,15 +110,8 @@ impl Backend for Direct2D {
     }
 
     #[inline]
-    fn render_target(
-        &self,
-        target: *mut std::ffi::c_void,
-    ) -> windows::Result<Self::RenderTarget> {
-        unsafe {
-            Ok(d3d11::RenderTarget(
-                ID2D1Bitmap1::from_abi(target)?
-            ))
-        }
+    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
+        unsafe { Ok(d3d11::RenderTarget(ID2D1Bitmap1::from_abi(target)?)) }
     }
 
     #[inline]

@@ -41,7 +41,7 @@ impl Direct3D11 {
             let d2d1_factory: ID2D1Factory1 = {
                 let mut p = None;
                 D2D1CreateFactory(
-                    D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                    D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     &D2D1_FACTORY_OPTIONS {
                         debugLevel: D2D1_DEBUG_LEVEL_ERROR,
@@ -105,13 +105,8 @@ impl Backend for Direct3D11 {
         }
     }
 
-    fn render_target(
-        &self,
-        target: *mut std::ffi::c_void,
-    ) -> windows::Result<Self::RenderTarget> {
-        let texture = unsafe {
-            ID3D11Texture2D::from_abi(target)?
-        };
+    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
+        let texture = unsafe { ID3D11Texture2D::from_abi(target)? };
         let desc = unsafe {
             let mut desc = D3D11_TEXTURE2D_DESC::default();
             texture.GetDesc(&mut desc);

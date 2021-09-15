@@ -1,11 +1,7 @@
 use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::{
-        Threading::*,
-        Com::*,
-        WindowsProgramming::*,
-    }
+    System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -22,6 +18,7 @@ struct Application {
     fence: ID3D12Fence,
     fence_value: Cell<u64>,
     context: mltg::Context<mltg::Direct3D12>,
+    factory: mltg::Factory,
     bitmaps: Vec<mltg::d3d12::RenderTarget>,
     text: mltg::TextLayout,
     white_brush: mltg::Brush,
@@ -36,10 +33,11 @@ impl Application {
             let window = wita::WindowBuilder::new().title("mltg d3d12").build()?;
             let window_size = window.inner_size();
             let d3d12_device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;
-            let command_queue: ID3D12CommandQueue = d3d12_device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
-                Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
-                ..Default::default()
-            })?;
+            let command_queue: ID3D12CommandQueue =
+                d3d12_device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
+                    Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
+                    ..Default::default()
+                })?;
             let command_allocator: ID3D12CommandAllocator =
                 d3d12_device.CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT)?;
             let command_list: ID3D12GraphicsCommandList = d3d12_device.CreateCommandList(
@@ -93,26 +91,29 @@ impl Application {
                 buffers
             };
             let fence = d3d12_device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
-            let context =
-                mltg::Context::new(mltg::Direct3D12::new(d3d12_device.abi(), command_queue.abi())?)?;
+            let context = mltg::Context::new(mltg::Direct3D12::new(
+                d3d12_device.abi(),
+                command_queue.abi(),
+            )?)?;
+            let factory = context.create_factory();
             let bitmaps = context.create_back_buffers(swap_chain.abi())?;
-            let text_format = context.create_text_format(
+            let text_format = factory.create_text_format(
                 &mltg::Font::system("Meiryo"),
                 mltg::font_point(14.0),
                 None,
             )?;
-            let text = context.create_text_layout(
+            let text = factory.create_text_layout(
                 "abcdefghijklmnopqrstuvwxyz",
                 &text_format,
                 mltg::TextAlignment::Leading,
                 None,
             )?;
-            let white_brush = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
-            let grad = context.create_gradient_stop_collection(&[
+            let white_brush = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
+            let grad = factory.create_gradient_stop_collection(&[
                 (0.0, [1.0, 0.0, 0.0, 1.0]),
                 (1.0, [0.0, 1.0, 0.0, 1.0]),
             ])?;
-            let image = context.create_image("ferris.png")?;
+            let image = factory.create_image("ferris.png")?;
             context.set_dpi(window.dpi() as _);
             Ok(Self {
                 d3d12_device,
@@ -126,6 +127,7 @@ impl Application {
                 fence,
                 fence_value: Cell::new(1),
                 context,
+                factory,
                 bitmaps,
                 text,
                 white_brush,
@@ -163,7 +165,7 @@ impl wita::EventHandler for Application {
         };
         let text_box = mltg::rect((hw, hh), self.text.size());
         let path = self
-            .context
+            .factory
             .create_path()
             .begin((30.0, hh + 30.0))
             .cubic_bezier_to(
@@ -174,7 +176,7 @@ impl wita::EventHandler for Application {
             .end(mltg::FigureEnd::Open)
             .build();
         let linear_grad_brush = self
-            .context
+            .factory
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
         let resource_barrier = |resource, before, after| {
@@ -238,7 +240,7 @@ impl wita::EventHandler for Application {
             self.context.draw(&self.bitmaps[index], |cmd| {
                 cmd.fill(&rect, &linear_grad_brush);
                 cmd.stroke(&text_box, &self.white_brush, 2.0, None);
-                cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
+                cmd.draw_text_layout(&self.text, &self.white_brush, (hw, hh));
                 cmd.draw_image(
                     &self.image,
                     mltg::Rect::new((hw, 10.0), image_size),
@@ -278,7 +280,10 @@ impl wita::EventHandler for Application {
             }
             buffers
         };
-        self.bitmaps = self.context.create_back_buffers(self.swap_chain.abi()).unwrap();
+        self.bitmaps = self
+            .context
+            .create_back_buffers(self.swap_chain.abi())
+            .unwrap();
         window.redraw();
     }
 }

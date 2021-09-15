@@ -1,11 +1,11 @@
-use windows::Abi;
 use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Abi;
 
 struct Application {
     context: mltg::Context<mltg::Direct2D>,
     back_buffer: Vec<mltg::d2d::RenderTarget>,
     white: mltg::Brush,
-    text_layout: mltg::TextLayout,
+    text_format: mltg::TextFormat,
 }
 
 impl Application {
@@ -18,24 +18,19 @@ impl Application {
         let backend =
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
+        let factory = context.create_factory();
         let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi())?;
-        let white = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
-        let text_format = context.create_text_format(
+        let white = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
+        let text_format = factory.create_text_format(
             &mltg::Font::system("Yu Gothic UI"),
             mltg::font_point(28.0),
-            None,
-        )?;
-        let text_layout = context.create_text_layout(
-            "Hello, world!",
-            &text_format,
-            mltg::TextAlignment::Leading,
             None,
         )?;
         Ok(Self {
             context,
             back_buffer,
             white,
-            text_layout,
+            text_format,
         })
     }
 }
@@ -44,7 +39,7 @@ impl wita::EventHandler for Application {
     fn draw(&mut self, _window: &wita::Window) {
         self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
-            cmd.draw_text(&self.text_layout, &self.white, (0.0, 0.0));
+            cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
         });
     }
 

@@ -1,7 +1,7 @@
 use mltg_bindings::Windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
-    System::{Threading::*, WindowsProgramming::*, Com::*},
+    System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 use std::cell::Cell;
 use windows::{Abi, Interface};
@@ -55,10 +55,11 @@ impl Application {
                 debug.EnableDebugLayer();
             }
             let device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;
-            let command_queue: ID3D12CommandQueue = device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
-                Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
-                ..Default::default()
-            })?;
+            let command_queue: ID3D12CommandQueue =
+                device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
+                    Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
+                    ..Default::default()
+                })?;
             let command_allocator: ID3D12CommandAllocator =
                 device.CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT)?;
             let command_list: ID3D12GraphicsCommandList = device.CreateCommandList(
@@ -366,9 +367,11 @@ impl Application {
                 device.CreateGraphicsPipelineState(&desc)?
             };
             let fence = device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
-            let context = mltg::Context::new(mltg::Direct3D12::new(device.abi(), command_queue.abi())?)?;
-            let image = context.create_image("ferris.png")?;
+            let context =
+                mltg::Context::new(mltg::Direct3D12::new(device.abi(), command_queue.abi())?)?;
+            let factory = context.create_factory();
             let target = context.create_render_target(tex.abi())?;
+            let image = factory.create_image("ferris.png")?;
             Ok(Self {
                 device,
                 command_queue,

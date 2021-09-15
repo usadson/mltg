@@ -68,7 +68,7 @@ impl Direct3D12 {
             let d2d1_factory = {
                 let mut p: Option<ID2D1Factory1> = None;
                 D2D1CreateFactory(
-                    D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                    D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     std::ptr::null(),
                     p.set_abi(),
@@ -152,10 +152,7 @@ impl Backend for Direct3D12 {
         }
     }
 
-    fn render_target(
-        &self,
-        target: *mut std::ffi::c_void,
-    ) -> windows::Result<Self::RenderTarget> {
+    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
         unsafe {
             let resource = ID3D12Resource::from_abi(target)?;
             let desc = resource.GetDesc();

@@ -1,9 +1,10 @@
-use windows::Abi;
 use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Abi;
 
 struct Application {
     back_buffer: Vec<mltg::d2d::RenderTarget>,
     context: mltg::Context<mltg::Direct2D>,
+    factory: mltg::Factory,
     white_brush: mltg::Brush,
     grad: mltg::GradientStopCollection,
     text: mltg::TextLayout,
@@ -22,30 +23,31 @@ impl Application {
         let backend =
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
+        let factory = context.create_factory();
         let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi())?;
-        let white_brush = context.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
-        let grad = context.create_gradient_stop_collection(&[
+        let white_brush = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
+        let grad = factory.create_gradient_stop_collection(&[
             (0.0, [1.0, 0.0, 0.0, 1.0]),
             (1.0, [0.0, 1.0, 0.0, 1.0]),
         ])?;
-        let text_format = context.create_text_format(
+        let text_format = factory.create_text_format(
             &mltg::Font::system("Meiryo"),
             mltg::font_point(14.0),
             None,
         )?;
-        let text = context.create_text_layout(
+        let text = factory.create_text_layout(
             "abcdefghijklmnopqrstuvwxyz",
             &text_format,
             mltg::TextAlignment::Leading,
             None,
         )?;
-        let text2 = context.create_text_layout(
+        let text2 = factory.create_text_layout(
             "abcdefghijklmnopqrstuvwxyz",
             &text_format,
             mltg::TextAlignment::Center,
             Some(text.size() + (30.0, 30.0)),
         )?;
-        let stroke_style = context.create_stroke_style(&mltg::StrokeStyleProperties {
+        let stroke_style = factory.create_stroke_style(&mltg::StrokeStyleProperties {
             start_cap: mltg::CapStyle::Triangle,
             end_cap: mltg::CapStyle::Round,
             line_join: mltg::LineJoin::Round,
@@ -54,11 +56,12 @@ impl Application {
                 ..Default::default()
             }),
         })?;
-        let image = context.create_image("ferris.png")?;
+        let image = factory.create_image("ferris.png")?;
         context.set_dpi(window.dpi() as _);
         Ok(Self {
             back_buffer,
             context,
+            factory,
             white_brush,
             grad,
             text,
@@ -83,7 +86,7 @@ impl wita::EventHandler for Application {
         let text_box = mltg::rect((hw, hh), self.text.size());
         let text_box2 = mltg::rect((hw, hh + 50.0), self.text2.size());
         let path = self
-            .context
+            .factory
             .create_path()
             .begin((30.0, hh + 30.0))
             .cubic_bezier_to(
@@ -98,16 +101,16 @@ impl wita::EventHandler for Application {
             (size.width as f32 / 4.0, size.height as f32 / 4.0)
         };
         let linear_grad_brush = self
-            .context
+            .factory
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
         self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.fill(&rect, &linear_grad_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
-            cmd.draw_text(&self.text, &self.white_brush, (hw, hh));
+            cmd.draw_text_layout(&self.text, &self.white_brush, (hw, hh));
             cmd.stroke(&text_box2, &self.white_brush, 2.0, None);
-            cmd.draw_text(&self.text2, &self.white_brush, (hw, hh + 50.0));
+            cmd.draw_text_layout(&self.text2, &self.white_brush, (hw, hh + 50.0));
             cmd.draw_image(
                 &self.image,
                 mltg::Rect::new((hw, 10.0), image_size),
