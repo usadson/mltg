@@ -79,8 +79,6 @@ impl Direct3D12 {
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
             let d2d1_device_context =
                 { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
-            std::mem::forget(d3d12_device);
-            std::mem::forget(command_queue);
             Ok(Self {
                 d3d11on12_device,
                 d2d1_factory,
@@ -184,7 +182,6 @@ impl Backend for Direct3D12 {
                     },
                 )?
             };
-            std::mem::forget(resource);
             Ok(RenderTarget { wrapper, bitmap })
         }
     }

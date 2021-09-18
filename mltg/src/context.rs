@@ -250,7 +250,6 @@ where
     ) -> windows::Result<Vec<T::RenderTarget>> {
         let swap_chain: IDXGISwapChain1 = swap_chain.cast()?;
         let ret = self.backend.back_buffers(&swap_chain);
-        std::mem::forget(swap_chain);
         ret
     }
 

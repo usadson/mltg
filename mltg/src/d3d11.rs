@@ -54,7 +54,6 @@ impl Direct3D11 {
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
             let device_context =
                 { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
-            std::mem::forget(d3d11_device);
             Ok(Self {
                 d2d1_factory,
                 device_context,
@@ -129,7 +128,6 @@ impl Backend for Direct3D11 {
                 },
             )?
         };
-        std::mem::forget(texture);
         Ok(RenderTarget(bitmap))
     }
 
