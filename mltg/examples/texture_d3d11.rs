@@ -3,7 +3,6 @@ use mltg_bindings::Windows::Win32::{
     Graphics::{Direct3D11::*, Dxgi::*},
     System::Com::*,
 };
-use windows::Abi;
 
 #[repr(C)]
 struct Vertex {
@@ -51,7 +50,7 @@ impl Application {
             D3D11CreateDevice(
                 None,
                 D3D_DRIVER_TYPE_HARDWARE,
-                HINSTANCE::NULL,
+                HINSTANCE::default(),
                 D3D11_CREATE_DEVICE_BGRA_SUPPORT,
                 FEATURE_LEVELS.as_ptr() as _,
                 FEATURE_LEVELS.len() as _,
@@ -213,9 +212,9 @@ impl Application {
                 ..Default::default()
             })?
         };
-        let context = mltg::Context::new(mltg::Direct3D11::new(device.abi())?)?;
+        let context = mltg::Context::new(mltg::Direct3D11::new(&device)?)?;
         let factory = context.create_factory();
-        let target = context.create_render_target(tex.abi())?;
+        let target = context.create_render_target(&tex)?;
         let image = factory.create_image("ferris.png")?;
         Ok(Self {
             device,

@@ -4,7 +4,7 @@ use mltg_bindings::Windows::Win32::{
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 use std::cell::Cell;
-use windows::{Abi, Interface};
+use windows::Interface;
 
 #[repr(C)]
 struct Vertex {
@@ -368,9 +368,9 @@ impl Application {
             };
             let fence = device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
             let context =
-                mltg::Context::new(mltg::Direct3D12::new(device.abi(), command_queue.abi())?)?;
+                mltg::Context::new(mltg::Direct3D12::new(&device, &command_queue)?)?;
             let factory = context.create_factory();
-            let target = context.create_render_target(tex.abi())?;
+            let target = context.create_render_target(&tex)?;
             let image = factory.create_image("ferris.png")?;
             Ok(Self {
                 device,
@@ -403,7 +403,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::NULL);
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::default());
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
             }
@@ -467,12 +467,12 @@ impl wita::EventHandler for Application {
                 Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: D3D12_RESOURCE_TRANSITION_BARRIER_abi {
-                        pResource: self.render_targets[index].abi() as _,
+                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: Some(self.render_targets[index].clone()),
                         Subresource: 0,
                         StateBefore: D3D12_RESOURCE_STATE_PRESENT,
                         StateAfter: D3D12_RESOURCE_STATE_RENDER_TARGET,
-                    },
+                    }),
                 },
             };
             self.command_list.ResourceBarrier(1, [barrier].as_ptr());
@@ -480,12 +480,12 @@ impl wita::EventHandler for Application {
                 Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: D3D12_RESOURCE_TRANSITION_BARRIER_abi {
-                        pResource: self.tex.abi() as _,
+                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: Some(self.tex.clone()),
                         Subresource: 0,
                         StateBefore: D3D12_RESOURCE_STATE_COMMON,
                         StateAfter: D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    },
+                    }),
                 },
             };
             self.command_list.ResourceBarrier(1, [barrier].as_ptr());
@@ -511,12 +511,12 @@ impl wita::EventHandler for Application {
                 Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: D3D12_RESOURCE_TRANSITION_BARRIER_abi {
-                        pResource: self.tex.abi() as _,
+                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: Some(self.tex.clone()),
                         Subresource: 0,
                         StateBefore: D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                         StateAfter: D3D12_RESOURCE_STATE_COMMON,
-                    },
+                    }),
                 },
             };
             self.command_list.ResourceBarrier(1, [barrier].as_ptr());
@@ -524,12 +524,12 @@ impl wita::EventHandler for Application {
                 Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: D3D12_RESOURCE_TRANSITION_BARRIER_abi {
-                        pResource: self.render_targets[index].abi() as _,
+                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: Some(self.render_targets[index].clone()),
                         Subresource: 0,
                         StateBefore: D3D12_RESOURCE_STATE_RENDER_TARGET,
                         StateAfter: D3D12_RESOURCE_STATE_PRESENT,
-                    },
+                    }),
                 },
             };
             self.command_list.ResourceBarrier(1, [barrier].as_ptr());

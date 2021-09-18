@@ -1,5 +1,4 @@
 use mltg_bindings::Windows::Win32::System::Com::*;
-use windows::Abi;
 use winit::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
@@ -22,7 +21,7 @@ fn main() -> anyhow::Result<()> {
         window.hwnd(),
         (window_size.width, window_size.height),
     )?)?;
-    let mut back_buffers = context.create_back_buffers(context.backend().swap_chain().abi())?;
+    let mut back_buffers = context.create_back_buffers(context.backend().swap_chain())?;
     let image = {
         let factory = context.create_factory();
         factory.create_image("ferris.png")?
@@ -54,7 +53,7 @@ fn main() -> anyhow::Result<()> {
                 back_buffers.clear();
                 context.backend().resize((size.width, size.height));
                 back_buffers = context
-                    .create_back_buffers(context.backend().swap_chain().abi())
+                    .create_back_buffers(context.backend().swap_chain())
                     .unwrap();
                 window.request_redraw();
             }

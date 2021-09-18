@@ -4,7 +4,7 @@ use mltg_bindings::Windows::Win32::{
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 use std::cell::Cell;
-use windows::{Abi, Interface};
+use windows::Interface;
 
 struct Application {
     d3d12_device: ID3D12Device,
@@ -92,11 +92,11 @@ impl Application {
             };
             let fence = d3d12_device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
             let context = mltg::Context::new(mltg::Direct3D12::new(
-                d3d12_device.abi(),
-                command_queue.abi(),
+                &d3d12_device,
+                &command_queue,
             )?)?;
             let factory = context.create_factory();
-            let bitmaps = context.create_back_buffers(swap_chain.abi())?;
+            let bitmaps = context.create_back_buffers(&swap_chain)?;
             let text_format = factory.create_text_format(
                 &mltg::Font::system("Meiryo"),
                 mltg::font_point(14.0),
@@ -142,7 +142,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::NULL);
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::default());
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
             }
@@ -184,12 +184,12 @@ impl wita::EventHandler for Application {
                 Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: D3D12_RESOURCE_TRANSITION_BARRIER_abi {
-                        pResource: resource,
+                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: Some(resource),
                         Subresource: 0,
                         StateBefore: before,
                         StateAfter: after,
-                    },
+                    }),
                 },
             }]
         };
@@ -206,7 +206,7 @@ impl wita::EventHandler for Application {
                 .Reset(&self.command_allocator, None)
                 .unwrap();
             let barrier = resource_barrier(
-                self.render_targets[index].abi(),
+                self.render_targets[index].clone(),
                 D3D12_RESOURCE_STATE_PRESENT,
                 D3D12_RESOURCE_STATE_RENDER_TARGET,
             );
@@ -282,7 +282,7 @@ impl wita::EventHandler for Application {
         };
         self.bitmaps = self
             .context
-            .create_back_buffers(self.swap_chain.abi())
+            .create_back_buffers(&self.swap_chain)
             .unwrap();
         window.redraw();
     }

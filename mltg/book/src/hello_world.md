@@ -65,7 +65,7 @@ let backend = mltg::Direct2D::new(
 
 ```rust,ignore
 let context = mltg::Context::new(backend)?;
-let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi())?;
+let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
 ```
 
 `mltg::Direct2D`である`backend`を渡すだけで`mltg::Context`を作れます。
@@ -76,9 +76,6 @@ let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi
 
 > `mltg::Direct3D11`や`mltg::Direct3D12`をバックエンドにした場合は
 > バックエンドの中でスワップチェーンを作らないので、ユーザ側でスワップチェーンを作って`create_back_buffers`に渡してもらうことになります。
-
-異なるwindows-rsのバインディングクレートに対応させるために`create_back_buffers`や`create_render_target`はポインタを要求します。
-`use windows::Abi;`で上記のように`abi()`でポインタを取得して渡すことができます。
 
 ### ブラシと文字フォーマットを作る
 

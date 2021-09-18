@@ -1,5 +1,4 @@
 use mltg_bindings::Windows::Win32::System::Com::*;
-use windows::Abi;
 
 struct Application {
     back_buffer: Vec<mltg::d2d::RenderTarget>,
@@ -24,7 +23,7 @@ impl Application {
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
         let factory = context.create_factory();
-        let back_buffer = context.create_back_buffers(context.backend().swap_chain().abi())?;
+        let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
         let white_brush = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let grad = factory.create_gradient_stop_collection(&[
             (0.0, [1.0, 0.0, 0.0, 1.0]),
@@ -131,7 +130,7 @@ impl wita::EventHandler for Application {
         self.context.backend().resize((size.width, size.height));
         self.back_buffer = self
             .context
-            .create_back_buffers(self.context.backend().swap_chain().abi())
+            .create_back_buffers(self.context.backend().swap_chain())
             .unwrap();
         window.redraw();
     }

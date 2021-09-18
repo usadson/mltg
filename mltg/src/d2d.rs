@@ -4,7 +4,7 @@ use crate::bindings::Windows::Win32::{
 };
 use crate::d3d11;
 use crate::*;
-use windows::Abi;
+use windows::Interface;
 
 pub type RenderTarget = d3d11::RenderTarget;
 
@@ -27,7 +27,7 @@ impl Direct2D {
                 D3D11CreateDevice(
                     None,
                     D3D_DRIVER_TYPE_HARDWARE,
-                    HINSTANCE::NULL,
+                    HINSTANCE::default(),
                     D3D11_CREATE_DEVICE_BGRA_SUPPORT,
                     FEATURE_LEVELS.as_ptr() as _,
                     FEATURE_LEVELS.len() as _,
@@ -62,7 +62,7 @@ impl Direct2D {
                     None,
                 )?
             };
-            let object = d3d11::Direct3D11::new(d3d11_device.abi())?;
+            let object = d3d11::Direct3D11::new(&d3d11_device)?;
             Ok(Self {
                 _d3d11_device: d3d11_device,
                 swap_chain,
@@ -110,8 +110,8 @@ impl Backend for Direct2D {
     }
 
     #[inline]
-    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
-        unsafe { Ok(d3d11::RenderTarget(ID2D1Bitmap1::from_abi(target)?)) }
+    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget> {
+        Ok(d3d11::RenderTarget(target.cast::<ID2D1Bitmap1>()?))
     }
 
     #[inline]

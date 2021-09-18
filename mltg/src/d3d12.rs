@@ -41,12 +41,12 @@ pub struct Direct3D12 {
 
 impl Direct3D12 {
     pub fn new(
-        d3d12_device: *mut std::ffi::c_void,
-        command_queue: *mut std::ffi::c_void,
+        d3d12_device: &impl Interface, 
+        command_queue: &impl Interface,
     ) -> windows::Result<Self> {
         unsafe {
-            let d3d12_device = ID3D12Device::from_abi(d3d12_device)?;
-            let command_queue = ID3D12CommandQueue::from_abi(command_queue)?;
+            let d3d12_device: ID3D12Device = d3d12_device.cast()?;
+            let command_queue: ID3D12CommandQueue = command_queue.cast()?;
             let (d3d11on12_device, d3d11_device_context) = {
                 let mut queues = [command_queue.cast::<IUnknown>().unwrap()];
                 let mut p = None;
@@ -66,14 +66,14 @@ impl Direct3D12 {
                 .map(|_| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
             };
             let d2d1_factory = {
-                let mut p: Option<ID2D1Factory1> = None;
+                let mut p = std::ptr::null_mut();
                 D2D1CreateFactory(
                     D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     std::ptr::null(),
-                    p.set_abi(),
+                    &mut p
                 )
-                .map(|_| p.unwrap())?
+                .and_then(|_| ID2D1Factory1::from_abi(p))?
             };
             let dxgi_device = d3d11on12_device.cast::<IDXGIDevice>()?;
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
@@ -152,9 +152,9 @@ impl Backend for Direct3D12 {
         }
     }
 
-    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget> {
         unsafe {
-            let resource = ID3D12Resource::from_abi(target)?;
+            let resource: ID3D12Resource = target.cast()?;
             let desc = resource.GetDesc();
             if cfg!(debug_assertions) {
                 assert!((desc.Flags.0 & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0) != 0);

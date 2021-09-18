@@ -35,20 +35,20 @@ pub struct Direct3D11 {
 }
 
 impl Direct3D11 {
-    pub fn new(d3d11_device: *mut std::ffi::c_void) -> windows::Result<Self> {
+    pub fn new(d3d11_device: &impl Interface) -> windows::Result<Self> {
         unsafe {
-            let d3d11_device = ID3D11Device::from_abi(d3d11_device)?;
-            let d2d1_factory: ID2D1Factory1 = {
-                let mut p = None;
+            let d3d11_device: ID3D11Device = d3d11_device.cast()?;
+            let d2d1_factory = {
+                let mut p = std::ptr::null_mut();
                 D2D1CreateFactory(
                     D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     &D2D1_FACTORY_OPTIONS {
                         debugLevel: D2D1_DEBUG_LEVEL_ERROR,
                     },
-                    p.set_abi(),
+                    &mut p,
                 )
-                .map(|_| p.unwrap())?
+                .and_then(|_| ID2D1Factory1::from_abi(p))?
             };
             let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
             let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
@@ -105,8 +105,8 @@ impl Backend for Direct3D11 {
         }
     }
 
-    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget> {
-        let texture = unsafe { ID3D11Texture2D::from_abi(target)? };
+    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget> {
+        let texture: ID3D11Texture2D = target.cast()?;
         let desc = unsafe {
             let mut desc = D3D11_TEXTURE2D_DESC::default();
             texture.GetDesc(&mut desc);

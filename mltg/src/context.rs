@@ -3,7 +3,7 @@ use crate::bindings::Windows::Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging
 use crate::bindings::Windows::Win32::System::Com::*;
 use crate::utility::*;
 use crate::*;
-use windows::{Abi, Interface};
+use windows::Interface;
 
 pub struct DrawCommand<'a> {
     device_context: &'a ID2D1DeviceContext,
@@ -95,7 +95,7 @@ pub trait Backend {
         &self,
         swap_chain: &IDXGISwapChain1,
     ) -> windows::Result<Vec<Self::RenderTarget>>;
-    fn render_target(&self, target: *mut std::ffi::c_void) -> windows::Result<Self::RenderTarget>;
+    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -246,9 +246,9 @@ where
     #[inline]
     pub fn create_back_buffers(
         &self,
-        swap_chain: *mut std::ffi::c_void,
+        swap_chain: &impl Interface,
     ) -> windows::Result<Vec<T::RenderTarget>> {
-        let swap_chain = unsafe { IDXGISwapChain1::from_abi(swap_chain)? };
+        let swap_chain: IDXGISwapChain1 = swap_chain.cast()?;
         let ret = self.backend.back_buffers(&swap_chain);
         std::mem::forget(swap_chain);
         ret
@@ -257,7 +257,7 @@ where
     #[inline]
     pub fn create_render_target(
         &self,
-        target: *mut std::ffi::c_void,
+        target: &impl Interface,
     ) -> windows::Result<T::RenderTarget> {
         self.backend.render_target(target)
     }

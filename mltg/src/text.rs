@@ -1,7 +1,7 @@
 use crate::bindings::Windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 use crate::*;
 use std::convert::TryInto;
-use windows::{Abi, Interface};
+use windows::Interface;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -203,13 +203,6 @@ impl PartialEq for TextFormat {
 
 impl Eq for TextFormat {}
 
-impl std::hash::Hash for TextFormat {
-    #[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.format.abi().hash(state);
-    }
-}
-
 #[derive(Clone)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
@@ -327,13 +320,6 @@ impl PartialEq for TextLayout {
 }
 
 impl Eq for TextLayout {}
-
-impl std::hash::Hash for TextLayout {
-    #[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.layout.abi().hash(state);
-    }
-}
 
 #[cfg(test)]
 mod tests {
