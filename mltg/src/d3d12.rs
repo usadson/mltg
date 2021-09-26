@@ -41,7 +41,7 @@ pub struct Direct3D12 {
 
 impl Direct3D12 {
     pub fn new(
-        d3d12_device: &impl Interface, 
+        d3d12_device: &impl Interface,
         command_queue: &impl Interface,
     ) -> windows::Result<Self> {
         unsafe {
@@ -71,7 +71,7 @@ impl Direct3D12 {
                     D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     std::ptr::null(),
-                    &mut p
+                    &mut p,
                 )
                 .and_then(|_| ID2D1Factory1::from_abi(p))?
             };
@@ -133,12 +133,18 @@ impl Backend for Direct3D12 {
                     BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
                     ..Default::default()
                 };
-                let wrapper: ID3D11Resource = self.d3d11on12_device.CreateWrappedResource(
-                    &buffer,
-                    &flags,
-                    D3D12_RESOURCE_STATE_RENDER_TARGET,
-                    D3D12_RESOURCE_STATE_PRESENT,
-                )?;
+                let wrapper = {
+                    let mut wrapper: Option<ID3D11Resource> = None;
+                    self.d3d11on12_device
+                        .CreateWrappedResource(
+                            &buffer,
+                            &flags,
+                            D3D12_RESOURCE_STATE_RENDER_TARGET,
+                            D3D12_RESOURCE_STATE_PRESENT,
+                            &mut wrapper,
+                        )
+                        .map(|_| wrapper.unwrap())?
+                };
                 let surface = wrapper.cast::<IDXGISurface>()?;
                 let bitmap = {
                     self.d2d1_device_context
@@ -157,16 +163,20 @@ impl Backend for Direct3D12 {
             if cfg!(debug_assertions) {
                 assert!((desc.Flags.0 & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0) != 0);
             }
-            let wrapper: ID3D11Resource = {
-                self.d3d11on12_device.CreateWrappedResource(
-                    &resource,
-                    &D3D11_RESOURCE_FLAGS {
-                        BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
-                        ..Default::default()
-                    },
-                    D3D12_RESOURCE_STATE_RENDER_TARGET,
-                    D3D12_RESOURCE_STATE_COMMON,
-                )?
+            let wrapper = {
+                let mut wrapper: Option<ID3D11Resource> = None;
+                self.d3d11on12_device
+                    .CreateWrappedResource(
+                        &resource,
+                        &D3D11_RESOURCE_FLAGS {
+                            BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
+                            ..Default::default()
+                        },
+                        D3D12_RESOURCE_STATE_RENDER_TARGET,
+                        D3D12_RESOURCE_STATE_COMMON,
+                        &mut wrapper,
+                    )
+                    .map(|_| wrapper.unwrap())?
             };
             let surface: IDXGISurface = wrapper.cast()?;
             let bitmap = {

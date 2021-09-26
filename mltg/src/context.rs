@@ -32,11 +32,22 @@ impl<'a> DrawCommand<'a> {
         width: f32,
         style: Option<&StrokeStyle>,
     ) {
-        object.stroke(self.device_context, &brush.handle(), width, style.map(|s| s.0.clone()));
+        object.stroke(
+            self.device_context,
+            &brush.handle(),
+            width,
+            style.map(|s| s.0.clone()),
+        );
     }
 
     #[inline]
-    pub fn draw_text(&self, text: &str, format: &TextFormat, brush: &Brush, origin: impl Into<Point>) {
+    pub fn draw_text(
+        &self,
+        text: &str,
+        format: &TextFormat,
+        brush: &Brush,
+        origin: impl Into<Point>,
+    ) {
         let layout = TextLayout::new(
             &self.dwrite_factory.cast().unwrap(),
             text,
@@ -62,7 +73,12 @@ impl<'a> DrawCommand<'a> {
         src_rect: Option<Rect>,
         interpolation: Interpolation,
     ) {
-        image.draw(&self.device_context, dest_rect.into(), src_rect, interpolation);
+        image.draw(
+            &self.device_context,
+            dest_rect.into(),
+            src_rect,
+            interpolation,
+        );
     }
 
     #[inline]

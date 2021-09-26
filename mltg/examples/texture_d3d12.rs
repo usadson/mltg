@@ -51,10 +51,17 @@ impl Application {
                 .build()?;
             let window_size = window.inner_size();
             if cfg!(debug_assertions) {
-                let debug: ID3D12Debug = D3D12GetDebugInterface()?;
+                let debug = {
+                    let mut debug: Option<ID3D12Debug> = None;
+                    D3D12GetDebugInterface(&mut debug).map(|_| debug.unwrap())?
+                };
                 debug.EnableDebugLayer();
             }
-            let device: ID3D12Device = D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0)?;
+            let device = {
+                let mut device: Option<ID3D12Device> = None;
+                D3D12CreateDevice(None, D3D_FEATURE_LEVEL_12_0, &mut device)
+                    .map(|_| device.unwrap())?
+            };
             let command_queue: ID3D12CommandQueue =
                 device.CreateCommandQueue(&D3D12_COMMAND_QUEUE_DESC {
                     Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -120,31 +127,35 @@ impl Application {
             ];
             const INDICES: [u32; 6] = [0, 1, 2, 1, 3, 2];
             let vertex_buffer = {
-                let vb: ID3D12Resource = device.CreateCommittedResource(
-                    &D3D12_HEAP_PROPERTIES {
-                        Type: D3D12_HEAP_TYPE_UPLOAD,
-                        CreationNodeMask: 1,
-                        VisibleNodeMask: 1,
-                        ..Default::default()
-                    },
-                    D3D12_HEAP_FLAG_NONE,
-                    &D3D12_RESOURCE_DESC {
-                        Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
-                        Width: std::mem::size_of_val(&VERTICES) as _,
-                        Height: 1,
-                        DepthOrArraySize: 1,
-                        MipLevels: 1,
-                        Format: DXGI_FORMAT_UNKNOWN,
-                        Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-                        SampleDesc: DXGI_SAMPLE_DESC {
-                            Count: 1,
-                            Quality: 0,
+                let mut vb: Option<ID3D12Resource> = None;
+                let vb = device
+                    .CreateCommittedResource(
+                        &D3D12_HEAP_PROPERTIES {
+                            Type: D3D12_HEAP_TYPE_UPLOAD,
+                            CreationNodeMask: 1,
+                            VisibleNodeMask: 1,
+                            ..Default::default()
                         },
-                        ..Default::default()
-                    },
-                    D3D12_RESOURCE_STATE_GENERIC_READ,
-                    std::ptr::null(),
-                )?;
+                        D3D12_HEAP_FLAG_NONE,
+                        &D3D12_RESOURCE_DESC {
+                            Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
+                            Width: std::mem::size_of_val(&VERTICES) as _,
+                            Height: 1,
+                            DepthOrArraySize: 1,
+                            MipLevels: 1,
+                            Format: DXGI_FORMAT_UNKNOWN,
+                            Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+                            SampleDesc: DXGI_SAMPLE_DESC {
+                                Count: 1,
+                                Quality: 0,
+                            },
+                            ..Default::default()
+                        },
+                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                        std::ptr::null(),
+                        &mut vb,
+                    )
+                    .map(|_| vb.unwrap())?;
                 let mut p = std::ptr::null_mut();
                 vb.Map(0, std::ptr::null(), &mut p).unwrap();
                 std::ptr::copy_nonoverlapping(&VERTICES, p as _, VERTICES.len());
@@ -157,31 +168,35 @@ impl Application {
                 SizeInBytes: std::mem::size_of_val(&VERTICES) as _,
             };
             let index_buffer = {
-                let ib: ID3D12Resource = device.CreateCommittedResource(
-                    &D3D12_HEAP_PROPERTIES {
-                        Type: D3D12_HEAP_TYPE_UPLOAD,
-                        CreationNodeMask: 1,
-                        VisibleNodeMask: 1,
-                        ..Default::default()
-                    },
-                    D3D12_HEAP_FLAG_NONE,
-                    &D3D12_RESOURCE_DESC {
-                        Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
-                        Width: std::mem::size_of_val(&INDICES) as _,
-                        Height: 1,
-                        DepthOrArraySize: 1,
-                        MipLevels: 1,
-                        Format: DXGI_FORMAT_UNKNOWN,
-                        Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-                        SampleDesc: DXGI_SAMPLE_DESC {
-                            Count: 1,
-                            Quality: 0,
+                let mut ib: Option<ID3D12Resource> = None;
+                let ib = device
+                    .CreateCommittedResource(
+                        &D3D12_HEAP_PROPERTIES {
+                            Type: D3D12_HEAP_TYPE_UPLOAD,
+                            CreationNodeMask: 1,
+                            VisibleNodeMask: 1,
+                            ..Default::default()
                         },
-                        ..Default::default()
-                    },
-                    D3D12_RESOURCE_STATE_GENERIC_READ,
-                    std::ptr::null(),
-                )?;
+                        D3D12_HEAP_FLAG_NONE,
+                        &D3D12_RESOURCE_DESC {
+                            Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
+                            Width: std::mem::size_of_val(&INDICES) as _,
+                            Height: 1,
+                            DepthOrArraySize: 1,
+                            MipLevels: 1,
+                            Format: DXGI_FORMAT_UNKNOWN,
+                            Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+                            SampleDesc: DXGI_SAMPLE_DESC {
+                                Count: 1,
+                                Quality: 0,
+                            },
+                            ..Default::default()
+                        },
+                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                        std::ptr::null(),
+                        &mut ib,
+                    )
+                    .map(|_| ib.unwrap())?;
                 let mut p = std::ptr::null_mut();
                 ib.Map(0, std::ptr::null(), &mut p).unwrap();
                 std::ptr::copy_nonoverlapping(&INDICES, p as _, INDICES.len());
@@ -193,37 +208,43 @@ impl Application {
                 SizeInBytes: std::mem::size_of_val(&INDICES) as _,
                 Format: DXGI_FORMAT_R32_UINT,
             };
-            let tex: ID3D12Resource = device.CreateCommittedResource(
-                &D3D12_HEAP_PROPERTIES {
-                    Type: D3D12_HEAP_TYPE_DEFAULT,
-                    CreationNodeMask: 1,
-                    VisibleNodeMask: 1,
-                    ..Default::default()
-                },
-                D3D12_HEAP_FLAG_NONE,
-                &D3D12_RESOURCE_DESC {
-                    Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-                    Width: window_size.width as _,
-                    Height: window_size.height,
-                    DepthOrArraySize: 1,
-                    MipLevels: 1,
-                    Format: DXGI_FORMAT_R8G8B8A8_UNORM,
-                    Flags: D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-                        | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS,
-                    SampleDesc: DXGI_SAMPLE_DESC {
-                        Count: 1,
-                        Quality: 0,
-                    },
-                    ..Default::default()
-                },
-                D3D12_RESOURCE_STATE_COMMON,
-                &D3D12_CLEAR_VALUE {
-                    Format: DXGI_FORMAT_R8G8B8A8_UNORM,
-                    Anonymous: D3D12_CLEAR_VALUE_0 {
-                        Color: [0.0, 0.5, 0.0, 0.5],
-                    },
-                },
-            )?;
+            let tex = {
+                let mut tex: Option<ID3D12Resource> = None;
+                device
+                    .CreateCommittedResource(
+                        &D3D12_HEAP_PROPERTIES {
+                            Type: D3D12_HEAP_TYPE_DEFAULT,
+                            CreationNodeMask: 1,
+                            VisibleNodeMask: 1,
+                            ..Default::default()
+                        },
+                        D3D12_HEAP_FLAG_NONE,
+                        &D3D12_RESOURCE_DESC {
+                            Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                            Width: window_size.width as _,
+                            Height: window_size.height,
+                            DepthOrArraySize: 1,
+                            MipLevels: 1,
+                            Format: DXGI_FORMAT_R8G8B8A8_UNORM,
+                            Flags: D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+                                | D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS,
+                            SampleDesc: DXGI_SAMPLE_DESC {
+                                Count: 1,
+                                Quality: 0,
+                            },
+                            ..Default::default()
+                        },
+                        D3D12_RESOURCE_STATE_COMMON,
+                        &D3D12_CLEAR_VALUE {
+                            Format: DXGI_FORMAT_R8G8B8A8_UNORM,
+                            Anonymous: D3D12_CLEAR_VALUE_0 {
+                                Color: [0.0, 0.5, 0.0, 0.5],
+                            },
+                        },
+                        &mut tex,
+                    )
+                    .map(|_| tex.unwrap())?
+            };
             tex.SetName("Application::tex").unwrap();
             let srv_heap: ID3D12DescriptorHeap =
                 device.CreateDescriptorHeap(&D3D12_DESCRIPTOR_HEAP_DESC {
@@ -367,8 +388,7 @@ impl Application {
                 device.CreateGraphicsPipelineState(&desc)?
             };
             let fence = device.CreateFence(0, D3D12_FENCE_FLAG_NONE)?;
-            let context =
-                mltg::Context::new(mltg::Direct3D12::new(&device, &command_queue)?)?;
+            let context = mltg::Context::new(mltg::Direct3D12::new(&device, &command_queue)?)?;
             let factory = context.create_factory();
             let target = context.create_render_target(&tex)?;
             let image = factory.create_image("ferris.png")?;
