@@ -3,6 +3,9 @@ use crate::*;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SolidColorBrush(ID2D1SolidColorBrush);
 
+unsafe impl Send for SolidColorBrush {}
+unsafe impl Sync for SolidColorBrush {}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct GradientStop {
     pub position: f32,
@@ -67,11 +70,20 @@ impl GradientStopCollection {
     }
 }
 
+unsafe impl Send for GradientStopCollection {}
+unsafe impl Sync for GradientStopCollection {}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct LinearGradientBrush(ID2D1LinearGradientBrush);
 
+unsafe impl Send for LinearGradientBrush {}
+unsafe impl Sync for LinearGradientBrush {}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct RadialGradientBrush(ID2D1RadialGradientBrush);
+
+unsafe impl Send for RadialGradientBrush {}
+unsafe impl Sync for RadialGradientBrush {}
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Brush {

@@ -26,6 +26,8 @@ fn main() {
         Windows::Win32::System::Com::{
             CoCreateInstance,
             CoInitialize,
+            CoInitializeEx,
+            CoUninitialize,
         },
     );
 }

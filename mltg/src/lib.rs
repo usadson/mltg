@@ -46,3 +46,14 @@ pub trait Stroke {
         style: Option<ID2D1StrokeStyle>,
     );
 }
+
+pub mod api {
+    pub use mltg_bindings::Windows::Win32::System::Com::{
+        CoInitializeEx,
+        CoUninitialize,
+        COINIT_APARTMENTTHREADED,
+        COINIT_MULTITHREADED,
+        COINIT_DISABLE_OLE1DDE,
+        COINIT_SPEED_OVER_MEMORY,
+    };
+}

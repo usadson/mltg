@@ -203,6 +203,8 @@ impl PartialEq for TextFormat {
 
 impl Eq for TextFormat {}
 
+unsafe impl Send for TextFormat {}
+
 #[derive(Clone)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
@@ -320,6 +322,8 @@ impl PartialEq for TextLayout {
 }
 
 impl Eq for TextLayout {}
+
+unsafe impl Send for TextLayout {}
 
 #[cfg(test)]
 mod tests {

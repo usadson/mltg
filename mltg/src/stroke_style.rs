@@ -115,3 +115,6 @@ impl StrokeStyle {
         Ok(StrokeStyle(stroke_style))
     }
 }
+
+unsafe impl Send for StrokeStyle {}
+unsafe impl Sync for StrokeStyle {}

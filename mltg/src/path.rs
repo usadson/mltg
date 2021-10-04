@@ -27,6 +27,9 @@ impl Stroke for Path {
     }
 }
 
+unsafe impl Send for Path {}
+unsafe impl Sync for Path {}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum FigureEnd {

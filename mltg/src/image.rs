@@ -62,6 +62,9 @@ impl Image {
     }
 }
 
+unsafe impl Send for Image {}
+unsafe impl Sync for Image {}
+
 pub trait ImageLoader {
     fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory)
         -> windows::Result<Image>;
