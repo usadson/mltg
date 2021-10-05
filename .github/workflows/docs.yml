@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'mltg/book/**'
   pull_request:
 
 jobs:
