@@ -320,7 +320,9 @@ impl TextLayout {
             let mut trailing_hit = BOOL(0);
             let mut inside = BOOL(0);
             let mut matrics = DWRITE_HIT_TEST_METRICS::default();
-            self.layout.HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut matrics).unwrap();
+            self.layout
+                .HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut matrics)
+                .unwrap();
             inside.as_bool().then(|| matrics.textPosition as _)
         }
     }
@@ -369,8 +371,10 @@ mod tests {
                 .cast()
                 .unwrap()
         };
-        let format = TextFormat::new(&factory, &Font::system("Meiryo"), FontPoint(14.0).0, None).unwrap();
-        let layout = TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
+        let format =
+            TextFormat::new(&factory, &Font::system("Meiryo"), FontPoint(14.0).0, None).unwrap();
+        let layout =
+            TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();
         assert!(layout.hit_test([0.0, 0.0]) == Some(0));
         assert!(layout.hit_test([size.width - 0.1, 0.0]) == Some(3));

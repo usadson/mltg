@@ -49,11 +49,7 @@ pub trait Stroke {
 
 pub mod api {
     pub use mltg_bindings::Windows::Win32::System::Com::{
-        CoInitializeEx,
-        CoUninitialize,
-        COINIT_APARTMENTTHREADED,
-        COINIT_MULTITHREADED,
-        COINIT_DISABLE_OLE1DDE,
-        COINIT_SPEED_OVER_MEMORY,
+        CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
+        COINIT_MULTITHREADED, COINIT_SPEED_OVER_MEMORY,
     };
 }
