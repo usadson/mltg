@@ -216,7 +216,7 @@ pub struct TextLayout {
 impl TextLayout {
     #[inline]
     pub(crate) fn new(
-        factory: &IDWriteFactory,
+        factory: &IDWriteFactory5,
         text: &str,
         format: &TextFormat,
         alignment: TextAlignment,
@@ -312,6 +312,18 @@ impl TextLayout {
             self.layout.SetMaxHeight(size.height).unwrap();
         }
     }
+
+    #[inline]
+    pub fn hit_test(&self, pt: impl Into<Point>) -> Option<usize> {
+        unsafe {
+            let pt = pt.into();
+            let mut trailing_hit = BOOL(0);
+            let mut inside = BOOL(0);
+            let mut matrics = DWRITE_HIT_TEST_METRICS::default();
+            self.layout.HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut matrics).unwrap();
+            inside.as_bool().then(|| matrics.textPosition as _)
+        }
+    }
 }
 
 impl PartialEq for TextLayout {
@@ -347,5 +359,21 @@ mod tests {
             None,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn hit_test() {
+        let factory: IDWriteFactory5 = unsafe {
+            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
+                .unwrap()
+                .cast()
+                .unwrap()
+        };
+        let format = TextFormat::new(&factory, &Font::system("Meiryo"), FontPoint(14.0).0, None).unwrap();
+        let layout = TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
+        let size = layout.size();
+        assert!(layout.hit_test([0.0, 0.0]) == Some(0));
+        assert!(layout.hit_test([size.width - 0.1, 0.0]) == Some(3));
+        assert!(layout.hit_test([-100.0, 0.0]) == None);
     }
 }
