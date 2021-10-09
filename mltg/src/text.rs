@@ -205,6 +205,13 @@ impl Eq for TextFormat {}
 
 unsafe impl Send for TextFormat {}
 
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct HitTestResult {
+    pub text_position: usize,   
+    pub inside: bool,
+    pub trailing_hit: bool,
+}
+
 #[derive(Clone)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
@@ -314,7 +321,7 @@ impl TextLayout {
     }
 
     #[inline]
-    pub fn hit_test(&self, pt: impl Into<Point>) -> Option<usize> {
+    pub fn hit_test(&self, pt: impl Into<Point>) -> HitTestResult {
         unsafe {
             let pt = pt.into();
             let mut trailing_hit = BOOL(0);
@@ -323,7 +330,11 @@ impl TextLayout {
             self.layout
                 .HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut matrics)
                 .unwrap();
-            inside.as_bool().then(|| matrics.textPosition as _)
+            HitTestResult {
+                text_position: matrics.textPosition as _,
+                inside: inside.as_bool(),
+                trailing_hit: trailing_hit.as_bool(),
+            }
         }
     }
 }
@@ -376,8 +387,20 @@ mod tests {
         let layout =
             TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();
-        assert!(layout.hit_test([0.0, 0.0]) == Some(0));
-        assert!(layout.hit_test([size.width - 0.1, 0.0]) == Some(3));
-        assert!(layout.hit_test([-100.0, 0.0]) == None);
+        assert!(layout.hit_test([0.0, 0.0]) == HitTestResult {
+            text_position: 0,
+            inside: true,
+            trailing_hit: false,
+        });
+        assert!(layout.hit_test([size.width - 0.1, 0.0]) == HitTestResult {
+            text_position: 3,
+            inside: true,
+            trailing_hit: true,
+        });
+        assert!(layout.hit_test([-100.0, 0.0]) == HitTestResult {
+            text_position: 0,
+            inside: false,
+            trailing_hit: false,
+        });
     }
 }
