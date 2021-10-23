@@ -2,7 +2,7 @@
 name = "mltg"
 version = "0.2.5"
 authors = ["LNSEAB <691752+LNSEAB@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 keywords = ["windows", "direct2d"]
 description = "Direct2D wrapper library"
 license = "MIT"

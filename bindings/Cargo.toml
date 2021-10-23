@@ -2,7 +2,7 @@
 name = "mltg_bindings"
 version = "0.2.2"
 authors = ["LNSEAB <691752+LNSEAB@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 description = "windows bindings for mltg"
 
