@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'mltg/book/**'
+      - 'book/**'
   pull_request:
 
 jobs:
