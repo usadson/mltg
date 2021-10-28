@@ -1,4 +1,4 @@
-use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Win32::System::Com::*;
 
 struct Application {
     back_buffer: Vec<mltg::d2d::RenderTarget>,

@@ -10,9 +10,7 @@ mod stroke_style;
 mod text;
 mod utility;
 
-use mltg_bindings as bindings;
-
-use bindings::Windows::Win32::Graphics::Direct2D::*;
+use windows::Win32::Graphics::Direct2D::*;
 pub use brush::*;
 pub use context::*;
 pub use d2d::Direct2D;
@@ -48,7 +46,7 @@ pub trait Stroke {
 }
 
 pub mod api {
-    pub use mltg_bindings::Windows::Win32::System::Com::{
+    pub use windows::Win32::System::Com::{
         CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
         COINIT_MULTITHREADED, COINIT_SPEED_OVER_MEMORY,
     };

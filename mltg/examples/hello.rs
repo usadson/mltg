@@ -1,4 +1,4 @@
-use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Win32::System::Com::*;
 
 struct Application {
     context: mltg::Context<mltg::Direct2D>,

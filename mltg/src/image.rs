@@ -1,7 +1,7 @@
 use crate::*;
-use bindings::Windows::Win32::{Graphics::Imaging::*, System::SystemServices::*};
+use windows::Win32::{Graphics::Imaging::*, System::SystemServices::*};
 use std::path::{Path, PathBuf};
-use windows::Interface;
+use windows::runtime::Interface;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -23,7 +23,7 @@ impl Image {
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
         loader: impl ImageLoader,
-    ) -> windows::Result<Self> {
+    ) -> windows::runtime::Result<Self> {
         loader.load(dc, factory)
     }
 
@@ -67,7 +67,7 @@ unsafe impl Sync for Image {}
 
 pub trait ImageLoader {
     fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory)
-        -> windows::Result<Image>;
+        -> windows::runtime::Result<Image>;
 }
 
 impl<'a> ImageLoader for &'a Path {
@@ -75,7 +75,7 @@ impl<'a> ImageLoader for &'a Path {
         &self,
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
-    ) -> windows::Result<Image> {
+    ) -> windows::runtime::Result<Image> {
         unsafe {
             let decoder = {
                 factory.CreateDecoderFromFilename(
@@ -113,7 +113,7 @@ impl ImageLoader for PathBuf {
         &self,
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
-    ) -> windows::Result<Image> {
+    ) -> windows::runtime::Result<Image> {
         self.as_path().load(dc, factory)
     }
 }
@@ -123,7 +123,7 @@ impl<'a> ImageLoader for &'a str {
         &self,
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
-    ) -> windows::Result<Image> {
+    ) -> windows::runtime::Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }
@@ -133,7 +133,7 @@ impl<'a> ImageLoader for &'a String {
         &self,
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
-    ) -> windows::Result<Image> {
+    ) -> windows::runtime::Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }

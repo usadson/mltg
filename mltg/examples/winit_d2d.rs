@@ -1,4 +1,4 @@
-use mltg_bindings::Windows::Win32::System::Com::*;
+use windows::Win32::System::Com::*;
 use winit::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},

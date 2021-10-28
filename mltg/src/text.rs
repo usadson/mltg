@@ -1,7 +1,7 @@
-use crate::bindings::Windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
+use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 use crate::*;
 use std::convert::TryInto;
-use windows::Interface;
+use windows::runtime::Interface;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -140,7 +140,7 @@ impl TextFormat {
         font: &Font,
         size: f32,
         style: Option<&TextStyle>,
-    ) -> windows::Result<Self> {
+    ) -> windows::runtime::Result<Self> {
         let style = style.cloned().unwrap_or_default();
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
             Font::System(font_name) => (font_name, None),
@@ -228,7 +228,7 @@ impl TextLayout {
         format: &TextFormat,
         alignment: TextAlignment,
         size: Option<Size>,
-    ) -> windows::Result<Self> {
+    ) -> windows::runtime::Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
             let layout = factory.CreateTextLayout(

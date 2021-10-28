@@ -1,10 +1,10 @@
-use crate::bindings::Windows::Win32::{
+use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Dxgi::*},
 };
 use crate::d3d11;
 use crate::*;
-use windows::Interface;
+use windows::runtime::Interface;
 
 pub type RenderTarget = d3d11::RenderTarget;
 
@@ -19,7 +19,7 @@ impl Direct2D {
     pub fn new(
         hwnd: *mut std::ffi::c_void,
         size: impl Into<gecl::Size<u32>>,
-    ) -> windows::Result<Self> {
+    ) -> windows::runtime::Result<Self> {
         unsafe {
             let d3d11_device: ID3D11Device = {
                 const FEATURE_LEVELS: [D3D_FEATURE_LEVEL; 1] = [D3D_FEATURE_LEVEL_11_0];
@@ -105,12 +105,12 @@ impl Backend for Direct2D {
     fn back_buffers(
         &self,
         swap_chain: &IDXGISwapChain1,
-    ) -> windows::Result<Vec<Self::RenderTarget>> {
+    ) -> windows::runtime::Result<Vec<Self::RenderTarget>> {
         self.object.back_buffers(swap_chain)
     }
 
     #[inline]
-    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> windows::runtime::Result<Self::RenderTarget> {
         Ok(d3d11::RenderTarget(target.cast::<ID2D1Bitmap1>()?))
     }
 

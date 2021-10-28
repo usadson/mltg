@@ -1,6 +1,6 @@
-use crate::bindings::Windows::Win32::Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*};
+use windows::Win32::Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*};
 use crate::*;
-use windows::{Abi, IUnknown, Interface};
+use windows::runtime::{Abi, IUnknown, Interface};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct RenderTarget {
@@ -43,7 +43,7 @@ impl Direct3D12 {
     pub fn new(
         d3d12_device: &impl Interface,
         command_queue: &impl Interface,
-    ) -> windows::Result<Self> {
+    ) -> windows::runtime::Result<Self> {
         unsafe {
             let d3d12_device: ID3D12Device = d3d12_device.cast()?;
             let command_queue: ID3D12CommandQueue = command_queue.cast()?;
@@ -115,7 +115,7 @@ impl Backend for Direct3D12 {
     fn back_buffers(
         &self,
         swap_chain: &IDXGISwapChain1,
-    ) -> windows::Result<Vec<Self::RenderTarget>> {
+    ) -> windows::runtime::Result<Vec<Self::RenderTarget>> {
         unsafe {
             let desc = swap_chain.GetDesc1()?;
             let bmp_props = D2D1_BITMAP_PROPERTIES1 {
@@ -156,7 +156,7 @@ impl Backend for Direct3D12 {
         }
     }
 
-    fn render_target(&self, target: &impl Interface) -> windows::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> windows::runtime::Result<Self::RenderTarget> {
         unsafe {
             let resource: ID3D12Resource = target.cast()?;
             let desc = resource.GetDesc();

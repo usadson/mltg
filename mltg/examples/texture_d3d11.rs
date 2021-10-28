@@ -1,4 +1,4 @@
-use mltg_bindings::Windows::Win32::{
+use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Dxgi::*},
     System::Com::*,

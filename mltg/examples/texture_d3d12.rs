@@ -1,10 +1,10 @@
-use mltg_bindings::Windows::Win32::{
+use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 use std::cell::Cell;
-use windows::Interface;
+use windows::runtime::Interface;
 
 #[repr(C)]
 struct Vertex {
