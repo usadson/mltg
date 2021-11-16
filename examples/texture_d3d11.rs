@@ -1,6 +1,6 @@
 use windows::Win32::{
     Foundation::*,
-    Graphics::{Direct3D11::*, Dxgi::*},
+    Graphics::{Direct3D::*, Direct3D11::*, Dxgi::*, Dxgi::Common::*},
     System::Com::*,
 };
 

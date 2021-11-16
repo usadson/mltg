@@ -10,7 +10,6 @@ mod stroke_style;
 mod text;
 mod utility;
 
-use windows::Win32::Graphics::Direct2D::*;
 pub use brush::*;
 pub use context::*;
 pub use d2d::Direct2D;
@@ -24,6 +23,7 @@ pub use shape::*;
 pub use stroke_style::*;
 pub use text::*;
 pub use utility::*;
+use windows::Win32::Graphics::{Direct2D::Common::*, Direct2D::*, Direct3D::*};
 
 pub trait Target {
     fn bitmap(&self) -> &ID2D1Bitmap1;

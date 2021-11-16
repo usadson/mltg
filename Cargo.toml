@@ -18,12 +18,18 @@ all-featurse = true
 gecl = "0.0.2"
 
 [dependencies.windows]
-version = "0.23.0"
+version = "0.27.0"
 features = [
+	"std",
+	"alloc",
+	"Win32_Graphics_Direct3D",
 	"Win32_Graphics_Direct3D11",
 	"Win32_Graphics_Direct3D12",
+	"Win32_Graphics_Direct3D11on12",
 	"Win32_Graphics_Dxgi",
+	"Win32_Graphics_Dxgi_Common",
 	"Win32_Graphics_Direct2D",
+	"Win32_Graphics_Direct2D_Common",
 	"Win32_Graphics_DirectWrite",
 	"Win32_Graphics_Imaging",
 	"Win32_System_Threading",
@@ -36,6 +42,6 @@ features = [
 ]
 
 [dev-dependencies]
-anyhow = "1.0.44"
+anyhow = "1.0.45"
 winit = "0.25.0"
 wita = "0.10.5"

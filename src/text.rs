@@ -1,7 +1,7 @@
-use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 use crate::*;
 use std::convert::TryInto;
-use windows::runtime::Interface;
+use windows::core::Interface;
+use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -140,7 +140,7 @@ impl TextFormat {
         font: &Font,
         size: f32,
         style: Option<&TextStyle>,
-    ) -> windows::runtime::Result<Self> {
+    ) -> windows::core::Result<Self> {
         let style = style.cloned().unwrap_or_default();
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
             Font::System(font_name) => (font_name, None),
@@ -207,7 +207,7 @@ unsafe impl Send for TextFormat {}
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct HitTestResult {
-    pub text_position: usize,   
+    pub text_position: usize,
     pub inside: bool,
     pub trailing_hit: bool,
 }
@@ -228,7 +228,7 @@ impl TextLayout {
         format: &TextFormat,
         alignment: TextAlignment,
         size: Option<Size>,
-    ) -> windows::runtime::Result<Self> {
+    ) -> windows::core::Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
             let layout = factory.CreateTextLayout(
@@ -387,20 +387,29 @@ mod tests {
         let layout =
             TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();
-        assert!(layout.hit_test([0.0, 0.0]) == HitTestResult {
-            text_position: 0,
-            inside: true,
-            trailing_hit: false,
-        });
-        assert!(layout.hit_test([size.width - 0.1, 0.0]) == HitTestResult {
-            text_position: 3,
-            inside: true,
-            trailing_hit: true,
-        });
-        assert!(layout.hit_test([-100.0, 0.0]) == HitTestResult {
-            text_position: 0,
-            inside: false,
-            trailing_hit: false,
-        });
+        assert!(
+            layout.hit_test([0.0, 0.0])
+                == HitTestResult {
+                    text_position: 0,
+                    inside: true,
+                    trailing_hit: false,
+                }
+        );
+        assert!(
+            layout.hit_test([size.width - 0.1, 0.0])
+                == HitTestResult {
+                    text_position: 3,
+                    inside: true,
+                    trailing_hit: true,
+                }
+        );
+        assert!(
+            layout.hit_test([-100.0, 0.0])
+                == HitTestResult {
+                    text_position: 0,
+                    inside: false,
+                    trailing_hit: false,
+                }
+        );
     }
 }

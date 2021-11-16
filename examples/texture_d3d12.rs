@@ -1,10 +1,10 @@
+use std::cell::Cell;
+use windows::core::Interface;
 use windows::Win32::{
     Foundation::*,
-    Graphics::{Direct3D11::*, Direct3D12::*, Dxgi::*},
+    Graphics::{Direct3D::*, Direct3D12::*, Dxgi::*, Dxgi::Common::*},
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
-use std::cell::Cell;
-use windows::runtime::Interface;
 
 #[repr(C)]
 struct Vertex {

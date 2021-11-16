@@ -1,11 +1,11 @@
+use crate::utility::*;
+use crate::*;
+use windows::core::Interface;
 use windows::{
     Foundation::Numerics::*,
     Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*},
     Win32::System::Com::*,
 };
-use crate::utility::*;
-use crate::*;
-use windows::runtime::Interface;
 
 pub struct DrawCommand<'a> {
     device_context: &'a ID2D1DeviceContext,
@@ -112,8 +112,8 @@ pub trait Backend {
     fn back_buffers(
         &self,
         swap_chain: &IDXGISwapChain1,
-    ) -> windows::runtime::Result<Vec<Self::RenderTarget>>;
-    fn render_target(&self, target: &impl Interface) -> windows::runtime::Result<Self::RenderTarget>;
+    ) -> windows::core::Result<Vec<Self::RenderTarget>>;
+    fn render_target(&self, target: &impl Interface) -> windows::core::Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -131,7 +131,7 @@ impl Factory {
     pub fn create_gradient_stop_collection<U>(
         &self,
         stops: &[U],
-    ) -> windows::runtime::Result<GradientStopCollection>
+    ) -> windows::core::Result<GradientStopCollection>
     where
         U: Into<GradientStop> + Clone,
     {
@@ -139,7 +139,7 @@ impl Factory {
     }
 
     #[inline]
-    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> windows::runtime::Result<Brush> {
+    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> windows::core::Result<Brush> {
         Brush::solid_color(&self.device_context, color)
     }
 
@@ -149,7 +149,7 @@ impl Factory {
         start: impl Into<Point>,
         end: impl Into<Point>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::runtime::Result<Brush> {
+    ) -> windows::core::Result<Brush> {
         Brush::linear_gradient(&self.device_context, start, end, stop_collection)
     }
 
@@ -160,7 +160,7 @@ impl Factory {
         offset: impl Into<Point>,
         radius: impl Into<Vector>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::runtime::Result<Brush> {
+    ) -> windows::core::Result<Brush> {
         Brush::radial_gradient(
             &self.device_context,
             center,
@@ -180,7 +180,7 @@ impl Factory {
     pub fn create_stroke_style(
         &self,
         props: &StrokeStyleProperties,
-    ) -> windows::runtime::Result<StrokeStyle> {
+    ) -> windows::core::Result<StrokeStyle> {
         StrokeStyle::new(&self.d2d1_factory, props)
     }
 
@@ -190,7 +190,7 @@ impl Factory {
         font: &Font,
         size: impl Into<f32>,
         style: Option<&TextStyle>,
-    ) -> windows::runtime::Result<TextFormat> {
+    ) -> windows::core::Result<TextFormat> {
         TextFormat::new(&self.dwrite_factory, font, size.into(), style)
     }
 
@@ -201,7 +201,7 @@ impl Factory {
         format: &TextFormat,
         alignment: TextAlignment,
         size: Option<Size>,
-    ) -> windows::runtime::Result<TextLayout> {
+    ) -> windows::core::Result<TextLayout> {
         TextLayout::new(
             &self.dwrite_factory.clone().into(),
             text.as_ref(),
@@ -212,7 +212,7 @@ impl Factory {
     }
 
     #[inline]
-    pub fn create_image(&self, loader: impl ImageLoader) -> windows::runtime::Result<Image> {
+    pub fn create_image(&self, loader: impl ImageLoader) -> windows::core::Result<Image> {
         Image::new(&self.device_context, &self.wic_imaging_factory, loader)
     }
 }
@@ -232,7 +232,7 @@ where
     T: Backend + Clone,
 {
     #[inline]
-    pub fn new(backend: T) -> windows::runtime::Result<Self> {
+    pub fn new(backend: T) -> windows::core::Result<Self> {
         unsafe {
             let dwrite_factory =
                 DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?;
@@ -265,7 +265,7 @@ where
     pub fn create_back_buffers(
         &self,
         swap_chain: &impl Interface,
-    ) -> windows::runtime::Result<Vec<T::RenderTarget>> {
+    ) -> windows::core::Result<Vec<T::RenderTarget>> {
         let swap_chain: IDXGISwapChain1 = swap_chain.cast()?;
         let ret = self.backend.back_buffers(&swap_chain);
         ret
@@ -275,7 +275,7 @@ where
     pub fn create_render_target(
         &self,
         target: &impl Interface,
-    ) -> windows::runtime::Result<T::RenderTarget> {
+    ) -> windows::core::Result<T::RenderTarget> {
         self.backend.render_target(target)
     }
 
