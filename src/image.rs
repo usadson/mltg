@@ -1,17 +1,17 @@
 use crate::*;
 use std::path::{Path, PathBuf};
-use windows::Win32::{Graphics::Imaging::*, System::SystemServices::*};
 use windows::core::Interface;
+use windows::Win32::{Graphics::Imaging::*, System::SystemServices::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum Interpolation {
-    NearestNeighbor = D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR.0,
-    Linear = D2D1_INTERPOLATION_MODE_LINEAR.0,
-    Cubic = D2D1_INTERPOLATION_MODE_CUBIC.0,
-    MultiSampleLinear = D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR.0,
-    Anisotropic = D2D1_INTERPOLATION_MODE_ANISOTROPIC.0,
-    HighQualityCubic = D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC.0,
+    NearestNeighbor = D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+    Linear = D2D1_INTERPOLATION_MODE_LINEAR,
+    Cubic = D2D1_INTERPOLATION_MODE_CUBIC,
+    MultiSampleLinear = D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR,
+    Anisotropic = D2D1_INTERPOLATION_MODE_ANISOTROPIC,
+    HighQualityCubic = D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -42,7 +42,7 @@ impl Image {
                 &self.0,
                 &dest,
                 1.0,
-                D2D1_INTERPOLATION_MODE(interpolation as _),
+                interpolation as _,
                 if let Some(src) = src.as_ref() {
                     src as *const _
                 } else {

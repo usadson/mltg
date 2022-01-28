@@ -2,7 +2,7 @@ use std::cell::Cell;
 use windows::core::Interface;
 use windows::Win32::{
     Foundation::*,
-    Graphics::{Direct3D::*, Direct3D12::*, Dxgi::*, Dxgi::Common::*},
+    Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 

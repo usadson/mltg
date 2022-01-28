@@ -33,8 +33,8 @@ unsafe impl Sync for Path {}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum FigureEnd {
-    Open = D2D1_FIGURE_END_OPEN.0,
-    Closed = D2D1_FIGURE_END_CLOSED.0,
+    Open = D2D1_FIGURE_END_OPEN,
+    Closed = D2D1_FIGURE_END_CLOSED,
 }
 
 pub struct PathBuilder {
@@ -124,7 +124,7 @@ impl Figure {
     #[inline]
     pub fn end(self, t: FigureEnd) -> PathBuilder {
         unsafe {
-            self.sink.EndFigure(D2D1_FIGURE_END(t as u32));
+            self.sink.EndFigure(t as u32);
             PathBuilder {
                 geometry: self.geometry,
                 sink: self.sink,

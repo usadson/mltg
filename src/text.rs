@@ -6,40 +6,40 @@ use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
 pub enum FontWeight {
-    Thin = DWRITE_FONT_WEIGHT_THIN.0,
-    UltraLight = DWRITE_FONT_WEIGHT_ULTRA_LIGHT.0,
-    Light = DWRITE_FONT_WEIGHT_LIGHT.0,
-    SemiLight = DWRITE_FONT_WEIGHT_SEMI_LIGHT.0,
-    Regular = DWRITE_FONT_WEIGHT_REGULAR.0,
-    Medium = DWRITE_FONT_WEIGHT_MEDIUM.0,
-    SemiBold = DWRITE_FONT_WEIGHT_SEMI_BOLD.0,
-    Bold = DWRITE_FONT_WEIGHT_BOLD.0,
-    UltraBold = DWRITE_FONT_WEIGHT_ULTRA_BOLD.0,
-    Heavy = DWRITE_FONT_WEIGHT_HEAVY.0,
-    UltraBlack = DWRITE_FONT_WEIGHT_ULTRA_BLACK.0,
+    Thin = DWRITE_FONT_WEIGHT_THIN,
+    UltraLight = DWRITE_FONT_WEIGHT_ULTRA_LIGHT,
+    Light = DWRITE_FONT_WEIGHT_LIGHT,
+    SemiLight = DWRITE_FONT_WEIGHT_SEMI_LIGHT,
+    Regular = DWRITE_FONT_WEIGHT_REGULAR,
+    Medium = DWRITE_FONT_WEIGHT_MEDIUM,
+    SemiBold = DWRITE_FONT_WEIGHT_SEMI_BOLD,
+    Bold = DWRITE_FONT_WEIGHT_BOLD,
+    UltraBold = DWRITE_FONT_WEIGHT_ULTRA_BOLD,
+    Heavy = DWRITE_FONT_WEIGHT_HEAVY,
+    UltraBlack = DWRITE_FONT_WEIGHT_ULTRA_BLACK,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
 pub enum FontStyle {
-    Normal = DWRITE_FONT_STYLE_NORMAL.0,
-    Oblique = DWRITE_FONT_STYLE_OBLIQUE.0,
-    Italic = DWRITE_FONT_STYLE_ITALIC.0,
+    Normal = DWRITE_FONT_STYLE_NORMAL,
+    Oblique = DWRITE_FONT_STYLE_OBLIQUE,
+    Italic = DWRITE_FONT_STYLE_ITALIC,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
 pub enum FontStretch {
-    Undefined = DWRITE_FONT_STRETCH_UNDEFINED.0,
-    UltraCondensed = DWRITE_FONT_STRETCH_ULTRA_CONDENSED.0,
-    ExtraCondensed = DWRITE_FONT_STRETCH_EXTRA_CONDENSED.0,
-    Condensed = DWRITE_FONT_STRETCH_CONDENSED.0,
-    SemiCondensed = DWRITE_FONT_STRETCH_SEMI_CONDENSED.0,
-    Medium = DWRITE_FONT_STRETCH_MEDIUM.0,
-    SemiExpanded = DWRITE_FONT_STRETCH_SEMI_EXPANDED.0,
-    Expanded = DWRITE_FONT_STRETCH_EXPANDED.0,
-    ExtraExpanded = DWRITE_FONT_STRETCH_EXTRA_EXPANDED.0,
-    UltraExpanded = DWRITE_FONT_STRETCH_ULTRA_EXPANDED.0,
+    Undefined = DWRITE_FONT_STRETCH_UNDEFINED,
+    UltraCondensed = DWRITE_FONT_STRETCH_ULTRA_CONDENSED,
+    ExtraCondensed = DWRITE_FONT_STRETCH_EXTRA_CONDENSED,
+    Condensed = DWRITE_FONT_STRETCH_CONDENSED,
+    SemiCondensed = DWRITE_FONT_STRETCH_SEMI_CONDENSED,
+    Medium = DWRITE_FONT_STRETCH_MEDIUM,
+    SemiExpanded = DWRITE_FONT_STRETCH_SEMI_EXPANDED,
+    Expanded = DWRITE_FONT_STRETCH_EXPANDED,
+    ExtraExpanded = DWRITE_FONT_STRETCH_EXTRA_EXPANDED,
+    UltraExpanded = DWRITE_FONT_STRETCH_ULTRA_EXPANDED,
 }
 
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
@@ -78,10 +78,10 @@ impl Default for TextStyle {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
 pub enum TextAlignment {
-    Leading = DWRITE_TEXT_ALIGNMENT_LEADING.0,
-    Center = DWRITE_TEXT_ALIGNMENT_CENTER.0,
-    Trailing = DWRITE_TEXT_ALIGNMENT_TRAILING.0,
-    Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED.0,
+    Leading = DWRITE_TEXT_ALIGNMENT_LEADING,
+    Center = DWRITE_TEXT_ALIGNMENT_CENTER,
+    Trailing = DWRITE_TEXT_ALIGNMENT_TRAILING,
+    Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED,
 }
 
 impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
@@ -163,9 +163,9 @@ impl TextFormat {
             factory.CreateTextFormat(
                 font_name.as_str(),
                 font_collection,
-                DWRITE_FONT_WEIGHT(style.weight as _),
-                DWRITE_FONT_STYLE(style.style as _),
-                DWRITE_FONT_STRETCH(style.stretch as _),
+                style.weight as _,
+                style.style as _,
+                style.stretch as _,
                 size,
                 "",
             )?
@@ -244,9 +244,7 @@ impl TextLayout {
             });
             layout.SetMaxWidth(size.width).unwrap();
             layout.SetMaxHeight(size.height).unwrap();
-            layout
-                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
-                .unwrap();
+            layout.SetTextAlignment(alignment as _).unwrap();
             layout
                 .SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
                 .unwrap();
@@ -296,9 +294,7 @@ impl TextLayout {
     #[inline]
     pub fn set_alignment(&self, alignment: TextAlignment) {
         unsafe {
-            self.layout
-                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
-                .unwrap();
+            self.layout.SetTextAlignment(alignment as _).unwrap();
         }
     }
 

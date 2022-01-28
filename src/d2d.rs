@@ -3,7 +3,7 @@ use crate::*;
 use windows::core::Interface;
 use windows::Win32::{
     Foundation::*,
-    Graphics::{Direct3D11::*, Dxgi::*, Dxgi::Common::*},
+    Graphics::{Direct3D11::*, Dxgi::Common::*, Dxgi::*},
 };
 
 pub type RenderTarget = d3d11::RenderTarget;

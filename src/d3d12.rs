@@ -53,7 +53,7 @@ impl Direct3D12 {
                 let mut dc = None;
                 D3D11On12CreateDevice(
                     &d3d12_device,
-                    D3D11_CREATE_DEVICE_BGRA_SUPPORT.0,
+                    D3D11_CREATE_DEVICE_BGRA_SUPPORT,
                     std::ptr::null(),
                     0,
                     queues.as_mut_ptr() as _,
@@ -130,7 +130,7 @@ impl Backend for Direct3D12 {
             for i in 0..desc.BufferCount {
                 let buffer: ID3D12Resource = swap_chain.GetBuffer(i)?;
                 let flags = D3D11_RESOURCE_FLAGS {
-                    BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
+                    BindFlags: D3D11_BIND_RENDER_TARGET,
                     ..Default::default()
                 };
                 let wrapper = {
@@ -161,7 +161,7 @@ impl Backend for Direct3D12 {
             let resource: ID3D12Resource = target.cast()?;
             let desc = resource.GetDesc();
             if cfg!(debug_assertions) {
-                assert!((desc.Flags.0 & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0) != 0);
+                assert!((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0);
             }
             let wrapper = {
                 let mut wrapper: Option<ID3D11Resource> = None;
@@ -169,7 +169,7 @@ impl Backend for Direct3D12 {
                     .CreateWrappedResource(
                         &resource,
                         &D3D11_RESOURCE_FLAGS {
-                            BindFlags: D3D11_BIND_RENDER_TARGET.0 as _,
+                            BindFlags: D3D11_BIND_RENDER_TARGET,
                             ..Default::default()
                         },
                         D3D12_RESOURCE_STATE_RENDER_TARGET,
