@@ -55,7 +55,7 @@ impl Application {
                 ..Default::default()
             }),
         })?;
-        let image = factory.create_image("ferris.png")?;
+        let image = factory.create_image("examples/ferris.png")?;
         context.set_dpi(window.dpi() as _);
         Ok(Self {
             back_buffer,

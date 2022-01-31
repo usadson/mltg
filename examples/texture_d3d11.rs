@@ -215,7 +215,7 @@ impl Application {
         let context = mltg::Context::new(mltg::Direct3D11::new(&device)?)?;
         let factory = context.create_factory();
         let target = context.create_render_target(&tex)?;
-        let image = factory.create_image("ferris.png")?;
+        let image = factory.create_image("examples/ferris.png")?;
         Ok(Self {
             device,
             device_context,

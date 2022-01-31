@@ -6,6 +6,30 @@ use windows::Win32::{
     System::{Com::*, Threading::*, WindowsProgramming::*},
 };
 
+fn resource_barrier(
+    command_list: &ID3D12GraphicsCommandList,
+    resource: &ID3D12Resource,
+    before: D3D12_RESOURCE_STATES,
+    after: D3D12_RESOURCE_STATES,
+) {
+    unsafe {
+        let mut barrier = [D3D12_RESOURCE_BARRIER {
+            Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+            Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: Some(resource.clone()),
+                    Subresource: 0,
+                    StateBefore: before,
+                    StateAfter: after,
+                }),
+            },
+        }];
+        command_list.ResourceBarrier(barrier.len() as _, barrier.as_ptr());
+        std::mem::ManuallyDrop::drop(&mut barrier[0].Anonymous.Transition);
+    }
+}
+
 struct Application {
     d3d12_device: ID3D12Device,
     command_queue: ID3D12CommandQueue,
@@ -115,7 +139,7 @@ impl Application {
                 (0.0, [1.0, 0.0, 0.0, 1.0]),
                 (1.0, [0.0, 1.0, 0.0, 1.0]),
             ])?;
-            let image = factory.create_image("ferris.png")?;
+            let image = factory.create_image("examples/ferris.png")?;
             context.set_dpi(window.dpi() as _);
             Ok(Self {
                 d3d12_device,
@@ -181,20 +205,6 @@ impl wita::EventHandler for Application {
             .factory
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
-        let resource_barrier = |resource, before, after| {
-            [D3D12_RESOURCE_BARRIER {
-                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-                Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: Some(resource),
-                        Subresource: 0,
-                        StateBefore: before,
-                        StateAfter: after,
-                    }),
-                },
-            }]
-        };
         let image_size = {
             let size = self.image.size();
             (size.width as f32 / 4.0, size.height as f32 / 4.0)
@@ -207,13 +217,12 @@ impl wita::EventHandler for Application {
             self.command_list
                 .Reset(&self.command_allocator, None)
                 .unwrap();
-            let barrier = resource_barrier(
-                self.render_targets[index].clone(),
+            resource_barrier(
+                &self.command_list,
+                &self.render_targets[index],
                 D3D12_RESOURCE_STATE_PRESENT,
                 D3D12_RESOURCE_STATE_RENDER_TARGET,
             );
-            self.command_list
-                .ResourceBarrier(barrier.len() as _, barrier.as_ptr());
             let viewports = [D3D12_VIEWPORT {
                 Width: window_size.width as _,
                 Height: window_size.height as _,

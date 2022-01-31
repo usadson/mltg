@@ -18,6 +18,30 @@ impl Vertex {
     }
 }
 
+fn resource_barrier(
+    command_list: &ID3D12GraphicsCommandList,
+    resource: &ID3D12Resource,
+    before: D3D12_RESOURCE_STATES,
+    after: D3D12_RESOURCE_STATES,
+) {
+    unsafe {
+        let mut barrier = [D3D12_RESOURCE_BARRIER {
+            Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+            Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: Some(resource.clone()),
+                    Subresource: 0,
+                    StateBefore: before,
+                    StateAfter: after,
+                }),
+            },
+        }];
+        command_list.ResourceBarrier(barrier.len() as _, barrier.as_ptr());
+        std::mem::ManuallyDrop::drop(&mut barrier[0].Anonymous.Transition);
+    }
+}
+
 struct Application {
     device: ID3D12Device,
     command_queue: ID3D12CommandQueue,
@@ -391,7 +415,7 @@ impl Application {
             let context = mltg::Context::new(mltg::Direct3D12::new(&device, &command_queue)?)?;
             let factory = context.create_factory();
             let target = context.create_render_target(&tex)?;
-            let image = factory.create_image("ferris.png")?;
+            let image = factory.create_image("examples/ferris.png")?;
             Ok(Self {
                 device,
                 command_queue,
@@ -483,32 +507,18 @@ impl wita::EventHandler for Application {
                 }]
                 .as_ptr(),
             );
-            let barrier = D3D12_RESOURCE_BARRIER {
-                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-                Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: Some(self.render_targets[index].clone()),
-                        Subresource: 0,
-                        StateBefore: D3D12_RESOURCE_STATE_PRESENT,
-                        StateAfter: D3D12_RESOURCE_STATE_RENDER_TARGET,
-                    }),
-                },
-            };
-            self.command_list.ResourceBarrier(1, [barrier].as_ptr());
-            let barrier = D3D12_RESOURCE_BARRIER {
-                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-                Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: Some(self.tex.clone()),
-                        Subresource: 0,
-                        StateBefore: D3D12_RESOURCE_STATE_COMMON,
-                        StateAfter: D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    }),
-                },
-            };
-            self.command_list.ResourceBarrier(1, [barrier].as_ptr());
+            resource_barrier(
+                &self.command_list,
+                &self.render_targets[index],
+                D3D12_RESOURCE_STATE_PRESENT,
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+            );
+            resource_barrier(
+                &self.command_list,
+                &self.tex,
+                D3D12_RESOURCE_STATE_COMMON,
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            );
             self.command_list.ClearRenderTargetView(
                 rtv_handle,
                 [0.0, 0.0, 0.3, 0.0].as_ptr(),
@@ -527,32 +537,18 @@ impl wita::EventHandler for Application {
             self.command_list
                 .IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             self.command_list.DrawIndexedInstanced(6, 1, 0, 0, 0);
-            let barrier = D3D12_RESOURCE_BARRIER {
-                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-                Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: Some(self.tex.clone()),
-                        Subresource: 0,
-                        StateBefore: D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                        StateAfter: D3D12_RESOURCE_STATE_COMMON,
-                    }),
-                },
-            };
-            self.command_list.ResourceBarrier(1, [barrier].as_ptr());
-            let barrier = D3D12_RESOURCE_BARRIER {
-                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-                Anonymous: D3D12_RESOURCE_BARRIER_0 {
-                    Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: Some(self.render_targets[index].clone()),
-                        Subresource: 0,
-                        StateBefore: D3D12_RESOURCE_STATE_RENDER_TARGET,
-                        StateAfter: D3D12_RESOURCE_STATE_PRESENT,
-                    }),
-                },
-            };
-            self.command_list.ResourceBarrier(1, [barrier].as_ptr());
+            resource_barrier(
+                &self.command_list,
+                &self.tex,
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                D3D12_RESOURCE_STATE_COMMON,
+            );
+            resource_barrier(
+                &self.command_list,
+                &self.render_targets[index],
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                D3D12_RESOURCE_STATE_PRESENT,
+            );
             self.command_list.Close().unwrap();
             let command_lists: [ID3D12CommandList; 1] = [self.command_list.clone().cast().unwrap()];
             self.command_queue

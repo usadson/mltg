@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
     let mut back_buffers = context.create_back_buffers(context.backend().swap_chain())?;
     let image = {
         let factory = context.create_factory();
-        factory.create_image("ferris.png")?
+        factory.create_image("examples/ferris.png")?
     };
     context.set_dpi(window.scale_factor() as f32 * 96.0);
     event_loop.run(move |event, _, control_flow| {

@@ -7,7 +7,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/hello.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug hello"
         },
@@ -17,7 +17,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/d2d.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug d2d"
         },
@@ -27,7 +27,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/d3d12.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug d3d12"
         },
@@ -37,7 +37,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/winit_d2d.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug winit_d2d"
         },
@@ -47,7 +47,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/texture_d3d11.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug texture_d3d11"
         },
@@ -57,7 +57,7 @@
             "type": "cppvsdbg",
             "program": "${workspaceFolder}/target/debug/examples/texture_d3d12.exe",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "preLaunchTask": "debug texture_d3d12"
         }
