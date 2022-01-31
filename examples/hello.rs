@@ -25,6 +25,7 @@ impl Application {
             mltg::font_point(28.0),
             None,
         )?;
+        context.set_dpi(window.dpi() as _);
         Ok(Self {
             context,
             back_buffer,
@@ -40,6 +41,11 @@ impl wita::EventHandler for Application {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
         });
+    }
+
+    fn dpi_changed(&mut self, window: &wita::Window) {
+        self.context.set_dpi(window.dpi() as _);
+        self.resizing(window, window.inner_size());
     }
 
     fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
