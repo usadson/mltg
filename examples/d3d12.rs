@@ -171,6 +171,7 @@ impl Application {
                 let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::default());
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
+                CloseHandle(event);
             }
             self.fence_value.set(fv + 1);
         }
