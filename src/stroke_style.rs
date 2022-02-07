@@ -3,10 +3,10 @@ use crate::*;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum CapStyle {
-    Flat = D2D1_CAP_STYLE_FLAT,
-    Square = D2D1_CAP_STYLE_SQUARE,
-    Round = D2D1_CAP_STYLE_ROUND,
-    Triangle = D2D1_CAP_STYLE_TRIANGLE,
+    Flat = D2D1_CAP_STYLE_FLAT.0,
+    Square = D2D1_CAP_STYLE_SQUARE.0,
+    Round = D2D1_CAP_STYLE_ROUND.0,
+    Triangle = D2D1_CAP_STYLE_TRIANGLE.0,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -75,7 +75,7 @@ impl StrokeStyle {
     ) -> windows::core::Result<Self> {
         let (dash_cap, dash_style, dash_offset, dashes, dashes_len) = match props.dash.as_ref() {
             Some(dash) => {
-                let cap = dash.cap as _;
+                let cap = D2D1_CAP_STYLE(dash.cap as _);
                 let (style, dashes, dashes_len) = match dash.style {
                     DashStyle::Solid => (D2D1_DASH_STYLE_SOLID, std::ptr::null(), 0),
                     DashStyle::Dash => (D2D1_DASH_STYLE_DASH, std::ptr::null(), 0),
@@ -103,8 +103,8 @@ impl StrokeStyle {
             LineJoin::MiterOrBevel(miter_limit) => (D2D1_LINE_JOIN_MITER_OR_BEVEL, miter_limit),
         };
         let props = D2D1_STROKE_STYLE_PROPERTIES {
-            startCap: props.start_cap as _,
-            endCap: props.end_cap as _,
+            startCap: D2D1_CAP_STYLE(props.start_cap as _),
+            endCap: D2D1_CAP_STYLE(props.end_cap as _),
             dashCap: dash_cap,
             lineJoin: line_join,
             miterLimit: miter_limit,

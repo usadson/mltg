@@ -371,7 +371,7 @@ impl Application {
                     DestBlendAlpha: D3D12_BLEND_ZERO,
                     BlendOpAlpha: D3D12_BLEND_OP_ADD,
                     LogicOp: D3D12_LOGIC_OP_NOOP,
-                    RenderTargetWriteMask: D3D12_COLOR_WRITE_ENABLE_ALL as _,
+                    RenderTargetWriteMask: D3D12_COLOR_WRITE_ENABLE_ALL.0 as _,
                 };
                 let mut rtv_formats = [DXGI_FORMAT_UNKNOWN; 8];
                 rtv_formats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;

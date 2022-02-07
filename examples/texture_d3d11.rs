@@ -104,7 +104,7 @@ impl Application {
                 &D3D11_BUFFER_DESC {
                     ByteWidth: std::mem::size_of::<[Vertex; 4]>() as _,
                     Usage: D3D11_USAGE_DEFAULT,
-                    BindFlags: D3D11_BIND_VERTEX_BUFFER,
+                    BindFlags: D3D11_BIND_VERTEX_BUFFER.0,
                     ..Default::default()
                 },
                 &D3D11_SUBRESOURCE_DATA {
@@ -119,7 +119,7 @@ impl Application {
                 &D3D11_BUFFER_DESC {
                     ByteWidth: std::mem::size_of::<[u32; 6]>() as _,
                     Usage: D3D11_USAGE_DEFAULT,
-                    BindFlags: D3D11_BIND_INDEX_BUFFER,
+                    BindFlags: D3D11_BIND_INDEX_BUFFER.0,
                     ..Default::default()
                 },
                 &D3D11_SUBRESOURCE_DATA {
@@ -205,7 +205,7 @@ impl Application {
                 SrcBlendAlpha: D3D11_BLEND_ONE,
                 DestBlendAlpha: D3D11_BLEND_ZERO,
                 BlendOpAlpha: D3D11_BLEND_OP_ADD,
-                RenderTargetWriteMask: D3D11_COLOR_WRITE_ENABLE_ALL as _,
+                RenderTargetWriteMask: D3D11_COLOR_WRITE_ENABLE_ALL.0 as _,
             };
             device.CreateBlendState(&D3D11_BLEND_DESC {
                 RenderTarget: [rt; 8],

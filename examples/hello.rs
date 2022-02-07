@@ -43,8 +43,8 @@ impl wita::EventHandler for Application {
         });
     }
 
-    fn dpi_changed(&mut self, window: &wita::Window) {
-        self.context.set_dpi(window.dpi() as _);
+    fn dpi_changed(&mut self, window: &wita::Window, new_dpi: u32) {
+        self.context.set_dpi(new_dpi as _);
         self.resizing(window, window.inner_size());
     }
 

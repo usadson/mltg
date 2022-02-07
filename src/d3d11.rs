@@ -1,5 +1,5 @@
 use crate::*;
-use windows::core::{Abi, Interface};
+use windows::core::Interface;
 use windows::Win32::Graphics::{Direct3D11::*, Dxgi::*};
 
 #[derive(Clone, PartialEq, Eq)]
@@ -39,21 +39,21 @@ impl Direct3D11 {
         unsafe {
             let d3d11_device: ID3D11Device = d3d11_device.cast()?;
             let d2d1_factory = {
-                let mut p = std::ptr::null_mut();
+                let mut p: Option<ID2D1Factory1> = None;
                 D2D1CreateFactory(
                     D2D1_FACTORY_TYPE_MULTI_THREADED,
                     &ID2D1Factory1::IID,
                     &D2D1_FACTORY_OPTIONS {
                         debugLevel: D2D1_DEBUG_LEVEL_ERROR,
                     },
-                    &mut p,
+                    &mut p as *mut _ as _,
                 )
-                .and_then(|_| ID2D1Factory1::from_abi(p))?
+                .map(|_| p.unwrap())?
             };
             let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
-            let d2d1_device = { d2d1_factory.CreateDevice(&dxgi_device)? };
+            let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
             let device_context =
-                { d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)? };
+                d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
             Ok(Self {
                 d2d1_factory,
                 device_context,
