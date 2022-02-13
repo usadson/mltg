@@ -16,10 +16,7 @@ pub struct Direct2D {
 }
 
 impl Direct2D {
-    pub fn new(
-        hwnd: *mut std::ffi::c_void,
-        size: impl Into<gecl::Size<u32>>,
-    ) -> windows::core::Result<Self> {
+    pub fn new(hwnd: *mut std::ffi::c_void, size: impl Into<gecl::Size<u32>>) -> Result<Self> {
         unsafe {
             let d3d11_device: ID3D11Device = {
                 const FEATURE_LEVELS: [D3D_FEATURE_LEVEL; 1] = [D3D_FEATURE_LEVEL_11_0];
@@ -102,15 +99,12 @@ impl Backend for Direct2D {
     }
 
     #[inline]
-    fn back_buffers(
-        &self,
-        swap_chain: &IDXGISwapChain1,
-    ) -> windows::core::Result<Vec<Self::RenderTarget>> {
+    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>> {
         self.object.back_buffers(swap_chain)
     }
 
     #[inline]
-    fn render_target(&self, target: &impl Interface) -> windows::core::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
         Ok(d3d11::RenderTarget(target.cast::<ID2D1Bitmap1>()?))
     }
 

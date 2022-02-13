@@ -109,11 +109,8 @@ pub trait Backend {
 
     fn device_context(&self) -> &ID2D1DeviceContext;
     fn d2d1_factory(&self) -> &ID2D1Factory1;
-    fn back_buffers(
-        &self,
-        swap_chain: &IDXGISwapChain1,
-    ) -> windows::core::Result<Vec<Self::RenderTarget>>;
-    fn render_target(&self, target: &impl Interface) -> windows::core::Result<Self::RenderTarget>;
+    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>>;
+    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -128,10 +125,7 @@ pub struct Factory {
 
 impl Factory {
     #[inline]
-    pub fn create_gradient_stop_collection<U>(
-        &self,
-        stops: &[U],
-    ) -> windows::core::Result<GradientStopCollection>
+    pub fn create_gradient_stop_collection<U>(&self, stops: &[U]) -> Result<GradientStopCollection>
     where
         U: Into<GradientStop> + Clone,
     {
@@ -139,7 +133,7 @@ impl Factory {
     }
 
     #[inline]
-    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> windows::core::Result<Brush> {
+    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> Result<Brush> {
         Brush::solid_color(&self.device_context, color)
     }
 
@@ -149,7 +143,7 @@ impl Factory {
         start: impl Into<Point>,
         end: impl Into<Point>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::core::Result<Brush> {
+    ) -> Result<Brush> {
         Brush::linear_gradient(&self.device_context, start, end, stop_collection)
     }
 
@@ -160,7 +154,7 @@ impl Factory {
         offset: impl Into<Point>,
         radius: impl Into<Vector>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::core::Result<Brush> {
+    ) -> Result<Brush> {
         Brush::radial_gradient(
             &self.device_context,
             center,
@@ -177,10 +171,7 @@ impl Factory {
     }
 
     #[inline]
-    pub fn create_stroke_style(
-        &self,
-        props: &StrokeStyleProperties,
-    ) -> windows::core::Result<StrokeStyle> {
+    pub fn create_stroke_style(&self, props: &StrokeStyleProperties) -> Result<StrokeStyle> {
         StrokeStyle::new(&self.d2d1_factory, props)
     }
 
@@ -190,7 +181,7 @@ impl Factory {
         font: &Font,
         size: impl Into<f32>,
         style: Option<&TextStyle>,
-    ) -> windows::core::Result<TextFormat> {
+    ) -> Result<TextFormat> {
         TextFormat::new(&self.dwrite_factory, font, size.into(), style)
     }
 
@@ -201,7 +192,7 @@ impl Factory {
         format: &TextFormat,
         alignment: TextAlignment,
         size: Option<Size>,
-    ) -> windows::core::Result<TextLayout> {
+    ) -> Result<TextLayout> {
         TextLayout::new(
             &self.dwrite_factory.clone().into(),
             text.as_ref(),
@@ -212,7 +203,7 @@ impl Factory {
     }
 
     #[inline]
-    pub fn create_image(&self, loader: impl ImageLoader) -> windows::core::Result<Image> {
+    pub fn create_image(&self, loader: impl ImageLoader) -> Result<Image> {
         Image::new(&self.device_context, &self.wic_imaging_factory, loader)
     }
 }
@@ -232,7 +223,7 @@ where
     T: Backend + Clone,
 {
     #[inline]
-    pub fn new(backend: T) -> windows::core::Result<Self> {
+    pub fn new(backend: T) -> Result<Self> {
         unsafe {
             let dwrite_factory =
                 DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?;
@@ -262,20 +253,14 @@ where
     }
 
     #[inline]
-    pub fn create_back_buffers(
-        &self,
-        swap_chain: &impl Interface,
-    ) -> windows::core::Result<Vec<T::RenderTarget>> {
+    pub fn create_back_buffers(&self, swap_chain: &impl Interface) -> Result<Vec<T::RenderTarget>> {
         let swap_chain: IDXGISwapChain1 = swap_chain.cast()?;
         let ret = self.backend.back_buffers(&swap_chain);
         ret
     }
 
     #[inline]
-    pub fn create_render_target(
-        &self,
-        target: &impl Interface,
-    ) -> windows::core::Result<T::RenderTarget> {
+    pub fn create_render_target(&self, target: &impl Interface) -> Result<T::RenderTarget> {
         self.backend.render_target(target)
     }
 
@@ -286,7 +271,11 @@ where
         }
     }
 
-    pub fn draw<R>(&self, target: &T::RenderTarget, f: impl FnOnce(&DrawCommand) -> R) -> R {
+    pub fn draw<R>(
+        &self,
+        target: &T::RenderTarget,
+        f: impl FnOnce(&DrawCommand) -> R,
+    ) -> Result<R> {
         let device_context = self.backend.device_context();
         unsafe {
             self.backend.begin_draw(target);
@@ -296,12 +285,10 @@ where
                 device_context: self.backend.device_context(),
                 dwrite_factory: &self.dwrite_factory,
             });
-            device_context
-                .EndDraw(std::ptr::null_mut(), std::ptr::null_mut())
-                .unwrap();
+            device_context.EndDraw(std::ptr::null_mut(), std::ptr::null_mut())?;
             device_context.SetTarget(None);
             self.backend.end_draw(target);
-            ret
+            Ok(ret)
         }
     }
 }

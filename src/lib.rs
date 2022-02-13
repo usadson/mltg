@@ -3,6 +3,7 @@ mod context;
 pub mod d2d;
 pub mod d3d11;
 pub mod d3d12;
+pub mod error;
 mod image;
 mod path;
 mod shape;
@@ -15,6 +16,7 @@ pub use context::*;
 pub use d2d::Direct2D;
 pub use d3d11::Direct3D11;
 pub use d3d12::Direct3D12;
+pub use error::{Error, ErrorKind};
 pub use gecl;
 pub use gecl::{circle, point, rect, rgba, size, vector};
 pub use image::*;
@@ -24,6 +26,8 @@ pub use stroke_style::*;
 pub use text::*;
 pub use utility::*;
 use windows::Win32::Graphics::{Direct2D::Common::*, Direct2D::*, Direct3D::*};
+
+pub type Result<T> = core::result::Result<T, Error>;
 
 pub trait Target {
     fn bitmap(&self) -> &ID2D1Bitmap1;

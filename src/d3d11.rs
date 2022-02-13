@@ -35,7 +35,7 @@ pub struct Direct3D11 {
 }
 
 impl Direct3D11 {
-    pub fn new(d3d11_device: &impl Interface) -> windows::core::Result<Self> {
+    pub fn new(d3d11_device: &impl Interface) -> Result<Self> {
         unsafe {
             let d3d11_device: ID3D11Device = d3d11_device.cast()?;
             let d2d1_factory = {
@@ -78,10 +78,7 @@ impl Backend for Direct3D11 {
         &self.d2d1_factory
     }
 
-    fn back_buffers(
-        &self,
-        swap_chain: &IDXGISwapChain1,
-    ) -> windows::core::Result<Vec<Self::RenderTarget>> {
+    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>> {
         unsafe {
             let desc = { swap_chain.GetDesc1()? };
             let surface: IDXGISurface = swap_chain.GetBuffer(0)?;
@@ -104,7 +101,7 @@ impl Backend for Direct3D11 {
         }
     }
 
-    fn render_target(&self, target: &impl Interface) -> windows::core::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
         let texture: ID3D11Texture2D = target.cast()?;
         let desc = unsafe {
             let mut desc = D3D11_TEXTURE2D_DESC::default();

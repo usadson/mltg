@@ -69,10 +69,7 @@ impl<'a> Default for StrokeStyleProperties<'a> {
 pub struct StrokeStyle(pub(crate) ID2D1StrokeStyle);
 
 impl StrokeStyle {
-    pub(crate) fn new(
-        factory: &ID2D1Factory1,
-        props: &StrokeStyleProperties,
-    ) -> windows::core::Result<Self> {
+    pub(crate) fn new(factory: &ID2D1Factory1, props: &StrokeStyleProperties) -> Result<Self> {
         let (dash_cap, dash_style, dash_offset, dashes, dashes_len) = match props.dash.as_ref() {
             Some(dash) => {
                 let cap = D2D1_CAP_STYLE(dash.cap as _);

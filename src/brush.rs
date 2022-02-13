@@ -49,7 +49,7 @@ where
 pub struct GradientStopCollection(ID2D1GradientStopCollection);
 
 impl GradientStopCollection {
-    pub(crate) fn new<T>(dc: &ID2D1DeviceContext, stops: &[T]) -> windows::core::Result<Self>
+    pub(crate) fn new<T>(dc: &ID2D1DeviceContext, stops: &[T]) -> Result<Self>
     where
         T: Into<GradientStop> + Clone,
     {
@@ -94,10 +94,7 @@ pub enum Brush {
 
 impl Brush {
     #[inline]
-    pub(crate) fn solid_color(
-        dc: &ID2D1DeviceContext,
-        color: impl Into<Rgba>,
-    ) -> windows::core::Result<Self> {
+    pub(crate) fn solid_color(dc: &ID2D1DeviceContext, color: impl Into<Rgba>) -> Result<Self> {
         let color: D2D1_COLOR_F = Inner(color.into()).into();
         let brush = unsafe { dc.CreateSolidColorBrush(&color, std::ptr::null())? };
         Ok(Self::SolidColor(SolidColorBrush(brush)))
@@ -109,7 +106,7 @@ impl Brush {
         start: impl Into<Point>,
         end: impl Into<Point>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::core::Result<Self> {
+    ) -> Result<Self> {
         let start = start.into();
         let end = end.into();
         let brush = unsafe {
@@ -132,7 +129,7 @@ impl Brush {
         offset: impl Into<Point>,
         radius: impl Into<Vector>,
         stop_collection: &GradientStopCollection,
-    ) -> windows::core::Result<Self> {
+    ) -> Result<Self> {
         let center = center.into();
         let offset = offset.into();
         let radius = radius.into();

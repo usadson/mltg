@@ -103,7 +103,7 @@ impl wita::EventHandler for Application {
             .factory
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
-        self.context.draw(&self.back_buffer[0], |cmd| {
+        let ret = self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.fill(&rect, &linear_grad_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
@@ -118,6 +118,18 @@ impl wita::EventHandler for Application {
             );
             cmd.stroke(&path, &self.white_brush, 5.0, Some(&self.stroke_style));
         });
+        match ret {
+            Ok(_) => {}
+            Err(e) if e == mltg::ErrorKind::RecreateTarget => {
+                self.back_buffer.clear();
+                self.back_buffer = self
+                    .context
+                    .create_back_buffers(self.context.backend().swap_chain())
+                    .unwrap();
+                window.redraw();
+            }
+            Err(e) => panic!("{:?}", e),
+        }
     }
 
     fn dpi_changed(&mut self, window: &wita::Window, new_dpi: u32) {

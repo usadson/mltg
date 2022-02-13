@@ -40,10 +40,7 @@ pub struct Direct3D12 {
 }
 
 impl Direct3D12 {
-    pub fn new(
-        d3d12_device: &impl Interface,
-        command_queue: &impl Interface,
-    ) -> windows::core::Result<Self> {
+    pub fn new(d3d12_device: &impl Interface, command_queue: &impl Interface) -> Result<Self> {
         unsafe {
             let d3d12_device: ID3D12Device = d3d12_device.cast()?;
             let command_queue: ID3D12CommandQueue = command_queue.cast()?;
@@ -112,10 +109,7 @@ impl Backend for Direct3D12 {
         &self.d2d1_factory
     }
 
-    fn back_buffers(
-        &self,
-        swap_chain: &IDXGISwapChain1,
-    ) -> windows::core::Result<Vec<Self::RenderTarget>> {
+    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>> {
         unsafe {
             let desc = swap_chain.GetDesc1()?;
             let bmp_props = D2D1_BITMAP_PROPERTIES1 {
@@ -156,7 +150,7 @@ impl Backend for Direct3D12 {
         }
     }
 
-    fn render_target(&self, target: &impl Interface) -> windows::core::Result<Self::RenderTarget> {
+    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
         unsafe {
             let resource: ID3D12Resource = target.cast()?;
             let desc = resource.GetDesc();

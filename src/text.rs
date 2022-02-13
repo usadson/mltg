@@ -87,7 +87,7 @@ pub enum TextAlignment {
 impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
     type Error = ();
 
-    fn try_from(src: DWRITE_TEXT_ALIGNMENT) -> Result<Self, ()> {
+    fn try_from(src: DWRITE_TEXT_ALIGNMENT) -> core::result::Result<Self, ()> {
         let dest = match src {
             DWRITE_TEXT_ALIGNMENT_LEADING => TextAlignment::Leading,
             DWRITE_TEXT_ALIGNMENT_CENTER => TextAlignment::Center,
@@ -140,7 +140,7 @@ impl TextFormat {
         font: &Font,
         size: f32,
         style: Option<&TextStyle>,
-    ) -> windows::core::Result<Self> {
+    ) -> Result<Self> {
         let style = style.cloned().unwrap_or_default();
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
             Font::System(font_name) => (font_name, None),
@@ -228,7 +228,7 @@ impl TextLayout {
         format: &TextFormat,
         alignment: TextAlignment,
         size: Option<Size>,
-    ) -> windows::core::Result<Self> {
+    ) -> Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
             let layout = factory.CreateTextLayout(

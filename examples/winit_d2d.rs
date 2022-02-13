@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
                 let hh = window_size.height / 2.0;
                 let image_size = image.size().cast::<f32>().unwrap();
                 let size = (hw, image_size.height * hw / image_size.width);
-                context.draw(&back_buffers[0], |cmd| {
+                let ret = context.draw(&back_buffers[0], |cmd| {
                     cmd.clear([0.0, 0.0, 0.3, 0.0]);
                     cmd.draw_image(
                         &image,
@@ -45,6 +45,17 @@ fn main() -> anyhow::Result<()> {
                         mltg::Interpolation::HighQualityCubic,
                     );
                 });
+                match ret {
+                    Ok(_) => {}
+                    Err(e) if e == mltg::ErrorKind::RecreateTarget => {
+                        back_buffers.clear();
+                        back_buffers = context
+                            .create_back_buffers(context.backend().swap_chain())
+                            .unwrap();
+                        window.request_redraw();
+                    }
+                    Err(e) => panic!("{:?}", e),
+                }
             }
             Event::WindowEvent {
                 event: WindowEvent::Resized(size),

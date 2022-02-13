@@ -63,7 +63,7 @@ struct Application {
     fence_value: Cell<u64>,
     context: mltg::Context<mltg::Direct3D12>,
     image: mltg::Image,
-    target: mltg::d3d12::RenderTarget,
+    target: Option<mltg::d3d12::RenderTarget>,
 }
 
 impl Application {
@@ -437,7 +437,7 @@ impl Application {
                 fence_value: Cell::new(1),
                 context,
                 image,
-                target,
+                target: Some(target),
             })
         }
     }
@@ -461,7 +461,7 @@ impl wita::EventHandler for Application {
     fn draw(&mut self, window: &wita::Window) {
         let window_size = window.inner_size();
         unsafe {
-            self.context.draw(&self.target, |cmd| {
+            let ret = self.context.draw(self.target.as_ref().unwrap(), |cmd| {
                 let desc = self.tex.GetDesc();
                 cmd.clear([0.0, 0.0, 0.0, 0.0]);
                 cmd.draw_image(
@@ -471,6 +471,18 @@ impl wita::EventHandler for Application {
                     mltg::Interpolation::HighQualityCubic,
                 );
             });
+            match ret {
+                Ok(_) => {
+                    self.swap_chain.Present(1, 0).unwrap();
+                }
+                Err(e) if e == mltg::ErrorKind::RecreateTarget => {
+                    self.target = None;
+                    self.context.backend().flush();
+                    self.target = Some(self.context.create_render_target(&self.tex).unwrap());
+                    window.redraw();
+                }
+                Err(e) => panic!("{:?}", e),
+            }
             let index = self.swap_chain.GetCurrentBackBufferIndex() as usize;
             let rtv_handle = {
                 let mut handle = self.rtv_heap.GetCPUDescriptorHandleForHeapStart();

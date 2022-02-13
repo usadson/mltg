@@ -249,7 +249,7 @@ impl wita::EventHandler for Application {
             let mut command_lists = [Some(self.command_list.cast::<ID3D12CommandList>().unwrap())];
             self.command_queue
                 .ExecuteCommandLists(command_lists.len() as _, command_lists.as_mut_ptr());
-            self.context.draw(&self.bitmaps[index], |cmd| {
+            let ret = self.context.draw(&self.bitmaps[index], |cmd| {
                 cmd.fill(&rect, &linear_grad_brush);
                 cmd.stroke(&text_box, &self.white_brush, 2.0, None);
                 cmd.draw_text_layout(&self.text, &self.white_brush, (hw, hh));
@@ -261,7 +261,18 @@ impl wita::EventHandler for Application {
                 );
                 cmd.stroke(&path, &self.white_brush, 5.0, None);
             });
-            self.swap_chain.Present(1, 0).unwrap();
+            match ret {
+                Ok(_) => {
+                    self.swap_chain.Present(1, 0).unwrap();
+                }
+                Err(e) if e == mltg::ErrorKind::RecreateTarget => {
+                    self.bitmaps.clear();
+                    self.context.backend().flush();
+                    self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
+                    window.redraw();
+                }
+                Err(e) => panic!("{:?}", e),
+            }
         }
         self.wait_gpu();
     }

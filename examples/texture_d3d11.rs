@@ -242,7 +242,7 @@ impl wita::EventHandler for Application {
         let dc = &self.device_context;
         let window_size = window.inner_size();
         unsafe {
-            self.context.draw(&self.target, |cmd| {
+            let ret = self.context.draw(&self.target, |cmd| {
                 let desc = {
                     let mut desc = D3D11_TEXTURE2D_DESC::default();
                     self.tex.GetDesc(&mut desc);
@@ -256,6 +256,15 @@ impl wita::EventHandler for Application {
                     mltg::Interpolation::HighQualityCubic,
                 );
             });
+            match ret {
+                Ok(_) => {}
+                Err(e) if e == mltg::ErrorKind::RecreateTarget => {
+                    self.target = self.context.create_render_target(&self.tex).unwrap();
+                    window.redraw();
+                    return;
+                }
+                Err(e) => panic!("{:?}", e),
+            }
             dc.ClearRenderTargetView(&self.rtv, [0.0, 0.0, 0.3, 0.0].as_ptr());
             dc.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             dc.IASetInputLayout(&self.input_layout);

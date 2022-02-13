@@ -23,7 +23,7 @@ impl Image {
         dc: &ID2D1DeviceContext,
         factory: &IWICImagingFactory,
         loader: impl ImageLoader,
-    ) -> windows::core::Result<Self> {
+    ) -> Result<Self> {
         loader.load(dc, factory)
     }
 
@@ -66,19 +66,11 @@ unsafe impl Send for Image {}
 unsafe impl Sync for Image {}
 
 pub trait ImageLoader {
-    fn load(
-        &self,
-        dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
-    ) -> windows::core::Result<Image>;
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image>;
 }
 
 impl<'a> ImageLoader for &'a Path {
-    fn load(
-        &self,
-        dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
-    ) -> windows::core::Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
         unsafe {
             let decoder = {
                 factory.CreateDecoderFromFilename(
@@ -112,31 +104,19 @@ impl<'a> ImageLoader for &'a Path {
 }
 
 impl ImageLoader for PathBuf {
-    fn load(
-        &self,
-        dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
-    ) -> windows::core::Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
         self.as_path().load(dc, factory)
     }
 }
 
 impl<'a> ImageLoader for &'a str {
-    fn load(
-        &self,
-        dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
-    ) -> windows::core::Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }
 
 impl<'a> ImageLoader for &'a String {
-    fn load(
-        &self,
-        dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
-    ) -> windows::core::Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }
