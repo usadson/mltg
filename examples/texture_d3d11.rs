@@ -3,6 +3,7 @@ use windows::Win32::{
     Graphics::{Direct3D::*, Direct3D11::*, Dxgi::Common::*, Dxgi::*},
     System::Com::*,
 };
+use windows::core::PCSTR;
 
 #[repr(C)]
 struct Vertex {
@@ -136,7 +137,7 @@ impl Application {
             let ps = { device.CreatePixelShader(ps_blob.as_ptr() as _, ps_blob.len() as _, None)? };
             let descs = [
                 D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: PSTR(b"POSITION\0".as_ptr() as _),
+                    SemanticName: PCSTR(b"POSITION\0".as_ptr() as _),
                     SemanticIndex: 0,
                     Format: DXGI_FORMAT_R32G32B32_FLOAT,
                     InputSlot: 0,
@@ -145,7 +146,7 @@ impl Application {
                     InstanceDataStepRate: 0,
                 },
                 D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: PSTR(b"TEXCOORD\0".as_ptr() as _),
+                    SemanticName: PCSTR(b"TEXCOORD\0".as_ptr() as _),
                     SemanticIndex: 0,
                     Format: DXGI_FORMAT_R32G32_FLOAT,
                     InputSlot: 0,

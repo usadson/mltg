@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use windows::core::Interface;
+use windows::core::{Interface, PCWSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
@@ -168,7 +168,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::default());
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PCWSTR::default());
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
                 CloseHandle(event);

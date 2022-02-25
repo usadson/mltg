@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use windows::core::Interface;
+use windows::core::{Interface, PCWSTR, PCSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
@@ -343,7 +343,7 @@ impl Application {
                 let ps_blob = include_bytes!("d3d12_hlsl/tex.ps");
                 let input_layout = [
                     D3D12_INPUT_ELEMENT_DESC {
-                        SemanticName: PSTR(b"POSITION\0".as_ptr() as _),
+                        SemanticName: PCSTR(b"POSITION\0".as_ptr() as _),
                         SemanticIndex: 0,
                         Format: DXGI_FORMAT_R32G32B32_FLOAT,
                         AlignedByteOffset: 0,
@@ -352,7 +352,7 @@ impl Application {
                         InstanceDataStepRate: 0,
                     },
                     D3D12_INPUT_ELEMENT_DESC {
-                        SemanticName: PSTR(b"TEXCOORD\0".as_ptr() as _),
+                        SemanticName: PCSTR(b"TEXCOORD\0".as_ptr() as _),
                         SemanticIndex: 0,
                         Format: DXGI_FORMAT_R32G32_FLOAT,
                         AlignedByteOffset: D3D12_APPEND_ALIGNED_ELEMENT,
@@ -447,7 +447,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, PWSTR::default());
+                let event = CreateEventW(std::ptr::null_mut(), false, false, PCWSTR::default());
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
                 CloseHandle(event);

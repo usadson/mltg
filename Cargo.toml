@@ -18,7 +18,7 @@ all-featurse = true
 gecl = "0.0.2"
 
 [dependencies.windows]
-version = "0.32.0"
+version = "0.33.0"
 features = [
 	"alloc",
 	"Win32_Graphics_Direct3D",
@@ -41,6 +41,6 @@ features = [
 ]
 
 [dev-dependencies]
-anyhow = "1.0.53"
+anyhow = "1.0.55"
 winit = "0.26.1"
-wita = "0.11.0"
+wita = "0.12.1"

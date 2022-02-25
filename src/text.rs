@@ -1,6 +1,6 @@
 use crate::*;
 use std::convert::TryInto;
-use windows::core::Interface;
+use windows::core::{Interface, PCWSTR};
 use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -232,7 +232,7 @@ impl TextLayout {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
             let layout = factory.CreateTextLayout(
-                PWSTR(text.as_ptr() as _),
+                PCWSTR(text.as_ptr() as _),
                 text.len() as _,
                 &format.format,
                 std::f32::MAX,
