@@ -48,7 +48,7 @@ impl Direct2D {
                         Format: DXGI_FORMAT_B8G8R8A8_UNORM,
                         BufferCount: 2,
                         BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                        SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                        SwapEffect: DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
                         SampleDesc: DXGI_SAMPLE_DESC {
                             Count: 1,
                             Quality: 0,
