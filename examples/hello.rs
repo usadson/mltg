@@ -36,7 +36,7 @@ impl Application {
 }
 
 impl wita::EventHandler for Application {
-    fn draw(&mut self, window: &wita::Window) {
+    fn draw(&mut self, ev: wita::event::Draw) {
         let ret = self.context.draw(&self.back_buffer[0], |cmd| {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
@@ -49,25 +49,28 @@ impl wita::EventHandler for Application {
                     .context
                     .create_back_buffers(self.context.backend().swap_chain())
                     .unwrap();
-                window.redraw();
+                ev.window.redraw();
             }
             Err(e) => panic!("{:?}", e),
         }
     }
 
-    fn dpi_changed(&mut self, window: &wita::Window, new_dpi: u32) {
-        self.context.set_dpi(new_dpi as _);
-        self.resizing(window, window.inner_size());
+    fn dpi_changed(&mut self, ev: wita::event::DpiChanged) {
+        self.context.set_dpi(ev.new_dpi as _);
+        self.resizing(wita::event::Resizing {
+            window: ev.window,
+            size: ev.window.inner_size(),
+        });
     }
 
-    fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
+    fn resizing(&mut self, ev: wita::event::Resizing) {
         self.back_buffer.clear();
-        self.context.backend().resize((size.width, size.height));
+        self.context.backend().resize((ev.size.width, ev.size.height));
         self.back_buffer = self
             .context
             .create_back_buffers(self.context.backend().swap_chain())
             .unwrap();
-        window.redraw();
+        ev.window.redraw();
     }
 }
 

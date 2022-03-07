@@ -459,8 +459,8 @@ impl Application {
 }
 
 impl wita::EventHandler for Application {
-    fn draw(&mut self, window: &wita::Window) {
-        let window_size = window.inner_size();
+    fn draw(&mut self, ev: wita::event::Draw) {
+        let window_size = ev.window.inner_size();
         unsafe {
             let ret = self.context.draw(self.target.as_ref().unwrap(), |cmd| {
                 let desc = self.tex.GetDesc();
@@ -480,7 +480,7 @@ impl wita::EventHandler for Application {
                     self.target = None;
                     self.context.backend().flush();
                     self.target = Some(self.context.create_render_target(&self.tex).unwrap());
-                    window.redraw();
+                    ev.window.redraw();
                 }
                 Err(e) => panic!("{:?}", e),
             }
@@ -572,11 +572,11 @@ impl wita::EventHandler for Application {
         self.wait_gpu();
     }
 
-    fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
+    fn resizing(&mut self, ev: wita::event::Resizing) {
         unsafe {
             self.render_targets.clear();
             self.swap_chain
-                .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
+                .ResizeBuffers(0, ev.size.width, ev.size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .unwrap();
             self.render_targets = {
                 let mut handle = self.rtv_heap.GetCPUDescriptorHandleForHeapStart();
@@ -591,7 +591,7 @@ impl wita::EventHandler for Application {
                 buffers
             };
         }
-        window.redraw();
+        ev.window.redraw();
     }
 }
 

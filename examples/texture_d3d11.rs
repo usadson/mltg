@@ -240,9 +240,9 @@ impl Application {
 }
 
 impl wita::EventHandler for Application {
-    fn draw(&mut self, window: &wita::Window) {
+    fn draw(&mut self, ev: wita::event::Draw) {
         let dc = &self.device_context;
-        let window_size = window.inner_size();
+        let window_size = ev.window.inner_size();
         unsafe {
             let ret = self.context.draw(&self.target, |cmd| {
                 let desc = {
@@ -262,7 +262,7 @@ impl wita::EventHandler for Application {
                 Ok(_) => {}
                 Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                     self.target = self.context.create_render_target(&self.tex).unwrap();
-                    window.redraw();
+                    ev.window.redraw();
                     return;
                 }
                 Err(e) => panic!("{:?}", e),
@@ -299,12 +299,12 @@ impl wita::EventHandler for Application {
         }
     }
 
-    fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
+    fn resizing(&mut self, ev: wita::event::Resizing) {
         unsafe {
             self.device_context.ClearState();
             self.rtv = None;
             self.swap_chain
-                .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
+                .ResizeBuffers(0, ev.size.width, ev.size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .unwrap();
             self.rtv = {
                 let buffer: ID3D11Texture2D = self.swap_chain.GetBuffer(0).unwrap();
@@ -312,7 +312,7 @@ impl wita::EventHandler for Application {
                     .CreateRenderTargetView(buffer, std::ptr::null())
                     .ok()
             };
-            window.redraw();
+            ev.window.redraw();
         }
     }
 }

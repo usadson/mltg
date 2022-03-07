@@ -180,9 +180,9 @@ impl Application {
 }
 
 impl wita::EventHandler for Application {
-    fn draw(&mut self, window: &wita::Window) {
+    fn draw(&mut self, ev: wita::event::Draw) {
         const CLEAR_COLOR: [f32; 4] = [0.0, 0.0, 0.3, 0.0];
-        let window_size = window.inner_size().to_logical(window.dpi());
+        let window_size = ev.window.inner_size().to_logical(ev.window.dpi());
         let hw = window_size.width as f32 / 2.0;
         let hh = window_size.height as f32 / 2.0;
         let rect = {
@@ -270,7 +270,7 @@ impl wita::EventHandler for Application {
                     self.bitmaps.clear();
                     self.context.backend().flush();
                     self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
-                    window.redraw();
+                    ev.window.redraw();
                 }
                 Err(e) => panic!("{:?}", e),
             }
@@ -278,18 +278,21 @@ impl wita::EventHandler for Application {
         self.wait_gpu();
     }
 
-    fn dpi_changed(&mut self, window: &wita::Window, new_dpi: u32) {
-        self.context.set_dpi(new_dpi as _);
-        self.resizing(window, window.inner_size());
+    fn dpi_changed(&mut self, ev: wita::event::DpiChanged) {
+        self.context.set_dpi(ev.new_dpi as _);
+        self.resizing(wita::event::Resizing {
+            window: ev.window,
+            size: ev.window.inner_size()
+        });
     }
 
-    fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
+    fn resizing(&mut self, ev: wita::event::Resizing) {
         self.bitmaps.clear();
         self.render_targets.clear();
         self.context.backend().flush();
         unsafe {
             self.swap_chain
-                .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
+                .ResizeBuffers(0, ev.size.width, ev.size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .unwrap();
         }
         self.render_targets = unsafe {
@@ -305,7 +308,7 @@ impl wita::EventHandler for Application {
             buffers
         };
         self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
-        window.redraw();
+        ev.window.redraw();
     }
 }
 
