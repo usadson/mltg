@@ -110,7 +110,7 @@ pub trait Backend {
     fn device_context(&self) -> &ID2D1DeviceContext;
     fn d2d1_factory(&self) -> &ID2D1Factory1;
     fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>>;
-    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget>;
+    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -253,14 +253,7 @@ where
     }
 
     #[inline]
-    pub fn create_back_buffers(&self, swap_chain: &impl Interface) -> Result<Vec<T::RenderTarget>> {
-        let swap_chain: IDXGISwapChain1 = swap_chain.cast()?;
-        let ret = self.backend.back_buffers(&swap_chain);
-        ret
-    }
-
-    #[inline]
-    pub fn create_render_target(&self, target: &impl Interface) -> Result<T::RenderTarget> {
+    pub unsafe fn create_render_target<U>(&self, target: &U) -> Result<T::RenderTarget> {
         self.backend.render_target(target)
     }
 

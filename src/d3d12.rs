@@ -40,55 +40,64 @@ pub struct Direct3D12 {
 }
 
 impl Direct3D12 {
-    pub fn new(d3d12_device: &impl Interface, command_queue: &impl Interface) -> Result<Self> {
-        unsafe {
-            let d3d12_device: ID3D12Device = d3d12_device.cast()?;
-            let command_queue: ID3D12CommandQueue = command_queue.cast()?;
-            let (d3d11on12_device, d3d11_device_context) = {
-                let mut queues = [command_queue.cast::<IUnknown>().unwrap()];
-                let mut p = None;
-                let mut dc = None;
-                D3D11On12CreateDevice(
-                    &d3d12_device,
-                    D3D11_CREATE_DEVICE_BGRA_SUPPORT.0,
-                    std::ptr::null(),
-                    0,
-                    queues.as_mut_ptr() as _,
-                    queues.len() as _,
-                    0,
-                    &mut p,
-                    &mut dc,
-                    std::ptr::null_mut(),
-                )
-                .map(|_| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
-            };
-            let d2d1_factory = {
-                let mut p: Option<ID2D1Factory1> = None;
-                D2D1CreateFactory(
-                    D2D1_FACTORY_TYPE_MULTI_THREADED,
-                    &ID2D1Factory1::IID,
-                    std::ptr::null(),
-                    &mut p as *mut _ as _,
-                )
-                .map(|_| p.unwrap())?
-            };
-            let dxgi_device = d3d11on12_device.cast::<IDXGIDevice>()?;
-            let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
-            let d2d1_device_context =
-                d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
-            Ok(Self {
-                d3d11on12_device,
-                d2d1_factory,
-                d2d1_device_context,
-                d3d11_device_context,
-            })
-        }
+    pub unsafe fn new<T, U>(d3d12_device: &T, command_queue: &U) -> Result<Self> {
+        let d3d12_device: ID3D12Device = (*(d3d12_device as *const _ as *const IUnknown)).cast()?;
+        let command_queue: ID3D12CommandQueue =
+            (*(command_queue as *const _ as *const IUnknown)).cast()?;
+        let (d3d11on12_device, d3d11_device_context) = {
+            let mut queues = [command_queue.cast::<IUnknown>().unwrap()];
+            let mut p = None;
+            let mut dc = None;
+            D3D11On12CreateDevice(
+                &d3d12_device,
+                D3D11_CREATE_DEVICE_BGRA_SUPPORT.0,
+                std::ptr::null(),
+                0,
+                queues.as_mut_ptr() as _,
+                queues.len() as _,
+                0,
+                &mut p,
+                &mut dc,
+                std::ptr::null_mut(),
+            )
+            .map(|_| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
+        };
+        let d2d1_factory = {
+            let mut p: Option<ID2D1Factory1> = None;
+            D2D1CreateFactory(
+                D2D1_FACTORY_TYPE_MULTI_THREADED,
+                &ID2D1Factory1::IID,
+                std::ptr::null(),
+                &mut p as *mut _ as _,
+            )
+            .map(|_| p.unwrap())?
+        };
+        let dxgi_device = d3d11on12_device.cast::<IDXGIDevice>()?;
+        let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
+        let d2d1_device_context =
+            d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
+        Ok(Self {
+            d3d11on12_device,
+            d2d1_factory,
+            d2d1_device_context,
+            d3d11_device_context,
+        })
+    }
+}
+
+impl Context<Direct3D12> {
+    #[inline]
+    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
+        let p = swap_chain as *const _ as *const IUnknown;
+        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
+        let ret = self.backend().back_buffers(&swap_chain);
+        ret
     }
 
     #[inline]
     pub fn flush(&self) {
         unsafe {
-            self.d3d11_device_context.Flush();
+            self.backend().d3d11_device_context.Flush();
         }
     }
 }
@@ -150,47 +159,45 @@ impl Backend for Direct3D12 {
         }
     }
 
-    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
-        unsafe {
-            let resource: ID3D12Resource = target.cast()?;
-            let desc = resource.GetDesc();
-            if cfg!(debug_assertions) {
-                assert!(
-                    (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
-                        != D3D12_RESOURCE_FLAG_NONE
-                );
-            }
-            let wrapper = {
-                let mut wrapper: Option<ID3D11Resource> = None;
-                self.d3d11on12_device
-                    .CreateWrappedResource(
-                        &resource,
-                        &D3D11_RESOURCE_FLAGS {
-                            BindFlags: D3D11_BIND_RENDER_TARGET.0,
-                            ..Default::default()
-                        },
-                        D3D12_RESOURCE_STATE_RENDER_TARGET,
-                        D3D12_RESOURCE_STATE_COMMON,
-                        &mut wrapper,
-                    )
-                    .map(|_| wrapper.unwrap())?
-            };
-            let surface: IDXGISurface = wrapper.cast()?;
-            let bitmap = {
-                self.d2d1_device_context.CreateBitmapFromDxgiSurface(
-                    &surface,
-                    &D2D1_BITMAP_PROPERTIES1 {
-                        pixelFormat: D2D1_PIXEL_FORMAT {
-                            format: desc.Format,
-                            alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
-                        },
-                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget> {
+        let target = target as *const _ as *const IUnknown;
+        let resource: ID3D12Resource = (*target).cast()?;
+        let desc = resource.GetDesc();
+        if cfg!(debug_assertions) {
+            assert!(
+                (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != D3D12_RESOURCE_FLAG_NONE
+            );
+        }
+        let wrapper = {
+            let mut wrapper: Option<ID3D11Resource> = None;
+            self.d3d11on12_device
+                .CreateWrappedResource(
+                    &resource,
+                    &D3D11_RESOURCE_FLAGS {
+                        BindFlags: D3D11_BIND_RENDER_TARGET.0,
                         ..Default::default()
                     },
-                )?
-            };
-            Ok(RenderTarget { wrapper, bitmap })
-        }
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_COMMON,
+                    &mut wrapper,
+                )
+                .map(|_| wrapper.unwrap())?
+        };
+        let surface: IDXGISurface = wrapper.cast()?;
+        let bitmap = {
+            self.d2d1_device_context.CreateBitmapFromDxgiSurface(
+                &surface,
+                &D2D1_BITMAP_PROPERTIES1 {
+                    pixelFormat: D2D1_PIXEL_FORMAT {
+                        format: desc.Format,
+                        alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
+                    },
+                    bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                    ..Default::default()
+                },
+            )?
+        };
+        Ok(RenderTarget { wrapper, bitmap })
     }
 
     #[inline]

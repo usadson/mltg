@@ -18,7 +18,7 @@ impl Application {
             mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
         let context = mltg::Context::new(backend)?;
         let factory = context.create_factory();
-        let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
+        let back_buffer = context.create_back_buffers()?;
         let white = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let text_format = factory.create_text_format(
             &mltg::Font::system("Yu Gothic UI"),
@@ -45,10 +45,7 @@ impl wita::EventHandler for Application {
             Ok(_) => {}
             Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                 self.back_buffer.clear();
-                self.back_buffer = self
-                    .context
-                    .create_back_buffers(self.context.backend().swap_chain())
-                    .unwrap();
+                self.back_buffer = self.context.create_back_buffers().unwrap();
                 ev.window.redraw();
             }
             Err(e) => panic!("{:?}", e),
@@ -65,11 +62,8 @@ impl wita::EventHandler for Application {
 
     fn resizing(&mut self, ev: wita::event::Resizing) {
         self.back_buffer.clear();
-        self.context.backend().resize((ev.size.width, ev.size.height));
-        self.back_buffer = self
-            .context
-            .create_back_buffers(self.context.backend().swap_chain())
-            .unwrap();
+        self.context.resize((ev.size.width, ev.size.height));
+        self.back_buffer = self.context.create_back_buffers().unwrap();
         ev.window.redraw();
     }
 }

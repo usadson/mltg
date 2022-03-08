@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
         window.hwnd(),
         (window_size.width, window_size.height),
     )?)?;
-    let mut back_buffers = context.create_back_buffers(context.backend().swap_chain())?;
+    let mut back_buffers = context.create_back_buffers()?;
     let image = {
         let factory = context.create_factory();
         factory.create_image("examples/ferris.png")?
@@ -49,9 +49,7 @@ fn main() -> anyhow::Result<()> {
                     Ok(_) => {}
                     Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                         back_buffers.clear();
-                        back_buffers = context
-                            .create_back_buffers(context.backend().swap_chain())
-                            .unwrap();
+                        back_buffers = context.create_back_buffers().unwrap();
                         window.request_redraw();
                     }
                     Err(e) => panic!("{:?}", e),
@@ -62,10 +60,8 @@ fn main() -> anyhow::Result<()> {
                 ..
             } => {
                 back_buffers.clear();
-                context.backend().resize((size.width, size.height));
-                back_buffers = context
-                    .create_back_buffers(context.backend().swap_chain())
-                    .unwrap();
+                context.resize((size.width, size.height));
+                back_buffers = context.create_back_buffers().unwrap();
                 window.request_redraw();
             }
             Event::WindowEvent {

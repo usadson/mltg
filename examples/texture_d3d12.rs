@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use windows::core::{Interface, PCWSTR, PCSTR};
+use windows::core::{Interface, PCSTR, PCWSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
@@ -478,7 +478,7 @@ impl wita::EventHandler for Application {
                 }
                 Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                     self.target = None;
-                    self.context.backend().flush();
+                    self.context.flush();
                     self.target = Some(self.context.create_render_target(&self.tex).unwrap());
                     ev.window.redraw();
                 }

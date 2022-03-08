@@ -1,6 +1,6 @@
 use crate::d3d11;
 use crate::*;
-use windows::core::Interface;
+use windows::core::{IUnknown, Interface};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D11::*, Dxgi::Common::*, Dxgi::*},
@@ -69,14 +69,25 @@ impl Direct2D {
         }
     }
 
+    #[inline]
     pub fn swap_chain(&self) -> &IDXGISwapChain1 {
         &self.swap_chain
     }
+}
 
+impl Context<Direct2D> {
+    #[inline]
+    pub fn create_back_buffers(&self) -> Result<Vec<RenderTarget>> {
+        let swap_chain: IDXGISwapChain1 = self.backend().swap_chain.cast()?;
+        let ret = self.backend().back_buffers(&swap_chain);
+        ret
+    }
+
+    #[inline]
     pub fn resize(&self, size: impl Into<gecl::Size<u32>>) {
         unsafe {
             let size = size.into();
-            self.swap_chain
+            self.backend().swap_chain
                 .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .ok();
         }
@@ -105,8 +116,9 @@ impl Backend for Direct2D {
     }
 
     #[inline]
-    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
-        Ok(d3d11::RenderTarget(target.cast::<ID2D1Bitmap1>()?))
+    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget> {
+        let target = target as *const _ as *const IUnknown;
+        Ok(d3d11::RenderTarget((*target).cast::<ID2D1Bitmap1>()?))
     }
 
     #[inline]

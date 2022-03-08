@@ -1,9 +1,9 @@
+use windows::core::PCSTR;
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D11::*, Dxgi::Common::*, Dxgi::*},
     System::Com::*,
 };
-use windows::core::PCSTR;
 
 #[repr(C)]
 struct Vertex {
@@ -214,9 +214,9 @@ impl Application {
                 ..Default::default()
             })?
         };
-        let context = mltg::Context::new(mltg::Direct3D11::new(&device)?)?;
+        let context = mltg::Context::new(unsafe { mltg::Direct3D11::new(&device)? })?;
         let factory = context.create_factory();
-        let target = context.create_render_target(&tex)?;
+        let target = unsafe { context.create_render_target(&tex)? };
         let image = factory.create_image("examples/ferris.png")?;
         Ok(Self {
             device,

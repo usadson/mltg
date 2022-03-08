@@ -65,7 +65,7 @@ let backend = mltg::Direct2D::new(
 
 ```rust,ignore
 let context = mltg::Context::new(backend)?;
-let back_buffer = context.create_back_buffers(context.backend().swap_chain())?;
+let back_buffer = context.create_back_buffers()?;
 ```
 
 `mltg::Direct2D`である`backend`を渡すだけで`mltg::Context`を作れます。
@@ -128,10 +128,10 @@ mltgでは`BeginDraw`と`EndDraw`で囲む代わりにクロージャの中に�
 ```rust,ignore
 fn resizing(&mut self, window: &wita::Window, size: wita::PhysicalSize<u32>) {
     self.back_buffer.clear();
-    self.context.backend().resize((size.width, size.height));
+    self.context.resize((size.width, size.height));
     self.back_buffer = self
         .context
-        .create_back_buffers(self.context.backend().swap_chain())
+        .create_back_buffers()
         .unwrap();
     window.redraw();
 }

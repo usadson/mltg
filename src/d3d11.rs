@@ -1,5 +1,5 @@
 use crate::*;
-use windows::core::Interface;
+use windows::core::{IUnknown, Interface};
 use windows::Win32::Graphics::{Direct3D11::*, Dxgi::*};
 
 #[derive(Clone, PartialEq, Eq)]
@@ -35,30 +35,37 @@ pub struct Direct3D11 {
 }
 
 impl Direct3D11 {
-    pub fn new(d3d11_device: &impl Interface) -> Result<Self> {
-        unsafe {
-            let d3d11_device: ID3D11Device = d3d11_device.cast()?;
-            let d2d1_factory = {
-                let mut p: Option<ID2D1Factory1> = None;
-                D2D1CreateFactory(
-                    D2D1_FACTORY_TYPE_MULTI_THREADED,
-                    &ID2D1Factory1::IID,
-                    &D2D1_FACTORY_OPTIONS {
-                        debugLevel: D2D1_DEBUG_LEVEL_ERROR,
-                    },
-                    &mut p as *mut _ as _,
-                )
-                .map(|_| p.unwrap())?
-            };
-            let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
-            let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
-            let device_context =
-                d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
-            Ok(Self {
-                d2d1_factory,
-                device_context,
-            })
-        }
+    pub unsafe fn new<T>(d3d11_device: &T) -> Result<Self> {
+        let d3d11_device: ID3D11Device = (*(d3d11_device as *const _ as *const IUnknown)).cast()?;
+        let d2d1_factory = {
+            let mut p: Option<ID2D1Factory1> = None;
+            D2D1CreateFactory(
+                D2D1_FACTORY_TYPE_MULTI_THREADED,
+                &ID2D1Factory1::IID,
+                &D2D1_FACTORY_OPTIONS {
+                    debugLevel: D2D1_DEBUG_LEVEL_ERROR,
+                },
+                &mut p as *mut _ as _,
+            )
+            .map(|_| p.unwrap())?
+        };
+        let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
+        let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
+        let device_context = d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
+        Ok(Self {
+            d2d1_factory,
+            device_context,
+        })
+    }
+}
+
+impl Context<Direct3D11> {
+    #[inline]
+    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
+        let p = swap_chain as *const _ as *const IUnknown;
+        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
+        let ret = self.backend().back_buffers(&swap_chain);
+        ret
     }
 }
 
@@ -101,9 +108,10 @@ impl Backend for Direct3D11 {
         }
     }
 
-    fn render_target(&self, target: &impl Interface) -> Result<Self::RenderTarget> {
-        let texture: ID3D11Texture2D = target.cast()?;
-        let desc = unsafe {
+    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget> {
+        let target = target as *const _ as *const IUnknown;
+        let texture: ID3D11Texture2D = (*target).cast()?;
+        let desc = {
             let mut desc = D3D11_TEXTURE2D_DESC::default();
             texture.GetDesc(&mut desc);
             desc
@@ -112,7 +120,7 @@ impl Backend for Direct3D11 {
             assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET) == D3D11_BIND_RENDER_TARGET);
         }
         let surface: IDXGISurface = texture.cast()?;
-        let bitmap = unsafe {
+        let bitmap = {
             self.device_context.CreateBitmapFromDxgiSurface(
                 &surface,
                 &D2D1_BITMAP_PROPERTIES1 {

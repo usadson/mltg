@@ -268,7 +268,7 @@ impl wita::EventHandler for Application {
                 }
                 Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                     self.bitmaps.clear();
-                    self.context.backend().flush();
+                    self.context.flush();
                     self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
                     ev.window.redraw();
                 }
@@ -282,14 +282,14 @@ impl wita::EventHandler for Application {
         self.context.set_dpi(ev.new_dpi as _);
         self.resizing(wita::event::Resizing {
             window: ev.window,
-            size: ev.window.inner_size()
+            size: ev.window.inner_size(),
         });
     }
 
     fn resizing(&mut self, ev: wita::event::Resizing) {
         self.bitmaps.clear();
         self.render_targets.clear();
-        self.context.backend().flush();
+        self.context.flush();
         unsafe {
             self.swap_chain
                 .ResizeBuffers(0, ev.size.width, ev.size.height, DXGI_FORMAT_UNKNOWN, 0)
@@ -307,7 +307,7 @@ impl wita::EventHandler for Application {
             }
             buffers
         };
-        self.bitmaps = self.context.create_back_buffers(&self.swap_chain).unwrap();
+        self.bitmaps = unsafe { self.context.create_back_buffers(&self.swap_chain).unwrap() };
         ev.window.redraw();
     }
 }
