@@ -90,14 +90,14 @@ impl Context<Direct3D12> {
     pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
         let p = swap_chain as *const _ as *const IUnknown;
         let swap_chain: IDXGISwapChain1 = (*p).cast()?;
-        let ret = self.backend().back_buffers(&swap_chain);
+        let ret = self.backend.back_buffers(&swap_chain);
         ret
     }
 
     #[inline]
     pub fn flush(&self) {
         unsafe {
-            self.backend().d3d11_device_context.Flush();
+            self.backend.d3d11_device_context.Flush();
         }
     }
 }

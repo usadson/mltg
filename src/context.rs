@@ -213,7 +213,7 @@ unsafe impl Sync for Factory {}
 
 #[derive(Clone)]
 pub struct Context<T> {
-    backend: T,
+    pub(crate) backend: T,
     dwrite_factory: IDWriteFactory5,
     wic_imaging_factory: IWICImagingFactory,
 }
@@ -245,11 +245,6 @@ where
             dwrite_factory: self.dwrite_factory.clone(),
             wic_imaging_factory: self.wic_imaging_factory.clone(),
         }
-    }
-
-    #[inline]
-    pub fn backend(&self) -> &T {
-        &self.backend
     }
 
     #[inline]

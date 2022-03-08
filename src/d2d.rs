@@ -68,18 +68,13 @@ impl Direct2D {
             })
         }
     }
-
-    #[inline]
-    pub fn swap_chain(&self) -> &IDXGISwapChain1 {
-        &self.swap_chain
-    }
 }
 
 impl Context<Direct2D> {
     #[inline]
     pub fn create_back_buffers(&self) -> Result<Vec<RenderTarget>> {
-        let swap_chain: IDXGISwapChain1 = self.backend().swap_chain.cast()?;
-        let ret = self.backend().back_buffers(&swap_chain);
+        let swap_chain: IDXGISwapChain1 = self.backend.swap_chain.cast()?;
+        let ret = self.backend.back_buffers(&swap_chain);
         ret
     }
 
@@ -87,10 +82,15 @@ impl Context<Direct2D> {
     pub fn resize(&self, size: impl Into<gecl::Size<u32>>) {
         unsafe {
             let size = size.into();
-            self.backend().swap_chain
+            self.backend.swap_chain
                 .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .ok();
         }
+    }
+
+    #[inline]
+    pub fn swap_chain(&self) -> &IDXGISwapChain1 {
+        &self.backend.swap_chain
     }
 }
 
