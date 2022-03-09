@@ -8,6 +8,21 @@ use windows::Win32::{
 
 pub type RenderTarget = d3d11::RenderTarget;
 
+pub struct Scroll {
+    pub rect: gecl::Rect<i32>,
+    pub offset: gecl::Point<i32>,
+}
+
+impl Scroll {
+    #[inline]
+    pub fn new(rect: impl Into<gecl::Rect<i32>>, offset: impl Into<gecl::Point<i32>>) -> Self {
+        Self {
+            rect: rect.into(),
+            offset: offset.into(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Direct2D {
     _d3d11_device: ID3D11Device,
@@ -82,7 +97,8 @@ impl Context<Direct2D> {
     pub fn resize(&self, size: impl Into<gecl::Size<u32>>) {
         unsafe {
             let size = size.into();
-            self.backend.swap_chain
+            self.backend
+                .swap_chain
                 .ResizeBuffers(0, size.width, size.height, DXGI_FORMAT_UNKNOWN, 0)
                 .ok();
         }
@@ -91,6 +107,38 @@ impl Context<Direct2D> {
     #[inline]
     pub fn swap_chain(&self) -> &IDXGISwapChain1 {
         &self.backend.swap_chain
+    }
+
+    #[inline]
+    pub fn present(&self, dirty_rects: Option<&[ScreenRect]>, scroll: Option<Scroll>) {
+        let scroll_rect = scroll.as_ref().map(|s| {
+            let ep = s.rect.endpoint();
+            RECT {
+                left: s.rect.origin.x,
+                top: s.rect.origin.y,
+                right: ep.x,
+                bottom: ep.y,
+            }
+        });
+        let scroll_offset = scroll.as_ref().map(|s| POINT {
+            x: s.offset.x,
+            y: s.offset.y,
+        });
+        let params = DXGI_PRESENT_PARAMETERS {
+            DirtyRectsCount: dirty_rects.as_ref().map_or(0, |dr| dr.len() as u32),
+            pDirtyRects: dirty_rects.map_or(std::ptr::null_mut(), |dr| {
+                dr.as_ptr() as *mut ScreenRect as *mut RECT
+            }),
+            pScrollRect: scroll_rect
+                .as_ref()
+                .map_or(std::ptr::null_mut(), |s| s as *const _ as *mut RECT),
+            pScrollOffset: scroll_offset
+                .as_ref()
+                .map_or(std::ptr::null_mut(), |s| s as *const _ as *mut POINT),
+        };
+        unsafe {
+            self.backend.swap_chain.Present1(1, 0, &params).ok();
+        }
     }
 }
 
@@ -129,8 +177,5 @@ impl Backend for Direct2D {
     #[inline]
     fn end_draw(&self, target: &Self::RenderTarget) {
         self.object.end_draw(target);
-        unsafe {
-            self.swap_chain.Present(1, 0).ok();
-        }
     }
 }

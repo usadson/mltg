@@ -13,6 +13,16 @@ pub struct DrawCommand<'a> {
 }
 
 impl<'a> DrawCommand<'a> {
+    pub(crate) fn new(
+        device_context: &'a ID2D1DeviceContext,
+        dwrite_factory: &'a IDWriteFactory5,
+    ) -> Self {
+        Self {
+            device_context,
+            dwrite_factory,
+        }
+    }
+
     #[inline]
     pub fn clear(&self, color: impl Into<Rgba>) {
         unsafe {
@@ -214,7 +224,7 @@ unsafe impl Sync for Factory {}
 #[derive(Clone)]
 pub struct Context<T> {
     pub(crate) backend: T,
-    dwrite_factory: IDWriteFactory5,
+    pub(crate) dwrite_factory: IDWriteFactory5,
     wic_imaging_factory: IWICImagingFactory,
 }
 
@@ -269,10 +279,10 @@ where
             self.backend.begin_draw(target);
             device_context.SetTarget(target.bitmap());
             device_context.BeginDraw();
-            let ret = f(&DrawCommand {
-                device_context: self.backend.device_context(),
-                dwrite_factory: &self.dwrite_factory,
-            });
+            let ret = f(&DrawCommand::new(
+                self.backend.device_context(),
+                &self.dwrite_factory,
+            ));
             device_context.EndDraw(std::ptr::null_mut(), std::ptr::null_mut())?;
             device_context.SetTarget(None);
             self.backend.end_draw(target);

@@ -119,7 +119,9 @@ impl wita::EventHandler for Application {
             cmd.stroke(&path, &self.white_brush, 5.0, Some(&self.stroke_style));
         });
         match ret {
-            Ok(_) => {}
+            Ok(_) => {
+                self.context.present(None, None);
+            }
             Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                 self.back_buffer.clear();
                 self.back_buffer = self.context.create_back_buffers().unwrap();

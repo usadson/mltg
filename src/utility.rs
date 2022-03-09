@@ -76,3 +76,38 @@ impl From<Inner<Rgba>> for D2D1_COLOR_F {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct ScreenRect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl ScreenRect {
+    #[inline]
+    pub const fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
+        Self {
+            left,
+            top,
+            right,
+            bottom,
+        }
+    }
+}
+
+impl From<[i32; 4]> for ScreenRect {
+    #[inline]
+    fn from(src: [i32; 4]) -> Self {
+        Self::new(src[0], src[1], src[2], src[3])
+    }
+}
+
+impl From<(i32, i32, i32, i32)> for ScreenRect {
+    #[inline]
+    fn from(src: (i32, i32, i32, i32)) -> Self {
+        Self::new(src.0, src.1, src.2, src.3)
+    }
+}

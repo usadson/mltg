@@ -28,7 +28,6 @@ struct Application {
 また、`back_buffer`は描画先となるので持っておく必要があり、
 `white`が色を表す`mltg::Brush`で`text_layout`が字を描画するための`mltg::TextLayout`となっています。
 
-
 ## Apllication::new
 
 `Application::new`の中でウィンドウやコンテキストを作っていきます。
@@ -70,9 +69,7 @@ let back_buffer = context.create_back_buffers()?;
 
 `mltg::Direct2D`である`backend`を渡すだけで`mltg::Context`を作れます。
 そして今回はバックバッファに直接描画するために`context.create_back_buffers`を使って
-描画先となるオブジェクトを作ります。`mltg::Direct2D`の`swap_chain`を渡す必要があるのですが、
-`mltg::Context`の中に取り込まれるので`mltg::Context`の`backend`で`mltg::Direct2D`を借用して
-`swap_chain`を呼び出しています。
+描画先となるオブジェクトを作ります。
 
 > `mltg::Direct3D11`や`mltg::Direct3D12`をバックエンドにした場合は
 > バックエンドの中でスワップチェーンを作らないので、ユーザ側でスワップチェーンを作って`create_back_buffers`に渡してもらうことになります。
@@ -108,16 +105,22 @@ fn draw(&mut self, _window: &wita::Window) {
     self.context.draw(&self.back_buffer[0], |cmd| {
         cmd.clear([0.0, 0.0, 0.3, 0.0]);
         cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
-    });
+    }).unwrap();
+    self.context.present(None, None);
 }
 ```
 
 `self.context.draw`で描画します。ここで描画先として`self.back_buffer`を渡します。
+本来`self.context.draw`の返り値を見てエラー処理をするべきですが、ここでは省略しています。
 
 mltgでは`BeginDraw`と`EndDraw`で囲む代わりにクロージャの中に処理を書くようにしています。
 クロージャの第1引数は`mltg::DrawCommand`で描画するためのコマンドをまとめたオブジェクトです。
 
 ここでは`cmd.clear`で青い背景になるように塗りつぶして`cmd.draw_text`で文字列を描画しています。
+
+`self.context.draw`の後、`self.context.present`を呼び出して画面に表示します。
+`self.context.present`の引数で`IDXGISwapChain1::Present1`のようにデューティ領域やスクロールを設定できますが、
+ここではすべて`None`にしています。
 
 ### ウィンドウのサイズが変更されている場合
 

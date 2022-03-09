@@ -36,20 +36,14 @@ impl Application {
 }
 
 impl wita::EventHandler for Application {
-    fn draw(&mut self, ev: wita::event::Draw) {
-        let ret = self.context.draw(&self.back_buffer[0], |cmd| {
-            cmd.clear([0.0, 0.0, 0.3, 0.0]);
-            cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
-        });
-        match ret {
-            Ok(_) => {}
-            Err(e) if e == mltg::ErrorKind::RecreateTarget => {
-                self.back_buffer.clear();
-                self.back_buffer = self.context.create_back_buffers().unwrap();
-                ev.window.redraw();
-            }
-            Err(e) => panic!("{:?}", e),
-        }
+    fn draw(&mut self, _: wita::event::Draw) {
+        self.context
+            .draw(&self.back_buffer[0], |cmd| {
+                cmd.clear([0.0, 0.0, 0.3, 0.0]);
+                cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
+            })
+            .unwrap();
+        self.context.present(None, None);
     }
 
     fn dpi_changed(&mut self, ev: wita::event::DpiChanged) {
