@@ -125,7 +125,7 @@ impl Application {
             let factory = context.create_factory();
             let bitmaps = context.create_back_buffers(&swap_chain)?;
             let text_format = factory.create_text_format(
-                &mltg::Font::system("Meiryo"),
+                mltg::Font::System("Meiryo"),
                 mltg::font_point(14.0),
                 None,
             )?;

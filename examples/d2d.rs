@@ -30,7 +30,7 @@ impl Application {
             (1.0, [0.0, 1.0, 0.0, 1.0]),
         ])?;
         let text_format = factory.create_text_format(
-            &mltg::Font::system("Meiryo"),
+            mltg::Font::System("Meiryo"),
             mltg::font_point(14.0),
             None,
         )?;

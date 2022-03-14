@@ -130,6 +130,7 @@ pub struct Factory {
     d2d1_factory: ID2D1Factory1,
     device_context: ID2D1DeviceContext,
     dwrite_factory: IDWriteFactory5,
+    dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
     wic_imaging_factory: IWICImagingFactory,
 }
 
@@ -188,11 +189,11 @@ impl Factory {
     #[inline]
     pub fn create_text_format(
         &self,
-        font: &Font,
+        font: Font,
         size: impl Into<f32>,
         style: Option<&TextStyle>,
     ) -> Result<TextFormat> {
-        TextFormat::new(&self.dwrite_factory, font, size.into(), style)
+        TextFormat::new(&self.dwrite_factory, &self.dwrite_in_memory_loader, font, size.into(), style)
     }
 
     #[inline]
@@ -221,10 +222,10 @@ impl Factory {
 unsafe impl Send for Factory {}
 unsafe impl Sync for Factory {}
 
-#[derive(Clone)]
 pub struct Context<T> {
     pub(crate) backend: T,
-    pub(crate) dwrite_factory: IDWriteFactory5,
+    dwrite_factory: IDWriteFactory5,
+    dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
     wic_imaging_factory: IWICImagingFactory,
 }
 
@@ -235,13 +236,16 @@ where
     #[inline]
     pub fn new(backend: T) -> Result<Self> {
         unsafe {
-            let dwrite_factory =
+            let dwrite_factory: IDWriteFactory5 =
                 DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?;
+            let dwrite_in_memory_loader = dwrite_factory.CreateInMemoryFontFileLoader()?;
+            dwrite_factory.RegisterFontFileLoader(&dwrite_in_memory_loader)?;
             let wic_imaging_factory =
                 CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)?;
             Ok(Self {
                 backend,
                 dwrite_factory,
+                dwrite_in_memory_loader,
                 wic_imaging_factory,
             })
         }
@@ -253,6 +257,7 @@ where
             d2d1_factory: self.backend.d2d1_factory().clone(),
             device_context: self.backend.device_context().clone(),
             dwrite_factory: self.dwrite_factory.clone(),
+            dwrite_in_memory_loader: self.dwrite_in_memory_loader.clone(),
             wic_imaging_factory: self.wic_imaging_factory.clone(),
         }
     }
@@ -287,6 +292,14 @@ where
             device_context.SetTarget(None);
             self.backend.end_draw(target);
             Ok(ret)
+        }
+    }
+}
+
+impl<T> Drop for Context<T> {
+    fn drop(&mut self) {
+        unsafe {
+            self.dwrite_factory.UnregisterFontFileLoader(&self.dwrite_in_memory_loader).ok();
         }
     }
 }

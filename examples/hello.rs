@@ -21,7 +21,7 @@ impl Application {
         let back_buffer = context.create_back_buffers()?;
         let white = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let text_format = factory.create_text_format(
-            &mltg::Font::system("Yu Gothic UI"),
+            mltg::Font::System("Yu Gothic UI"),
             mltg::font_point(28.0),
             None,
         )?;

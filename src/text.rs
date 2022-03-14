@@ -99,28 +99,32 @@ impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum Font {
-    System(String),
-    File(std::path::PathBuf, String),
+#[derive(Clone)]
+pub enum Font<'a, 'b> {
+    System(&'a str),
+    File(&'a std::path::Path, &'b str),
+    Memory(&'a [u8], &'b str),
 }
 
-impl Font {
-    #[inline]
-    pub fn system(name: impl AsRef<str>) -> Self {
-        Self::System(name.as_ref().to_string())
-    }
-
-    #[inline]
-    pub fn file(path: impl AsRef<std::path::Path>, name: impl AsRef<str>) -> Self {
-        Self::File(path.as_ref().to_path_buf(), name.as_ref().to_string())
-    }
-
+impl<'a, 'b> Font<'a, 'b> {
     #[inline]
     pub fn name(&self) -> &str {
         match self {
-            Self::System(name) => name.as_str(),
-            Self::File(_, name) => name.as_str(),
+            Self::System(name) => name,
+            Self::File(_, name) => name,
+            Self::Memory(_, name) => name,
+        }
+    }
+}
+
+impl<'a, 'b> std::fmt::Debug for Font<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::System(font_name) => write!(f, "Font::System({})", font_name),
+            Self::File(path, font_name) => {
+                write!(f, "Font::File({}, {})", path.display(), font_name)
+            }
+            Self::Memory(_, font_name) => write!(f, "Font::Memory({})", font_name),
         }
     }
 }
@@ -128,7 +132,7 @@ impl Font {
 #[derive(Clone)]
 pub struct TextFormat {
     format: IDWriteTextFormat,
-    font: Font,
+    name: String,
     size: f32,
     style: TextStyle,
 }
@@ -137,7 +141,8 @@ impl TextFormat {
     #[inline]
     pub(crate) fn new(
         factory: &IDWriteFactory5,
-        font: &Font,
+        in_memory_loader: &IDWriteInMemoryFontFileLoader,
+        font: Font,
         size: f32,
         style: Option<&TextStyle>,
     ) -> Result<Self> {
@@ -145,23 +150,31 @@ impl TextFormat {
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
             Font::System(font_name) => (font_name, None),
             Font::File(path, font_name) => unsafe {
-                let set_builder: IDWriteFontSetBuilder1 =
-                    { factory.CreateFontSetBuilder()?.cast()? };
-                let font_file = {
-                    factory.CreateFontFileReference(
-                        path.as_path().to_string_lossy().as_ref(),
-                        std::ptr::null(),
-                    )?
-                };
+                let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
+                let font_file = factory
+                    .CreateFontFileReference(path.to_string_lossy().as_ref(), std::ptr::null())?;
                 set_builder.AddFontFile(&font_file)?;
-                let font_set = { set_builder.CreateFontSet()? };
-                let font_collection = { factory.CreateFontCollectionFromFontSet(&font_set)? };
+                let font_set = set_builder.CreateFontSet()?;
+                let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;
+                (font_name, Some(font_collection.into()))
+            },
+            Font::Memory(data, font_name) => unsafe {
+                let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
+                let font_file = in_memory_loader.CreateInMemoryFontFileReference(
+                    factory,
+                    data.as_ptr() as _,
+                    data.len() as _,
+                    None,
+                )?;
+                set_builder.AddFontFile(&font_file)?;
+                let font_set = set_builder.CreateFontSet()?;
+                let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;
                 (font_name, Some(font_collection.into()))
             },
         };
         let format = unsafe {
             factory.CreateTextFormat(
-                font_name.as_str(),
+                font_name,
                 font_collection,
                 DWRITE_FONT_WEIGHT(style.weight as _),
                 DWRITE_FONT_STYLE(style.style as _),
@@ -172,15 +185,15 @@ impl TextFormat {
         };
         Ok(Self {
             format,
-            font: font.clone(),
+            name: font_name.to_string(),
             size,
             style,
         })
     }
 
     #[inline]
-    pub fn font(&self) -> &Font {
-        &self.font
+    pub fn font_name(&self) -> &str {
+        &self.name
     }
 
     #[inline]
@@ -362,16 +375,46 @@ mod tests {
                 .cast()
                 .unwrap()
         };
+        let loader = unsafe {
+            let loader = factory.CreateInMemoryFontFileLoader().unwrap();
+            factory.RegisterFontFileLoader(&loader).unwrap();
+            loader 
+        };
         TextFormat::new(
             &factory,
-            &Font::file(
-                "./test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf",
+            &loader,
+            Font::File(
+                std::path::Path::new(
+                    "./test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf",
+                ),
                 "Inconsolata",
             ),
             14.0,
             None,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn from_memory() {
+        let factory: IDWriteFactory5 = unsafe {
+            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
+                .unwrap()
+                .cast()
+                .unwrap()
+        };
+        let loader = unsafe {
+            let loader = factory.CreateInMemoryFontFileLoader().unwrap();
+            factory.RegisterFontFileLoader(&loader).unwrap();
+            loader 
+        };
+        TextFormat::new(
+            &factory,
+            &loader,
+            Font::Memory(include_bytes!("../test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf"), "Inconsolata"),
+            14.0,
+            None
+        ).unwrap();
     }
 
     #[test]
@@ -382,8 +425,13 @@ mod tests {
                 .cast()
                 .unwrap()
         };
+        let loader = unsafe {
+            let loader = factory.CreateInMemoryFontFileLoader().unwrap();
+            factory.RegisterFontFileLoader(&loader).unwrap();
+            loader 
+        };
         let format =
-            TextFormat::new(&factory, &Font::system("Meiryo"), FontPoint(14.0).0, None).unwrap();
+            TextFormat::new(&factory, &loader, Font::System("Meiryo"), FontPoint(14.0).0, None).unwrap();
         let layout =
             TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();
