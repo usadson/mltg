@@ -45,16 +45,14 @@ impl Direct3D12 {
         let command_queue: ID3D12CommandQueue =
             (*(command_queue as *const _ as *const IUnknown)).cast()?;
         let (d3d11on12_device, d3d11_device_context) = {
-            let mut queues = [command_queue.cast::<IUnknown>().unwrap()];
+            let queues = [Some(command_queue.cast::<IUnknown>().unwrap())];
             let mut p = None;
             let mut dc = None;
             D3D11On12CreateDevice(
                 &d3d12_device,
                 D3D11_CREATE_DEVICE_BGRA_SUPPORT.0,
-                std::ptr::null(),
-                0,
-                queues.as_mut_ptr() as _,
-                queues.len() as _,
+                &[],
+                &queues,
                 0,
                 &mut p,
                 &mut dc,
@@ -203,18 +201,16 @@ impl Backend for Direct3D12 {
     #[inline]
     fn begin_draw(&self, target: &Self::RenderTarget) {
         unsafe {
-            let mut wrappers = [target.wrapper.clone()];
             self.d3d11on12_device
-                .AcquireWrappedResources(wrappers.as_mut_ptr() as _, wrappers.len() as _);
+                .AcquireWrappedResources(&[Some(target.wrapper.clone())]);
         }
     }
 
     #[inline]
     fn end_draw(&self, target: &Self::RenderTarget) {
         unsafe {
-            let mut wrappers = [target.wrapper.clone()];
             self.d3d11on12_device
-                .ReleaseWrappedResources(wrappers.as_mut_ptr() as _, wrappers.len() as _);
+                .ReleaseWrappedResources(&[Some(target.wrapper.clone())]);
             self.d3d11_device_context.Flush();
             self.d3d11_device_context.ClearState();
         }

@@ -193,7 +193,13 @@ impl Factory {
         size: impl Into<f32>,
         style: Option<&TextStyle>,
     ) -> Result<TextFormat> {
-        TextFormat::new(&self.dwrite_factory, &self.dwrite_in_memory_loader, font, size.into(), style)
+        TextFormat::new(
+            &self.dwrite_factory,
+            &self.dwrite_in_memory_loader,
+            font,
+            size.into(),
+            style,
+        )
     }
 
     #[inline]
@@ -299,7 +305,9 @@ where
 impl<T> Drop for Context<T> {
     fn drop(&mut self) {
         unsafe {
-            self.dwrite_factory.UnregisterFontFileLoader(&self.dwrite_in_memory_loader).ok();
+            self.dwrite_factory
+                .UnregisterFontFileLoader(&self.dwrite_in_memory_loader)
+                .ok();
         }
     }
 }

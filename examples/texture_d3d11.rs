@@ -53,8 +53,7 @@ impl Application {
                 D3D_DRIVER_TYPE_HARDWARE,
                 HINSTANCE::default(),
                 D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                FEATURE_LEVELS.as_ptr() as _,
-                FEATURE_LEVELS.len() as _,
+                &FEATURE_LEVELS,
                 D3D11_SDK_VERSION,
                 &mut p,
                 std::ptr::null_mut(),
@@ -133,9 +132,8 @@ impl Application {
         let (vs, ps, input_layout) = unsafe {
             let vs_blob = include_bytes!("d3d11_hlsl/tex.vs");
             let ps_blob = include_bytes!("d3d11_hlsl/tex.ps");
-            let vs =
-                { device.CreateVertexShader(vs_blob.as_ptr() as _, vs_blob.len() as _, None)? };
-            let ps = { device.CreatePixelShader(ps_blob.as_ptr() as _, ps_blob.len() as _, None)? };
+            let vs = device.CreateVertexShader(vs_blob, None)?;
+            let ps = device.CreatePixelShader(ps_blob, None)?;
             let descs = [
                 D3D11_INPUT_ELEMENT_DESC {
                     SemanticName: PCSTR(b"POSITION\0".as_ptr() as _),
@@ -156,14 +154,7 @@ impl Application {
                     InstanceDataStepRate: 0,
                 },
             ];
-            let input_layout = {
-                device.CreateInputLayout(
-                    descs.as_ptr(),
-                    descs.len() as _,
-                    vs_blob.as_ptr() as _,
-                    vs_blob.len() as _,
-                )?
-            };
+            let input_layout = device.CreateInputLayout(&descs, vs_blob)?;
             (vs, ps, input_layout)
         };
         let tex = unsafe {
@@ -278,22 +269,18 @@ impl wita::EventHandler for Application {
                 [std::mem::size_of::<Vertex>() as u32].as_ptr(),
                 [0].as_ptr(),
             );
-            dc.OMSetRenderTargets(1, [Some(self.rtv.clone().unwrap())].as_mut_ptr(), None);
+            dc.OMSetRenderTargets(&[Some(self.rtv.clone().unwrap())], None);
             dc.OMSetBlendState(&self.blend, std::ptr::null(), u32::MAX);
-            dc.VSSetShader(&self.vs, std::ptr::null_mut(), 0);
-            dc.PSSetShader(&self.ps, std::ptr::null_mut(), 0);
-            dc.PSSetShaderResources(0, 1, [Some(self.tex_view.clone())].as_mut_ptr());
-            dc.PSSetSamplers(0, 1, [Some(self.sampler.clone())].as_mut_ptr());
-            dc.RSSetViewports(
-                1,
-                [D3D11_VIEWPORT {
-                    Width: window_size.width as f32,
-                    Height: window_size.height as f32,
-                    MaxDepth: 1.0,
-                    ..Default::default()
-                }]
-                .as_ptr(),
-            );
+            dc.VSSetShader(&self.vs, &[]);
+            dc.PSSetShader(&self.ps, &[]);
+            dc.PSSetShaderResources(0, &[Some(self.tex_view.clone())]);
+            dc.PSSetSamplers(0, &[Some(self.sampler.clone())]);
+            dc.RSSetViewports(&[D3D11_VIEWPORT {
+                Width: window_size.width as f32,
+                Height: window_size.height as f32,
+                MaxDepth: 1.0,
+                ..Default::default()
+            }]);
             dc.DrawIndexed(6, 0, 0);
             self.swap_chain.Present(1, 0).unwrap();
         }

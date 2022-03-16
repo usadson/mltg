@@ -37,7 +37,7 @@ fn resource_barrier(
                 }),
             },
         }];
-        command_list.ResourceBarrier(barrier.len() as _, barrier.as_ptr());
+        command_list.ResourceBarrier(&barrier);
         std::mem::ManuallyDrop::drop(&mut barrier[0].Anonymous.Transition);
     }
 }
@@ -337,7 +337,13 @@ impl Application {
                     )
                     .map(|_| p.unwrap())?
                 };
-                device.CreateRootSignature(0, blob.GetBufferPointer(), blob.GetBufferSize())?
+                device.CreateRootSignature(
+                    0,
+                    std::slice::from_raw_parts(
+                        blob.GetBufferPointer() as *const u8,
+                        blob.GetBufferSize(),
+                    ),
+                )?
             };
             let pipeline: ID3D12PipelineState = {
                 let vs_blob = include_bytes!("d3d12_hlsl/tex.vs");
@@ -495,32 +501,24 @@ impl wita::EventHandler for Application {
                 .Reset(&self.command_allocator, &self.pipeline)
                 .unwrap();
             self.command_list
-                .SetDescriptorHeaps(1, [self.srv_heap.clone()].as_ptr() as _);
+                .SetDescriptorHeaps(&[Some(self.srv_heap.clone())]);
             self.command_list
                 .SetGraphicsRootSignature(&self.root_signature);
             self.command_list.SetGraphicsRootDescriptorTable(
                 0,
                 self.srv_heap.GetGPUDescriptorHandleForHeapStart(),
             );
-            self.command_list.RSSetViewports(
-                1,
-                [D3D12_VIEWPORT {
-                    Width: window_size.width as _,
-                    Height: window_size.height as _,
-                    MaxDepth: 1.0,
-                    ..Default::default()
-                }]
-                .as_ptr(),
-            );
-            self.command_list.RSSetScissorRects(
-                1,
-                [RECT {
-                    right: window_size.width as _,
-                    bottom: window_size.height as _,
-                    ..Default::default()
-                }]
-                .as_ptr(),
-            );
+            self.command_list.RSSetViewports(&[D3D12_VIEWPORT {
+                Width: window_size.width as _,
+                Height: window_size.height as _,
+                MaxDepth: 1.0,
+                ..Default::default()
+            }]);
+            self.command_list.RSSetScissorRects(&[RECT {
+                right: window_size.width as _,
+                bottom: window_size.height as _,
+                ..Default::default()
+            }]);
             resource_barrier(
                 &self.command_list,
                 &self.render_targets[index],
@@ -533,20 +531,15 @@ impl wita::EventHandler for Application {
                 D3D12_RESOURCE_STATE_COMMON,
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             );
-            self.command_list.ClearRenderTargetView(
-                rtv_handle,
-                [0.0, 0.0, 0.3, 0.0].as_ptr(),
-                0,
-                std::ptr::null(),
-            );
+            self.command_list
+                .ClearRenderTargetView(rtv_handle, [0.0, 0.0, 0.3, 0.0].as_ptr(), &[]);
             self.command_list.OMSetRenderTargets(
                 1,
                 [rtv_handle.clone()].as_ptr(),
                 false,
                 std::ptr::null(),
             );
-            self.command_list
-                .IASetVertexBuffers(0, 1, [self.vbv.clone()].as_ptr());
+            self.command_list.IASetVertexBuffers(0, &[self.vbv.clone()]);
             self.command_list.IASetIndexBuffer(&self.ibv);
             self.command_list
                 .IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -564,9 +557,8 @@ impl wita::EventHandler for Application {
                 D3D12_RESOURCE_STATE_PRESENT,
             );
             self.command_list.Close().unwrap();
-            let command_lists: [ID3D12CommandList; 1] = [self.command_list.clone().cast().unwrap()];
-            self.command_queue
-                .ExecuteCommandLists(command_lists.len() as _, command_lists.as_ptr() as _);
+            let command_lists = [Some(self.command_list.clone().cast().unwrap())];
+            self.command_queue.ExecuteCommandLists(&command_lists);
             self.swap_chain.Present(1, 0).unwrap();
         }
         self.wait_gpu();

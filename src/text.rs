@@ -1,6 +1,6 @@
 use crate::*;
 use std::convert::TryInto;
-use windows::core::{Interface, PCWSTR};
+use windows::core::Interface;
 use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -244,13 +244,8 @@ impl TextLayout {
     ) -> Result<Self> {
         let (layout, max_size) = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
-            let layout = factory.CreateTextLayout(
-                PCWSTR(text.as_ptr() as _),
-                text.len() as _,
-                &format.format,
-                std::f32::MAX,
-                std::f32::MAX,
-            )?;
+            let layout =
+                factory.CreateTextLayout(&text, &format.format, std::f32::MAX, std::f32::MAX)?;
             let size = size.unwrap_or_else(|| {
                 let metrics = layout.GetMetrics().unwrap();
                 (metrics.width, metrics.height).into()
@@ -378,7 +373,7 @@ mod tests {
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
-            loader 
+            loader
         };
         TextFormat::new(
             &factory,
@@ -406,15 +401,21 @@ mod tests {
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
-            loader 
+            loader
         };
         TextFormat::new(
             &factory,
             &loader,
-            Font::Memory(include_bytes!("../test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf"), "Inconsolata"),
+            Font::Memory(
+                include_bytes!(
+                    "../test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf"
+                ),
+                "Inconsolata",
+            ),
             14.0,
-            None
-        ).unwrap();
+            None,
+        )
+        .unwrap();
     }
 
     #[test]
@@ -428,10 +429,16 @@ mod tests {
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
-            loader 
+            loader
         };
-        let format =
-            TextFormat::new(&factory, &loader, Font::System("Meiryo"), FontPoint(14.0).0, None).unwrap();
+        let format = TextFormat::new(
+            &factory,
+            &loader,
+            Font::System("Meiryo"),
+            FontPoint(14.0).0,
+            None,
+        )
+        .unwrap();
         let layout =
             TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();

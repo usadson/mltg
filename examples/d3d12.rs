@@ -25,7 +25,7 @@ fn resource_barrier(
                 }),
             },
         }];
-        command_list.ResourceBarrier(barrier.len() as _, barrier.as_ptr());
+        command_list.ResourceBarrier(&barrier);
         std::mem::ManuallyDrop::drop(&mut barrier[0].Anonymous.Transition);
     }
 }
@@ -231,25 +231,18 @@ impl wita::EventHandler for Application {
                 MaxDepth: 1.0,
                 ..Default::default()
             }];
-            self.command_list
-                .RSSetViewports(viewports.len() as _, viewports.as_ptr());
+            self.command_list.RSSetViewports(&viewports);
             let scissor_rect = [RECT {
                 right: window_size.width as _,
                 bottom: window_size.height as _,
                 ..Default::default()
             }];
+            self.command_list.RSSetScissorRects(&scissor_rect);
             self.command_list
-                .RSSetScissorRects(scissor_rect.len() as _, scissor_rect.as_ptr());
-            self.command_list.ClearRenderTargetView(
-                rtv_handle,
-                CLEAR_COLOR.as_ptr(),
-                0,
-                std::ptr::null(),
-            );
+                .ClearRenderTargetView(rtv_handle, CLEAR_COLOR.as_ptr(), &[]);
             self.command_list.Close().unwrap();
-            let mut command_lists = [Some(self.command_list.cast::<ID3D12CommandList>().unwrap())];
-            self.command_queue
-                .ExecuteCommandLists(command_lists.len() as _, command_lists.as_mut_ptr());
+            let command_lists = [Some(self.command_list.cast::<ID3D12CommandList>().unwrap())];
+            self.command_queue.ExecuteCommandLists(&command_lists);
             let ret = self.context.draw(&self.bitmaps[index], |cmd| {
                 cmd.fill(&rect, &linear_grad_brush);
                 cmd.stroke(&text_box, &self.white_brush, 2.0, None);

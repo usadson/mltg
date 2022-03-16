@@ -59,12 +59,7 @@ impl GradientStopCollection {
             .map(|stop| stop.into().into())
             .collect::<Vec<_>>();
         let collection = unsafe {
-            dc.CreateGradientStopCollection(
-                stops.as_ptr(),
-                stops.len() as _,
-                D2D1_GAMMA_2_2,
-                D2D1_EXTEND_MODE_WRAP,
-            )?
+            dc.CreateGradientStopCollection(&stops, D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_WRAP)?
         };
         Ok(Self(collection))
     }

@@ -70,28 +70,20 @@ pub struct StrokeStyle(pub(crate) ID2D1StrokeStyle);
 
 impl StrokeStyle {
     pub(crate) fn new(factory: &ID2D1Factory1, props: &StrokeStyleProperties) -> Result<Self> {
-        let (dash_cap, dash_style, dash_offset, dashes, dashes_len) = match props.dash.as_ref() {
+        let (dash_cap, dash_style, dash_offset, dashes) = match props.dash.as_ref() {
             Some(dash) => {
                 let cap = D2D1_CAP_STYLE(dash.cap as _);
-                let (style, dashes, dashes_len) = match dash.style {
-                    DashStyle::Solid => (D2D1_DASH_STYLE_SOLID, std::ptr::null(), 0),
-                    DashStyle::Dash => (D2D1_DASH_STYLE_DASH, std::ptr::null(), 0),
-                    DashStyle::Dot => (D2D1_DASH_STYLE_DOT, std::ptr::null(), 0),
-                    DashStyle::DashDot => (D2D1_DASH_STYLE_DASH_DOT, std::ptr::null(), 0),
-                    DashStyle::DashDotDot => (D2D1_DASH_STYLE_DASH_DOT_DOT, std::ptr::null(), 0),
-                    DashStyle::Custom(dashes) => {
-                        (D2D1_DASH_STYLE_CUSTOM, dashes.as_ptr(), dashes.len())
-                    }
+                let (style, dashes): (_, &[f32]) = match dash.style {
+                    DashStyle::Solid => (D2D1_DASH_STYLE_SOLID, &[]),
+                    DashStyle::Dash => (D2D1_DASH_STYLE_DASH, &[]),
+                    DashStyle::Dot => (D2D1_DASH_STYLE_DOT, &[]),
+                    DashStyle::DashDot => (D2D1_DASH_STYLE_DASH_DOT, &[]),
+                    DashStyle::DashDotDot => (D2D1_DASH_STYLE_DASH_DOT_DOT, &[]),
+                    DashStyle::Custom(dashes) => (D2D1_DASH_STYLE_CUSTOM, dashes),
                 };
-                (cap, style, dash.offset, dashes, dashes_len)
+                (cap, style, dash.offset, dashes)
             }
-            None => (
-                D2D1_CAP_STYLE_FLAT,
-                D2D1_DASH_STYLE_SOLID,
-                0.0,
-                std::ptr::null(),
-                0,
-            ),
+            None => (D2D1_CAP_STYLE_FLAT, D2D1_DASH_STYLE_SOLID, 0.0, [].as_ref()),
         };
         let (line_join, miter_limit) = match props.line_join {
             LineJoin::Miter => (D2D1_LINE_JOIN_MITER, 1.0),
@@ -108,7 +100,7 @@ impl StrokeStyle {
             dashStyle: dash_style,
             dashOffset: dash_offset,
         };
-        let stroke_style = unsafe { factory.CreateStrokeStyle(&props, dashes, dashes_len as _)? };
+        let stroke_style = unsafe { factory.CreateStrokeStyle(&props, dashes)? };
         Ok(StrokeStyle(stroke_style))
     }
 }
