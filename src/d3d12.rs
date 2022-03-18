@@ -81,42 +81,8 @@ impl Direct3D12 {
             d3d11_device_context,
         })
     }
-}
 
-impl Context<Direct3D12> {
-    #[inline]
-    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
-        let p = swap_chain as *const _ as *const IUnknown;
-        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
-        let ret = self.backend.back_buffers(&swap_chain);
-        ret
-    }
-
-    #[inline]
-    pub fn flush(&self) {
-        unsafe {
-            self.backend.d3d11_device_context.Flush();
-        }
-    }
-}
-
-unsafe impl Send for Direct3D12 {}
-unsafe impl Sync for Direct3D12 {}
-
-impl Backend for Direct3D12 {
-    type RenderTarget = RenderTarget;
-
-    #[inline]
-    fn device_context(&self) -> &ID2D1DeviceContext {
-        &self.d2d1_device_context
-    }
-
-    #[inline]
-    fn d2d1_factory(&self) -> &ID2D1Factory1 {
-        &self.d2d1_factory
-    }
-
-    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>> {
+    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<RenderTarget>> {
         unsafe {
             let desc = swap_chain.GetDesc1()?;
             let bmp_props = D2D1_BITMAP_PROPERTIES1 {
@@ -156,8 +122,18 @@ impl Backend for Direct3D12 {
             Ok(targets)
         }
     }
+}
 
-    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget> {
+impl Context<Direct3D12> {
+    #[inline]
+    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
+        let p = swap_chain as *const _ as *const IUnknown;
+        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
+        let ret = self.backend.back_buffers(&swap_chain);
+        ret
+    }
+
+    pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
         let target = target as *const _ as *const IUnknown;
         let resource: ID3D12Resource = (*target).cast()?;
         let desc = resource.GetDesc();
@@ -168,7 +144,8 @@ impl Backend for Direct3D12 {
         }
         let wrapper = {
             let mut wrapper: Option<ID3D11Resource> = None;
-            self.d3d11on12_device
+            self.backend
+                .d3d11on12_device
                 .CreateWrappedResource(
                     &resource,
                     &D3D11_RESOURCE_FLAGS {
@@ -183,19 +160,45 @@ impl Backend for Direct3D12 {
         };
         let surface: IDXGISurface = wrapper.cast()?;
         let bitmap = {
-            self.d2d1_device_context.CreateBitmapFromDxgiSurface(
-                &surface,
-                &D2D1_BITMAP_PROPERTIES1 {
-                    pixelFormat: D2D1_PIXEL_FORMAT {
-                        format: desc.Format,
-                        alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
+            self.backend
+                .d2d1_device_context
+                .CreateBitmapFromDxgiSurface(
+                    &surface,
+                    &D2D1_BITMAP_PROPERTIES1 {
+                        pixelFormat: D2D1_PIXEL_FORMAT {
+                            format: desc.Format,
+                            alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
+                        },
+                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                        ..Default::default()
                     },
-                    bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                    ..Default::default()
-                },
-            )?
+                )?
         };
         Ok(RenderTarget { wrapper, bitmap })
+    }
+
+    #[inline]
+    pub fn flush(&self) {
+        unsafe {
+            self.backend.d3d11_device_context.Flush();
+        }
+    }
+}
+
+unsafe impl Send for Direct3D12 {}
+unsafe impl Sync for Direct3D12 {}
+
+impl Backend for Direct3D12 {
+    type RenderTarget = RenderTarget;
+
+    #[inline]
+    fn device_context(&self) -> &ID2D1DeviceContext {
+        &self.d2d1_device_context
+    }
+
+    #[inline]
+    fn d2d1_factory(&self) -> &ID2D1Factory1 {
+        &self.d2d1_factory
     }
 
     #[inline]

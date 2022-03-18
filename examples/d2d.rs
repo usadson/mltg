@@ -1,7 +1,7 @@
 use windows::Win32::System::Com::*;
 
 struct Application {
-    back_buffer: Vec<mltg::d2d::RenderTarget>,
+    back_buffer: mltg::d2d::RenderTarget,
     context: mltg::Context<mltg::Direct2D>,
     factory: mltg::Factory,
     white_brush: mltg::Brush,
@@ -19,11 +19,11 @@ impl Application {
         }
         let window = wita::WindowBuilder::new().title("mltg d2d").build()?;
         let window_size = window.inner_size();
-        let backend =
-            mltg::Direct2D::new(window.raw_handle(), (window_size.width, window_size.height))?;
+        let backend = mltg::Direct2D::new()?;
         let context = mltg::Context::new(backend)?;
         let factory = context.create_factory();
-        let back_buffer = context.create_back_buffers()?;
+        let back_buffer = context
+            .create_render_target(window.raw_handle(), (window_size.width, window_size.height))?;
         let white_brush = factory.create_solid_color_brush([1.0, 1.0, 1.0, 1.0])?;
         let grad = factory.create_gradient_stop_collection(&[
             (0.0, [1.0, 0.0, 0.0, 1.0]),
@@ -103,7 +103,7 @@ impl wita::EventHandler for Application {
             .factory
             .create_linear_gradient_brush((30.0, 30.0), (hw - 30.0, hh - 30.0), &self.grad)
             .unwrap();
-        let ret = self.context.draw(&self.back_buffer[0], |cmd| {
+        let ret = self.context.draw(&self.back_buffer, |cmd| {
             cmd.clear([0.0, 0.0, 0.3, 0.0]);
             cmd.fill(&rect, &linear_grad_brush);
             cmd.stroke(&text_box, &self.white_brush, 2.0, None);
@@ -120,11 +120,11 @@ impl wita::EventHandler for Application {
         });
         match ret {
             Ok(_) => {
-                self.context.present(None, None);
+                self.back_buffer.present(None, None);
             }
             Err(e) if e == mltg::ErrorKind::RecreateTarget => {
-                self.back_buffer.clear();
-                self.back_buffer = self.context.create_back_buffers().unwrap();
+                let size = ev.window.inner_size();
+                self.back_buffer = self.context.create_render_target(ev.window.raw_handle(), (size.width, size.height)).unwrap();
                 ev.window.redraw();
             }
             Err(e) => panic!("{:?}", e),
@@ -140,9 +140,7 @@ impl wita::EventHandler for Application {
     }
 
     fn resizing(&mut self, ev: wita::event::Resizing) {
-        self.back_buffer.clear();
-        self.context.resize((ev.size.width, ev.size.height));
-        self.back_buffer = self.context.create_back_buffers().unwrap();
+        self.back_buffer.resize((ev.size.width, ev.size.height)).ok();
         ev.window.redraw();
     }
 }

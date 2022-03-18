@@ -17,11 +17,8 @@ fn main() -> anyhow::Result<()> {
         .with_inner_size(LogicalSize::new(640, 480))
         .build(&event_loop)?;
     let window_size = window.inner_size();
-    let context = mltg::Context::new(mltg::Direct2D::new(
-        window.hwnd(),
-        (window_size.width, window_size.height),
-    )?)?;
-    let mut back_buffers = context.create_back_buffers()?;
+    let context = mltg::Context::new(mltg::Direct2D::new()?)?;
+    let mut back_buffer = context.create_render_target(window.hwnd(), (window_size.width, window_size.height))?;
     let image = {
         let factory = context.create_factory();
         factory.create_image("examples/ferris.png")?
@@ -36,7 +33,7 @@ fn main() -> anyhow::Result<()> {
                 let hh = window_size.height / 2.0;
                 let image_size = image.size().cast::<f32>().unwrap();
                 let size = (hw, image_size.height * hw / image_size.width);
-                let ret = context.draw(&back_buffers[0], |cmd| {
+                let ret = context.draw(&back_buffer, |cmd| {
                     cmd.clear([0.0, 0.0, 0.3, 0.0]);
                     cmd.draw_image(
                         &image,
@@ -46,10 +43,12 @@ fn main() -> anyhow::Result<()> {
                     );
                 });
                 match ret {
-                    Ok(_) => {}
+                    Ok(_) => {
+                        back_buffer.present(None, None);
+                    }
                     Err(e) if e == mltg::ErrorKind::RecreateTarget => {
-                        back_buffers.clear();
-                        back_buffers = context.create_back_buffers().unwrap();
+                        let size = window.inner_size();
+                        back_buffer = context.create_render_target(window.hwnd(), (size.width, size.height)).unwrap();
                         window.request_redraw();
                     }
                     Err(e) => panic!("{:?}", e),
@@ -59,9 +58,7 @@ fn main() -> anyhow::Result<()> {
                 event: WindowEvent::Resized(size),
                 ..
             } => {
-                back_buffers.clear();
-                context.resize((size.width, size.height));
-                back_buffers = context.create_back_buffers().unwrap();
+                back_buffer.resize((size.width, size.height)).ok();
                 window.request_redraw();
             }
             Event::WindowEvent {

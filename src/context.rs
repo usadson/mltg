@@ -3,7 +3,7 @@ use crate::*;
 use windows::core::Interface;
 use windows::{
     Foundation::Numerics::*,
-    Win32::Graphics::{DirectWrite::*, Dxgi::*, Imaging::*},
+    Win32::Graphics::{DirectWrite::*, Imaging::*},
     Win32::System::Com::*,
 };
 
@@ -119,8 +119,6 @@ pub trait Backend {
 
     fn device_context(&self) -> &ID2D1DeviceContext;
     fn d2d1_factory(&self) -> &ID2D1Factory1;
-    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>>;
-    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget>;
     fn begin_draw(&self, target: &Self::RenderTarget);
     fn end_draw(&self, target: &Self::RenderTarget);
 }
@@ -266,11 +264,6 @@ where
             dwrite_in_memory_loader: self.dwrite_in_memory_loader.clone(),
             wic_imaging_factory: self.wic_imaging_factory.clone(),
         }
-    }
-
-    #[inline]
-    pub unsafe fn create_render_target<U>(&self, target: &U) -> Result<T::RenderTarget> {
-        self.backend.render_target(target)
     }
 
     #[inline]

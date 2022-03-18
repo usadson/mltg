@@ -57,37 +57,10 @@ impl Direct3D11 {
             device_context,
         })
     }
-}
 
-impl Context<Direct3D11> {
-    #[inline]
-    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
-        let p = swap_chain as *const _ as *const IUnknown;
-        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
-        let ret = self.backend.back_buffers(&swap_chain);
-        ret
-    }
-}
-
-unsafe impl Send for Direct3D11 {}
-unsafe impl Sync for Direct3D11 {}
-
-impl Backend for Direct3D11 {
-    type RenderTarget = RenderTarget;
-
-    #[inline]
-    fn device_context(&self) -> &ID2D1DeviceContext {
-        &self.device_context
-    }
-
-    #[inline]
-    fn d2d1_factory(&self) -> &ID2D1Factory1 {
-        &self.d2d1_factory
-    }
-
-    fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<Self::RenderTarget>> {
+    pub(crate) fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<RenderTarget>> {
         unsafe {
-            let desc = { swap_chain.GetDesc1()? };
+            let desc = swap_chain.GetDesc1()?;
             let surface: IDXGISurface = swap_chain.GetBuffer(0)?;
             let bitmap = {
                 self.device_context.CreateBitmapFromDxgiSurface(
@@ -107,8 +80,18 @@ impl Backend for Direct3D11 {
             Ok(vec![RenderTarget(bitmap)])
         }
     }
+}
 
-    unsafe fn render_target<T>(&self, target: &T) -> Result<Self::RenderTarget> {
+impl Context<Direct3D11> {
+    #[inline]
+    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
+        let p = swap_chain as *const _ as *const IUnknown;
+        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
+        let ret = self.backend.back_buffers(&swap_chain);
+        ret
+    }
+
+    pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
         let target = target as *const _ as *const IUnknown;
         let texture: ID3D11Texture2D = (*target).cast()?;
         let desc = {
@@ -121,7 +104,7 @@ impl Backend for Direct3D11 {
         }
         let surface: IDXGISurface = texture.cast()?;
         let bitmap = {
-            self.device_context.CreateBitmapFromDxgiSurface(
+            self.backend.device_context.CreateBitmapFromDxgiSurface(
                 &surface,
                 &D2D1_BITMAP_PROPERTIES1 {
                     pixelFormat: D2D1_PIXEL_FORMAT {
@@ -134,6 +117,23 @@ impl Backend for Direct3D11 {
             )?
         };
         Ok(RenderTarget(bitmap))
+    }
+}
+
+unsafe impl Send for Direct3D11 {}
+unsafe impl Sync for Direct3D11 {}
+
+impl Backend for Direct3D11 {
+    type RenderTarget = RenderTarget;
+
+    #[inline]
+    fn device_context(&self) -> &ID2D1DeviceContext {
+        &self.device_context
+    }
+
+    #[inline]
+    fn d2d1_factory(&self) -> &ID2D1Factory1 {
+        &self.d2d1_factory
     }
 
     fn begin_draw(&self, _target: &RenderTarget) {}
