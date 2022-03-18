@@ -17,7 +17,7 @@ mltgの`examples`にある`hello.rs`を例にmltgの使い方を見ていきま�
 ```rust,ignore
 struct Application {
     context: mltg::Context<mltg::Direct2D>,
-    back_buffer: Vec<mltg::d2d::RenderTarget>,
+    back_buffer: mltg::d2d::RenderTarget,
     white: mltg::Brush,
     text_layout: mltg::TextLayout,
 }
@@ -49,30 +49,28 @@ let window_size = window.inner_size();
 `mltg::Direct2D`を作ります。
 
 ```rust,ignore
-let backend = mltg::Direct2D::new(
+let backend = mltg::Direct2D::new()?;
+```
+
+### コンテキストとバックバッファを作る
+
+`mltg::Context`と`mltg::d3d::RenderTarget`を作ります。
+
+```rust,ignore
+let context = mltg::Context::new(backend)?;
+let back_buffer = context.create_render_target(
     window.raw_handle(),
     (window_size.width, window_size.height)
 )?;
 ```
 
-ウィンドウのハンドルと`mltg::Direct2D`の中に作られるバックバッファのサイズを引数として渡すと
-`mltg::Direct2D`を作ることができます。
-
-### コンテキストとバックバッファを作る
-
-`mltg::Context`と`Vec<mltg::d3d::RenderTarget>`を作ります。
-
-```rust,ignore
-let context = mltg::Context::new(backend)?;
-let back_buffer = context.create_back_buffers()?;
-```
-
 `mltg::Direct2D`である`backend`を渡すだけで`mltg::Context`を作れます。
-そして今回はバックバッファに直接描画するために`context.create_back_buffers`を使って
-描画先となるオブジェクトを作ります。
 
-> `mltg::Direct3D11`や`mltg::Direct3D12`をバックエンドにした場合は
-> バックエンドの中でスワップチェーンを作らないので、ユーザ側でスワップチェーンを作って`create_back_buffers`に渡してもらうことになります。
+そして今回はバックバッファに直接描画するために`context.create_render_target`を使います。
+ウィンドウのハンドルと`mltg::Direct2D`の中に作られるバックバッファのサイズを引数として渡して描画先となるオブジェクトを作ることができます。
+
+> `mltg::Direct3D11`や`mltg::Direct3D12`をバックエンドにする場合は
+> ユーザ側でスワップチェーンを作って`create_back_buffers`に渡してもらうことになります。
 
 ### ブラシと文字フォーマットを作る
 
