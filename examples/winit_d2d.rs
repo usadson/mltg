@@ -18,7 +18,8 @@ fn main() -> anyhow::Result<()> {
         .build(&event_loop)?;
     let window_size = window.inner_size();
     let context = mltg::Context::new(mltg::Direct2D::new()?)?;
-    let mut back_buffer = context.create_render_target(window.hwnd(), (window_size.width, window_size.height))?;
+    let mut back_buffer =
+        context.create_render_target(window.hwnd(), (window_size.width, window_size.height))?;
     let image = {
         let factory = context.create_factory();
         factory.create_image("examples/ferris.png")?
@@ -48,7 +49,9 @@ fn main() -> anyhow::Result<()> {
                     }
                     Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                         let size = window.inner_size();
-                        back_buffer = context.create_render_target(window.hwnd(), (size.width, size.height)).unwrap();
+                        back_buffer = context
+                            .create_render_target(window.hwnd(), (size.width, size.height))
+                            .unwrap();
                         window.request_redraw();
                     }
                     Err(e) => panic!("{:?}", e),

@@ -124,7 +124,10 @@ impl wita::EventHandler for Application {
             }
             Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                 let size = ev.window.inner_size();
-                self.back_buffer = self.context.create_render_target(ev.window.raw_handle(), (size.width, size.height)).unwrap();
+                self.back_buffer = self
+                    .context
+                    .create_render_target(ev.window.raw_handle(), (size.width, size.height))
+                    .unwrap();
                 ev.window.redraw();
             }
             Err(e) => panic!("{:?}", e),
@@ -140,7 +143,9 @@ impl wita::EventHandler for Application {
     }
 
     fn resizing(&mut self, ev: wita::event::Resizing) {
-        self.back_buffer.resize((ev.size.width, ev.size.height)).ok();
+        self.back_buffer
+            .resize((ev.size.width, ev.size.height))
+            .ok();
         ev.window.redraw();
     }
 }
