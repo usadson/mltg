@@ -1,7 +1,7 @@
 use crate::*;
 use std::path::{Path, PathBuf};
 use windows::core::Interface;
-use windows::Win32::{Graphics::Imaging::*, System::SystemServices::*};
+use windows::Win32::{Graphics::Imaging::D2D::*, Graphics::Imaging::*, System::SystemServices::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -21,7 +21,7 @@ impl Image {
     #[inline]
     pub(crate) fn new(
         dc: &ID2D1DeviceContext,
-        factory: &IWICImagingFactory,
+        factory: &IWICImagingFactory2,
         loader: impl ImageLoader,
     ) -> Result<Self> {
         loader.load(dc, factory)
@@ -66,11 +66,11 @@ unsafe impl Send for Image {}
 unsafe impl Sync for Image {}
 
 pub trait ImageLoader {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image>;
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image>;
 }
 
 impl<'a> ImageLoader for &'a Path {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
         unsafe {
             let decoder = {
                 factory.CreateDecoderFromFilename(
@@ -104,19 +104,19 @@ impl<'a> ImageLoader for &'a Path {
 }
 
 impl ImageLoader for PathBuf {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
         self.as_path().load(dc, factory)
     }
 }
 
 impl<'a> ImageLoader for &'a str {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }
 
 impl<'a> ImageLoader for &'a String {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory) -> Result<Image> {
+    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
         Path::new(self).load(dc, factory)
     }
 }

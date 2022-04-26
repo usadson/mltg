@@ -3,7 +3,7 @@ use crate::*;
 use windows::core::Interface;
 use windows::{
     Foundation::Numerics::*,
-    Win32::Graphics::{DirectWrite::*, Imaging::*},
+    Win32::Graphics::{DirectWrite::*, Imaging::D2D::*, Imaging::*},
     Win32::System::Com::*,
 };
 
@@ -129,7 +129,7 @@ pub struct Factory {
     device_context: ID2D1DeviceContext,
     dwrite_factory: IDWriteFactory5,
     dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
-    wic_imaging_factory: IWICImagingFactory,
+    wic_imaging_factory: IWICImagingFactory2,
 }
 
 impl Factory {
@@ -230,7 +230,7 @@ pub struct Context<T> {
     pub(crate) backend: T,
     dwrite_factory: IDWriteFactory5,
     dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
-    wic_imaging_factory: IWICImagingFactory,
+    wic_imaging_factory: IWICImagingFactory2,
 }
 
 impl<T> Context<T>
@@ -245,7 +245,7 @@ where
             let dwrite_in_memory_loader = dwrite_factory.CreateInMemoryFontFileLoader()?;
             dwrite_factory.RegisterFontFileLoader(&dwrite_in_memory_loader)?;
             let wic_imaging_factory =
-                CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)?;
+                CoCreateInstance(&CLSID_WICImagingFactory2, None, CLSCTX_INPROC_SERVER)?;
             Ok(Self {
                 backend,
                 dwrite_factory,

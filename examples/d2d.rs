@@ -138,7 +138,7 @@ impl wita::EventHandler for Application {
         self.context.set_dpi(ev.new_dpi as _);
         self.resizing(wita::event::Resizing {
             window: ev.window,
-            size: ev.window.inner_size(),
+            size: &mut ev.window.inner_size(),
         });
     }
 
