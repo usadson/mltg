@@ -139,6 +139,7 @@ impl wita::EventHandler for Application {
         self.resizing(wita::event::Resizing {
             window: ev.window,
             size: &mut ev.window.inner_size(),
+            edge: wita::ResizingEdge::Right,
         });
     }
 
