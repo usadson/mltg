@@ -7,19 +7,19 @@ use windows::{
     Win32::System::Com::*,
 };
 
-pub struct DrawCommand<'a> {
-    device_context: &'a ID2D1DeviceContext,
-    dwrite_factory: &'a IDWriteFactory5,
+pub struct DrawCommand {
+    device_context: ID2D1DeviceContext,
+    dwrite_factory: IDWriteFactory5,
 }
 
-impl<'a> DrawCommand<'a> {
+impl DrawCommand {
     pub(crate) fn new(
-        device_context: &'a ID2D1DeviceContext,
-        dwrite_factory: &'a IDWriteFactory5,
+        device_context: &ID2D1DeviceContext,
+        dwrite_factory: &IDWriteFactory5,
     ) -> Self {
         Self {
-            device_context,
-            dwrite_factory,
+            device_context: device_context.clone(),
+            dwrite_factory: dwrite_factory.clone(),
         }
     }
 
@@ -33,7 +33,7 @@ impl<'a> DrawCommand<'a> {
 
     #[inline]
     pub fn fill(&self, object: &impl Fill, brush: &Brush) {
-        object.fill(self.device_context, &brush.handle());
+        object.fill(&self.device_context, &brush.handle());
     }
 
     #[inline]
@@ -45,7 +45,7 @@ impl<'a> DrawCommand<'a> {
         style: Option<&StrokeStyle>,
     ) {
         object.stroke(
-            self.device_context,
+            &self.device_context,
             &brush.handle(),
             width,
             style.map(|s| s.0.clone()),

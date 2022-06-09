@@ -3,7 +3,7 @@ use windows::core::{Interface, PCSTR, PCWSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
-    System::{Com::*, Threading::*, WindowsProgramming::*},
+    System::{Threading::*, WindowsProgramming::*},
 };
 
 #[repr(C)]
@@ -63,13 +63,12 @@ struct Application {
     fence_value: Cell<u64>,
     context: mltg::Context<mltg::Direct3D12>,
     image: mltg::Image,
-    target: Option<mltg::d3d12::RenderTarget>,
+    target: Option<mltg::RenderTarget<mltg::Direct3D12>>,
 }
 
 impl Application {
     fn new() -> anyhow::Result<Self> {
         unsafe {
-            CoInitialize(std::ptr::null_mut())?;
             let window = wita::WindowBuilder::new()
                 .title("mltg offscreen d3d12")
                 .build()?;
@@ -589,5 +588,6 @@ impl wita::EventHandler for Application {
 }
 
 fn main() {
+    let _coinit = coinit::init(coinit::APARTMENTTHREADED | coinit::DISABLE_OLE1DDE).unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }

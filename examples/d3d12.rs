@@ -3,7 +3,7 @@ use windows::core::{Interface, PCWSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
-    System::{Com::*, Threading::*, WindowsProgramming::*},
+    System::{Threading::*, WindowsProgramming::*},
 };
 
 fn resource_barrier(
@@ -43,7 +43,7 @@ struct Application {
     fence_value: Cell<u64>,
     context: mltg::Context<mltg::Direct3D12>,
     factory: mltg::Factory,
-    bitmaps: Vec<mltg::d3d12::RenderTarget>,
+    bitmaps: Vec<mltg::RenderTarget<mltg::Direct3D12>>,
     text: mltg::TextLayout,
     white_brush: mltg::Brush,
     grad: mltg::GradientStopCollection,
@@ -53,7 +53,6 @@ struct Application {
 impl Application {
     fn new() -> anyhow::Result<Self> {
         unsafe {
-            CoInitialize(std::ptr::null_mut())?;
             let window = wita::WindowBuilder::new().title("mltg d3d12").build()?;
             let window_size = window.inner_size();
             let d3d12_device = {
@@ -308,5 +307,6 @@ impl wita::EventHandler for Application {
 }
 
 fn main() {
+    let _coinit = coinit::init(coinit::APARTMENTTHREADED | coinit::DISABLE_OLE1DDE).unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }

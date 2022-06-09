@@ -28,6 +28,7 @@ pub use utility::*;
 use windows::Win32::Graphics::{Direct2D::Common::*, Direct2D::*, Direct3D::*};
 
 pub type Result<T> = core::result::Result<T, Error>;
+pub type RenderTarget<T> = <T as Backend>::RenderTarget;
 
 pub trait Target {
     fn bitmap(&self) -> &ID2D1Bitmap1;
@@ -47,11 +48,4 @@ pub trait Stroke {
         width: f32,
         style: Option<ID2D1StrokeStyle>,
     );
-}
-
-pub mod api {
-    pub use windows::Win32::System::Com::{
-        CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
-        COINIT_MULTITHREADED, COINIT_SPEED_OVER_MEMORY,
-    };
 }

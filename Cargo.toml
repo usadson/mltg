@@ -43,5 +43,6 @@ features = [
 
 [dev-dependencies]
 anyhow = "1.0.57"
+coinit = "0.1.5"
 winit = "0.26.1"
 wita = "0.16.1"

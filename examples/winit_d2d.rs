@@ -1,4 +1,3 @@
-use windows::Win32::System::Com::*;
 use winit::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
@@ -8,9 +7,7 @@ use winit::{
 };
 
 fn main() -> anyhow::Result<()> {
-    unsafe {
-        CoInitialize(std::ptr::null_mut())?;
-    }
+    let _coinit = coinit::init(coinit::APARTMENTTHREADED | coinit::DISABLE_OLE1DDE).unwrap();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("mltg winit d2d")

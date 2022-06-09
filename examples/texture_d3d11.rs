@@ -2,7 +2,6 @@ use windows::core::PCSTR;
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D11::*, Dxgi::Common::*, Dxgi::*},
-    System::Com::*,
 };
 
 #[repr(C)]
@@ -32,15 +31,12 @@ struct Application {
     sampler: ID3D11SamplerState,
     blend: ID3D11BlendState,
     context: mltg::Context<mltg::Direct3D11>,
-    target: mltg::d3d11::RenderTarget,
+    target: mltg::RenderTarget<mltg::Direct3D11>,
     image: mltg::Image,
 }
 
 impl Application {
     fn new() -> anyhow::Result<Self> {
-        unsafe {
-            CoInitialize(std::ptr::null_mut())?;
-        }
         let window = wita::WindowBuilder::new()
             .title("mltg offscreen d3d11")
             .build()?;
@@ -305,5 +301,6 @@ impl wita::EventHandler for Application {
 }
 
 fn main() {
+    let _coinit = coinit::init(coinit::APARTMENTTHREADED | coinit::DISABLE_OLE1DDE).unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }

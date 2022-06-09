@@ -1,17 +1,12 @@
-use windows::Win32::System::Com::*;
-
 struct Application {
     context: mltg::Context<mltg::Direct2D>,
-    back_buffer: mltg::d2d::RenderTarget,
+    back_buffer: mltg::RenderTarget<mltg::Direct2D>,
     white: mltg::Brush,
     text_format: mltg::TextFormat,
 }
 
 impl Application {
     fn new() -> anyhow::Result<Self> {
-        unsafe {
-            CoInitialize(std::ptr::null_mut())?;
-        }
         let window = wita::WindowBuilder::new().title("mltg hello").build()?;
         let window_size = window.inner_size();
         let backend = mltg::Direct2D::new()?;
@@ -64,5 +59,6 @@ impl wita::EventHandler for Application {
 }
 
 fn main() {
+    let _coinit = coinit::init(coinit::APARTMENTTHREADED | coinit::DISABLE_OLE1DDE).unwrap();
     wita::run(wita::RunType::Wait, Application::new).unwrap();
 }
