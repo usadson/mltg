@@ -15,7 +15,7 @@ targets = ["x86_64-pc-windows-msvc"]
 all-featurse = true
 
 [dependencies]
-gecl = "0.0.2"
+gecl = "0.1.1"
 
 [dependencies.windows]
 version = "0.37.0"
@@ -44,4 +44,4 @@ features = [
 [dev-dependencies]
 anyhow = "1.0.57"
 winit = "0.26.1"
-wita = "0.16.0"
+wita = "0.16.1"
