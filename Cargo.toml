@@ -15,7 +15,7 @@ targets = ["x86_64-pc-windows-msvc"]
 all-featurse = true
 
 [dependencies]
-gecl = "0.1.1"
+gecl = "0.1.2"
 
 [dependencies.windows]
 version = "0.37.0"
