@@ -228,6 +228,7 @@ pub struct HitTestResult {
 #[derive(Clone)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
+    _typography: IDWriteTypography,
     format: TextFormat,
     text: String,
     size: Size,
@@ -242,26 +243,44 @@ impl TextLayout {
         alignment: TextAlignment,
         size: Option<Size>,
     ) -> Result<Self> {
-        let (layout, max_size) = unsafe {
+        let layout = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
             let layout =
                 factory.CreateTextLayout(&text, &format.format, std::f32::MAX, std::f32::MAX)?;
+            layout
+        };
+        let typography = unsafe {
+            let typography = factory.CreateTypography()?;
+            let feature = DWRITE_FONT_FEATURE {
+                nameTag: DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES,
+                parameter: 0,
+            };
+            typography.AddFontFeature(&feature)?;
+            let range = DWRITE_TEXT_RANGE {
+                startPosition: 0,
+                length: text.chars().count() as _,
+            };
+            layout.SetTypography(&typography, range)?;
+            typography
+        };
+        let max_size = unsafe {
             let size = size.unwrap_or_else(|| {
                 let metrics = layout.GetMetrics().unwrap();
                 (metrics.width, metrics.height).into()
             });
-            layout.SetMaxWidth(size.width).unwrap();
-            layout.SetMaxHeight(size.height).unwrap();
             layout
                 .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
                 .unwrap();
             layout
                 .SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
                 .unwrap();
-            (layout, size)
+            layout.SetMaxWidth(size.width).unwrap();
+            layout.SetMaxHeight(size.height).unwrap();
+            size
         };
         Ok(Self {
             layout,
+            _typography: typography,
             format: format.clone(),
             text: text.into(),
             size: max_size,
@@ -343,6 +362,24 @@ impl TextLayout {
                 inside: inside.as_bool(),
                 trailing_hit: trailing_hit.as_bool(),
             }
+        }
+    }
+
+    #[inline]
+    pub fn text_position_to_point(&self, position: usize, trailing_hit: bool) -> Point {
+        unsafe {
+            let mut point = point(0.0, 0.0);
+            let mut metrics = DWRITE_HIT_TEST_METRICS::default();
+            self.layout
+                .HitTestTextPosition(
+                    position as _,
+                    trailing_hit,
+                    &mut point.x,
+                    &mut point.y,
+                    &mut metrics,
+                )
+                .unwrap();
+            point
         }
     }
 }

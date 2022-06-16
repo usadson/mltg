@@ -60,6 +60,16 @@
 			],
 			"group": "build",
 			"label": "debug texture_d3d12"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"args": ["--example", "text"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "debug text"
 		}
 	]
 }
