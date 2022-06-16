@@ -245,9 +245,7 @@ impl TextLayout {
     ) -> Result<Self> {
         let layout = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
-            let layout =
-                factory.CreateTextLayout(&text, &format.format, std::f32::MAX, std::f32::MAX)?;
-            layout
+            factory.CreateTextLayout(&text, &format.format, std::f32::MAX, std::f32::MAX)?
         };
         let typography = unsafe {
             let typography = factory.CreateTypography()?;

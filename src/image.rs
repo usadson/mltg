@@ -83,10 +83,10 @@ impl<'a> ImageLoader for &'a Path {
             let frame = decoder.GetFrame(0)?;
             let converter = {
                 let converter = factory.CreateFormatConverter()?;
-                let mut guid = GUID_WICPixelFormat32bppPBGRA.clone();
+                let guid = GUID_WICPixelFormat32bppPBGRA;
                 converter.Initialize(
                     &frame,
-                    &mut guid,
+                    &guid,
                     WICBitmapDitherTypeNone,
                     None,
                     1.0,

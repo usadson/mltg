@@ -40,6 +40,9 @@ pub struct Direct3D12 {
 }
 
 impl Direct3D12 {
+    /// # Safety
+    /// 
+    /// `d3d12_device` must be an `ID3D12Device` and `command_queue` must be an `ID3D12CommandQueue`.
     pub unsafe fn new<T, U>(d3d12_device: &T, command_queue: &U) -> Result<Self> {
         let d3d12_device: ID3D12Device = (*(d3d12_device as *const _ as *const IUnknown)).cast()?;
         let command_queue: ID3D12CommandQueue =
@@ -125,17 +128,22 @@ impl Direct3D12 {
 }
 
 impl Context<Direct3D12> {
+    /// # Safety
+    /// 
+    /// `swap_chain` must be an `IDXGISwapChain1`.
     #[inline]
     pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
         let p = swap_chain as *const _ as *const IUnknown;
-        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
-        let ret = self.backend.back_buffers(&swap_chain);
-        ret
+        let swap_chain: IDXGISwapChain1 = p.as_ref().unwrap().cast()?;
+        self.backend.back_buffers(&swap_chain)
     }
 
+    /// # Safety
+    /// 
+    /// `target` must be an `ID3D12Resource`.
     pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
         let target = target as *const _ as *const IUnknown;
-        let resource: ID3D12Resource = (*target).cast()?;
+        let resource: ID3D12Resource = target.as_ref().unwrap().cast()?;
         let desc = resource.GetDesc();
         if cfg!(debug_assertions) {
             assert!(

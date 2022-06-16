@@ -116,7 +116,7 @@ impl Direct2D {
             let dxgi_factory: IDXGIFactory2 = CreateDXGIFactory1()?;
             let object = d3d11::Direct3D11::new(&d3d11_device)?;
             Ok(Self {
-                d3d11_device: d3d11_device,
+                d3d11_device,
                 dxgi_factory,
                 object,
             })
@@ -188,6 +188,6 @@ impl Backend for Direct2D {
     #[inline]
     fn end_draw(&self, target: &Self::RenderTarget) {
         self.object
-            .end_draw(&target.render_target.as_ref().unwrap());
+            .end_draw(target.render_target.as_ref().unwrap());
     }
 }

@@ -209,7 +209,7 @@ impl Factory {
         size: Option<Size>,
     ) -> Result<TextLayout> {
         TextLayout::new(
-            &self.dwrite_factory.clone().into(),
+            &self.dwrite_factory.clone(),
             text.as_ref(),
             format,
             alignment,
