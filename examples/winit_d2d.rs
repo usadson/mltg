@@ -42,7 +42,7 @@ fn main() -> anyhow::Result<()> {
                 });
                 match ret {
                     Ok(_) => {
-                        back_buffer.present(None, None);
+                        back_buffer.present(0, None, None);
                     }
                     Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                         let size = window.inner_size();

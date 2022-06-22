@@ -38,7 +38,7 @@ impl wita::EventHandler for Application {
                 cmd.draw_text("Hello, world!", &self.text_format, &self.white, (0.0, 0.0));
             })
             .unwrap();
-        self.back_buffer.present(None, None);
+        self.back_buffer.present(0, None, None);
     }
 
     fn dpi_changed(&mut self, ev: wita::event::DpiChanged) {

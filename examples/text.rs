@@ -76,7 +76,7 @@ impl wita::EventHandler for Application {
         });
         match ret {
             Ok(_) => {
-                self.render_target.present(None, None);
+                self.render_target.present(0, None, None);
             }
             Err(e) if e == mltg::ErrorKind::RecreateTarget => {
                 let size = ev.window.inner_size();

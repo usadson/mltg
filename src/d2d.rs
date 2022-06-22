@@ -40,7 +40,13 @@ impl RenderTarget {
         Ok(())
     }
 
-    pub fn present(&self, dirty_rects: Option<&[ScreenRect]>, scroll: Option<Scroll>) {
+    pub fn present(
+        &self,
+        sync_interval: u32,
+        dirty_rects: Option<&[ScreenRect]>,
+        scroll: Option<Scroll>,
+    ) {
+        assert!(sync_interval <= 4);
         let scroll_rect = scroll.as_ref().map(|s| {
             let ep = s.rect.endpoint();
             RECT {
@@ -67,7 +73,7 @@ impl RenderTarget {
                 .map_or(std::ptr::null_mut(), |s| s as *const _ as *mut POINT),
         };
         unsafe {
-            self.swap_chain.Present1(1, 0, &params).ok();
+            self.swap_chain.Present1(sync_interval, 0, &params).ok();
         }
     }
 }
@@ -187,7 +193,6 @@ impl Backend for Direct2D {
 
     #[inline]
     fn end_draw(&self, target: &Self::RenderTarget) {
-        self.object
-            .end_draw(target.render_target.as_ref().unwrap());
+        self.object.end_draw(target.render_target.as_ref().unwrap());
     }
 }

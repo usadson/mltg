@@ -41,7 +41,7 @@ pub struct Direct3D12 {
 
 impl Direct3D12 {
     /// # Safety
-    /// 
+    ///
     /// `d3d12_device` must be an `ID3D12Device` and `command_queue` must be an `ID3D12CommandQueue`.
     pub unsafe fn new<T, U>(d3d12_device: &T, command_queue: &U) -> Result<Self> {
         let d3d12_device: ID3D12Device = (*(d3d12_device as *const _ as *const IUnknown)).cast()?;
@@ -129,7 +129,7 @@ impl Direct3D12 {
 
 impl Context<Direct3D12> {
     /// # Safety
-    /// 
+    ///
     /// `swap_chain` must be an `IDXGISwapChain1`.
     #[inline]
     pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
@@ -139,7 +139,7 @@ impl Context<Direct3D12> {
     }
 
     /// # Safety
-    /// 
+    ///
     /// `target` must be an `ID3D12Resource`.
     pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
         let target = target as *const _ as *const IUnknown;

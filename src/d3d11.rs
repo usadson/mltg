@@ -36,7 +36,7 @@ pub struct Direct3D11 {
 
 impl Direct3D11 {
     /// # Safety
-    /// 
+    ///
     /// `d3d12_device` must be a `ID3D11Device`.
     pub unsafe fn new<T>(d3d11_device: &T) -> Result<Self> {
         let d3d11_device: ID3D11Device = (*(d3d11_device as *const _ as *const IUnknown)).cast()?;
@@ -87,7 +87,7 @@ impl Direct3D11 {
 
 impl Context<Direct3D11> {
     /// # Safety
-    /// 
+    ///
     /// `target` must be an `ID3D11SwapChain1`.
     #[inline]
     pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
@@ -97,7 +97,7 @@ impl Context<Direct3D11> {
     }
 
     /// # Safety
-    /// 
+    ///
     /// `target` must be an `ID3D11Texture2D`.
     pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
         let target = target as *const _ as *const IUnknown;
