@@ -1,6 +1,6 @@
 use crate::*;
 use std::path::{Path, PathBuf};
-use windows::core::Interface;
+use windows::core::{Interface, HSTRING};
 use windows::Win32::{Graphics::Imaging::D2D::*, Graphics::Imaging::*, System::SystemServices::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -72,14 +72,12 @@ pub trait ImageLoader {
 impl<'a> ImageLoader for &'a Path {
     fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
         unsafe {
-            let decoder = {
-                factory.CreateDecoderFromFilename(
-                    self.to_str().unwrap(),
-                    std::ptr::null(),
-                    GENERIC_READ,
-                    WICDecodeMetadataCacheOnDemand,
-                )?
-            };
+            let decoder = factory.CreateDecoderFromFilename(
+                &HSTRING::from(self.to_str().unwrap()),
+                std::ptr::null(),
+                GENERIC_READ,
+                WICDecodeMetadataCacheOnDemand,
+            )?;
             let frame = decoder.GetFrame(0)?;
             let converter = {
                 let converter = factory.CreateFormatConverter()?;

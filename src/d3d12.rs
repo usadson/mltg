@@ -63,16 +63,8 @@ impl Direct3D12 {
             )
             .map(|_| (p.unwrap().cast::<ID3D11On12Device>().unwrap(), dc.unwrap()))?
         };
-        let d2d1_factory = {
-            let mut p: Option<ID2D1Factory1> = None;
-            D2D1CreateFactory(
-                D2D1_FACTORY_TYPE_MULTI_THREADED,
-                &ID2D1Factory1::IID,
-                std::ptr::null(),
-                &mut p as *mut _ as _,
-            )
-            .map(|_| p.unwrap())?
-        };
+        let d2d1_factory =
+            D2D1CreateFactory::<ID2D1Factory1>(D2D1_FACTORY_TYPE_MULTI_THREADED, std::ptr::null())?;
         let dxgi_device = d3d11on12_device.cast::<IDXGIDevice>()?;
         let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
         let d2d1_device_context =

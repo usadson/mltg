@@ -88,7 +88,7 @@ impl Application {
         };
         let rtv = unsafe {
             let buffer: ID3D11Texture2D = swap_chain.GetBuffer(0)?;
-            device.CreateRenderTargetView(buffer, std::ptr::null())?
+            device.CreateRenderTargetView(&buffer, std::ptr::null())?
         };
         let vertex_buffer = unsafe {
             const VERTICES: [Vertex; 4] = [
@@ -254,7 +254,7 @@ impl wita::EventHandler for Application {
                 }
                 Err(e) => panic!("{:?}", e),
             }
-            dc.ClearRenderTargetView(&self.rtv, [0.0, 0.0, 0.3, 0.0].as_ptr());
+            dc.ClearRenderTargetView(self.rtv.as_ref(), [0.0, 0.0, 0.3, 0.0].as_ptr());
             dc.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             dc.IASetInputLayout(&self.input_layout);
             dc.IASetIndexBuffer(&self.index_buffer, DXGI_FORMAT_R32_UINT, 0);
@@ -292,7 +292,7 @@ impl wita::EventHandler for Application {
             self.rtv = {
                 let buffer: ID3D11Texture2D = self.swap_chain.GetBuffer(0).unwrap();
                 self.device
-                    .CreateRenderTargetView(buffer, std::ptr::null())
+                    .CreateRenderTargetView(&buffer, std::ptr::null())
                     .ok()
             };
             ev.window.redraw();

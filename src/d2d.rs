@@ -73,7 +73,7 @@ impl RenderTarget {
                 .map_or(std::ptr::null_mut(), |s| s as *const _ as *mut POINT),
         };
         unsafe {
-            self.swap_chain.Present1(sync_interval, 0, &params).ok();
+            self.swap_chain.Present1(sync_interval, 0, &params).ok().unwrap_or(());
         }
     }
 }

@@ -22,7 +22,7 @@ impl Stroke for Path {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawGeometry(&self.0, brush, width, style);
+            dc.DrawGeometry(&self.0, brush, width, style.as_ref());
         }
     }
 }
@@ -60,7 +60,7 @@ impl PathBuilder {
     pub fn begin(self, point: impl Into<Point>) -> Figure {
         unsafe {
             let point: D2D_POINT_2F = Inner(point.into()).into();
-            self.sink.BeginFigure(&point, D2D1_FIGURE_BEGIN_FILLED);
+            self.sink.BeginFigure(point, D2D1_FIGURE_BEGIN_FILLED);
             Figure {
                 geometry: self.geometry,
                 sink: self.sink,

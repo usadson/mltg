@@ -27,7 +27,7 @@ impl Stroke for Line {
         let x0: D2D_POINT_2F = Inner(self.0).into();
         let x1: D2D_POINT_2F = Inner(self.1).into();
         unsafe {
-            dc.DrawLine(x0, x1, brush, width, style);
+            dc.DrawLine(x0, x1, brush, width, style.as_ref());
         }
     }
 }
@@ -51,7 +51,12 @@ impl Stroke for Rect {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawRectangle(&D2D_RECT_F::from(Inner(*self)), brush, width, style);
+            dc.DrawRectangle(
+                &D2D_RECT_F::from(Inner(*self)),
+                brush,
+                width,
+                style.as_ref(),
+            );
         }
     }
 }
@@ -92,7 +97,7 @@ impl Stroke for Ellipse {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style);
+            dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style.as_ref());
         }
     }
 }
@@ -116,7 +121,12 @@ impl Stroke for Circle {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawEllipse(&D2D1_ELLIPSE::from(Inner(*self)), brush, width, style);
+            dc.DrawEllipse(
+                &D2D1_ELLIPSE::from(Inner(*self)),
+                brush,
+                width,
+                style.as_ref(),
+            );
         }
     }
 }
@@ -167,7 +177,12 @@ impl Stroke for RoundedRect {
         style: Option<ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawRoundedRectangle(&D2D1_ROUNDED_RECT::from(*self), brush, width, style);
+            dc.DrawRoundedRectangle(
+                &D2D1_ROUNDED_RECT::from(*self),
+                brush,
+                width,
+                style.as_ref(),
+            );
         }
     }
 }

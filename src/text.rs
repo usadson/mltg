@@ -1,6 +1,6 @@
 use crate::*;
 use std::convert::TryInto;
-use windows::core::Interface;
+use windows::core::{Interface, HSTRING};
 use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -151,8 +151,10 @@ impl TextFormat {
             Font::System(font_name) => (font_name, None),
             Font::File(path, font_name) => unsafe {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
-                let font_file = factory
-                    .CreateFontFileReference(path.to_string_lossy().as_ref(), std::ptr::null())?;
+                let font_file = factory.CreateFontFileReference(
+                    &HSTRING::from(path.to_string_lossy().as_ref()),
+                    std::ptr::null(),
+                )?;
                 set_builder.AddFontFile(&font_file)?;
                 let font_set = set_builder.CreateFontSet()?;
                 let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;
@@ -174,13 +176,13 @@ impl TextFormat {
         };
         let format = unsafe {
             factory.CreateTextFormat(
-                font_name,
-                font_collection,
+                &HSTRING::from(font_name),
+                font_collection.as_ref(),
                 DWRITE_FONT_WEIGHT(style.weight as _),
                 DWRITE_FONT_STYLE(style.style as _),
                 DWRITE_FONT_STRETCH(style.stretch as _),
                 size,
-                "",
+                windows::w!(""),
             )?
         };
         Ok(Self {
@@ -253,7 +255,7 @@ impl TextLayout {
                 nameTag: DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES,
                 parameter: 0,
             };
-            typography.AddFontFeature(&feature)?;
+            typography.AddFontFeature(feature)?;
             let range = DWRITE_TEXT_RANGE {
                 startPosition: 0,
                 length: text.chars().count() as _,

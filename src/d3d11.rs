@@ -40,18 +40,12 @@ impl Direct3D11 {
     /// `d3d12_device` must be a `ID3D11Device`.
     pub unsafe fn new<T>(d3d11_device: &T) -> Result<Self> {
         let d3d11_device: ID3D11Device = (*(d3d11_device as *const _ as *const IUnknown)).cast()?;
-        let d2d1_factory = {
-            let mut p: Option<ID2D1Factory1> = None;
-            D2D1CreateFactory(
-                D2D1_FACTORY_TYPE_MULTI_THREADED,
-                &ID2D1Factory1::IID,
-                &D2D1_FACTORY_OPTIONS {
-                    debugLevel: D2D1_DEBUG_LEVEL_ERROR,
-                },
-                &mut p as *mut _ as _,
-            )
-            .map(|_| p.unwrap())?
-        };
+        let d2d1_factory = D2D1CreateFactory::<ID2D1Factory1>(
+            D2D1_FACTORY_TYPE_MULTI_THREADED,
+            &D2D1_FACTORY_OPTIONS {
+                debugLevel: D2D1_DEBUG_LEVEL_ERROR,
+            },
+        )?;
         let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
         let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
         let device_context = d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;

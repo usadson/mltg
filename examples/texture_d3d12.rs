@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use windows::core::{Interface, PCSTR, PCWSTR};
+use windows::core::{Interface, PCSTR};
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
@@ -98,7 +98,9 @@ impl Application {
                 &command_allocator,
                 None,
             )?;
-            command_list.SetName("Application::command_list").unwrap();
+            command_list
+                .SetName(windows::w!("Application::command_list"))
+                .unwrap();
             command_list.Close().unwrap();
             let dxgi_factory: IDXGIFactory4 = CreateDXGIFactory1()?;
             let swap_chain: IDXGISwapChain4 = {
@@ -269,7 +271,7 @@ impl Application {
                     )
                     .map(|_| tex.unwrap())?
             };
-            tex.SetName("Application::tex").unwrap();
+            tex.SetName(windows::w!("Application::tex")).unwrap();
             let srv_heap: ID3D12DescriptorHeap =
                 device.CreateDescriptorHeap(&D3D12_DESCRIPTOR_HEAP_DESC {
                     Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
@@ -453,8 +455,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event =
-                    CreateEventW(std::ptr::null_mut(), false, false, PCWSTR::default()).unwrap();
+                let event = CreateEventW(std::ptr::null_mut(), false, false, None).unwrap();
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
                 CloseHandle(event);
