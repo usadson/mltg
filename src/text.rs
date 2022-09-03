@@ -59,9 +59,9 @@ pub fn font_point(value: f32) -> FontPoint {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TextStyle {
-    weight: FontWeight,
-    style: FontStyle,
-    stretch: FontStretch,
+    pub weight: FontWeight,
+    pub style: FontStyle,
+    pub stretch: FontStretch,
 }
 
 impl Default for TextStyle {
