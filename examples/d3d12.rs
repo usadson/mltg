@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use windows::core::{Interface};
+use windows::core::Interface;
 use windows::Win32::{
     Foundation::*,
     Graphics::{Direct3D::*, Direct3D12::*, Dxgi::Common::*, Dxgi::*},
