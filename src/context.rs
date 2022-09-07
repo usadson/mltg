@@ -7,6 +7,7 @@ use windows::{
     Win32::System::Com::*,
 };
 
+#[derive(Clone)]
 pub struct DrawCommand {
     device_context: ID2D1DeviceContext,
     dwrite_factory: IDWriteFactory5,
