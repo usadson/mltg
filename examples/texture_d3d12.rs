@@ -330,13 +330,8 @@ impl Application {
                 };
                 let blob = {
                     let mut p = None;
-                    D3D12SerializeRootSignature(
-                        &root,
-                        D3D_ROOT_SIGNATURE_VERSION_1,
-                        &mut p,
-                        None,
-                    )
-                    .map(|_| p.unwrap())?
+                    D3D12SerializeRootSignature(&root, D3D_ROOT_SIGNATURE_VERSION_1, &mut p, None)
+                        .map(|_| p.unwrap())?
                 };
                 device.CreateRootSignature(
                     0,
@@ -532,15 +527,19 @@ impl wita::EventHandler for Application {
                 D3D12_RESOURCE_STATE_COMMON,
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             );
-            self.command_list
-                .ClearRenderTargetView(rtv_handle, &*[0.0, 0.0, 0.3, 0.0].as_ptr(), &[]);
+            self.command_list.ClearRenderTargetView(
+                rtv_handle,
+                &*[0.0, 0.0, 0.3, 0.0].as_ptr(),
+                &[],
+            );
             self.command_list.OMSetRenderTargets(
                 1,
                 Some(&*[rtv_handle.clone()].as_ptr()),
                 false,
                 None,
             );
-            self.command_list.IASetVertexBuffers(0, Some(&[self.vbv.clone()]));
+            self.command_list
+                .IASetVertexBuffers(0, Some(&[self.vbv.clone()]));
             self.command_list.IASetIndexBuffer(Some(&self.ibv));
             self.command_list
                 .IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -576,8 +575,7 @@ impl wita::EventHandler for Application {
                 let mut buffers = vec![];
                 for i in 0..2 {
                     let buffer: ID3D12Resource = self.swap_chain.GetBuffer(i as _).unwrap();
-                    self.device
-                        .CreateRenderTargetView(&buffer, None, handle);
+                    self.device.CreateRenderTargetView(&buffer, None, handle);
                     buffers.push(buffer);
                     handle.ptr += self.rtv_descriptor_size;
                 }

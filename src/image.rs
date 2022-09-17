@@ -88,10 +88,7 @@ impl<'a> ImageLoader for &'a Path {
                 )?;
                 converter
             };
-            let bitmap = {
-                dc.CreateBitmapFromWicBitmap(&converter, None)?
-                    .cast()?
-            };
+            let bitmap = { dc.CreateBitmapFromWicBitmap(&converter, None)?.cast()? };
             Ok(Image(bitmap))
         }
     }

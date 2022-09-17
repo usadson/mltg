@@ -291,9 +291,7 @@ impl wita::EventHandler for Application {
                 .unwrap();
             self.rtv = {
                 let buffer: ID3D11Texture2D = self.swap_chain.GetBuffer(0).unwrap();
-                self.device
-                    .CreateRenderTargetView(&buffer, None)
-                    .ok()
+                self.device.CreateRenderTargetView(&buffer, None).ok()
             };
             ev.window.redraw();
         }
