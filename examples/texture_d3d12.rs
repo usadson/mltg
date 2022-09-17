@@ -121,7 +121,7 @@ impl Application {
                             },
                             ..Default::default()
                         },
-                        std::ptr::null(),
+                        None,
                         None,
                     )?
                     .cast()?
@@ -139,7 +139,7 @@ impl Application {
                 let mut buffers = Vec::with_capacity(2);
                 for i in 0..2 {
                     let buffer: ID3D12Resource = swap_chain.GetBuffer(i as _)?;
-                    device.CreateRenderTargetView(&buffer, std::ptr::null(), handle);
+                    device.CreateRenderTargetView(&buffer, None, handle);
                     buffers.push(buffer);
                     handle.ptr += rtv_descriptor_size;
                 }
@@ -178,14 +178,14 @@ impl Application {
                             ..Default::default()
                         },
                         D3D12_RESOURCE_STATE_GENERIC_READ,
-                        std::ptr::null(),
+                        None,
                         &mut vb,
                     )
                     .map(|_| vb.unwrap())?;
                 let mut p = std::ptr::null_mut();
-                vb.Map(0, std::ptr::null(), &mut p).unwrap();
+                vb.Map(0, None, &mut p).unwrap();
                 std::ptr::copy_nonoverlapping(&VERTICES, p as _, VERTICES.len());
-                vb.Unmap(0, std::ptr::null());
+                vb.Unmap(0, None);
                 vb
             };
             let vbv = D3D12_VERTEX_BUFFER_VIEW {
@@ -219,14 +219,14 @@ impl Application {
                             ..Default::default()
                         },
                         D3D12_RESOURCE_STATE_GENERIC_READ,
-                        std::ptr::null(),
+                        None,
                         &mut ib,
                     )
                     .map(|_| ib.unwrap())?;
                 let mut p = std::ptr::null_mut();
-                ib.Map(0, std::ptr::null(), &mut p).unwrap();
+                ib.Map(0, None, &mut p).unwrap();
                 std::ptr::copy_nonoverlapping(&INDICES, p as _, INDICES.len());
-                ib.Unmap(0, std::ptr::null());
+                ib.Unmap(0, None);
                 ib
             };
             let ibv = D3D12_INDEX_BUFFER_VIEW {
@@ -261,12 +261,12 @@ impl Application {
                             ..Default::default()
                         },
                         D3D12_RESOURCE_STATE_COMMON,
-                        &D3D12_CLEAR_VALUE {
+                        Some(&D3D12_CLEAR_VALUE {
                             Format: DXGI_FORMAT_R8G8B8A8_UNORM,
                             Anonymous: D3D12_CLEAR_VALUE_0 {
                                 Color: [0.0, 0.5, 0.0, 0.5],
                             },
-                        },
+                        }),
                         &mut tex,
                     )
                     .map(|_| tex.unwrap())?
@@ -281,7 +281,7 @@ impl Application {
                 })?;
             device.CreateShaderResourceView(
                 &tex,
-                &D3D12_SHADER_RESOURCE_VIEW_DESC {
+                Some(&D3D12_SHADER_RESOURCE_VIEW_DESC {
                     ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2D,
                     Format: DXGI_FORMAT_R8G8B8A8_UNORM,
                     Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
@@ -291,7 +291,7 @@ impl Application {
                             ..Default::default()
                         },
                     },
-                },
+                }),
                 srv_heap.GetCPUDescriptorHandleForHeapStart(),
             );
             let root_signature: ID3D12RootSignature = {
@@ -334,7 +334,7 @@ impl Application {
                         &root,
                         D3D_ROOT_SIGNATURE_VERSION_1,
                         &mut p,
-                        std::ptr::null_mut(),
+                        None,
                     )
                     .map(|_| p.unwrap())?
                 };
@@ -455,7 +455,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, None).unwrap();
+                let event = CreateEventW(None, false, false, None).unwrap();
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
                 CloseHandle(event);
@@ -533,15 +533,15 @@ impl wita::EventHandler for Application {
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             );
             self.command_list
-                .ClearRenderTargetView(rtv_handle, [0.0, 0.0, 0.3, 0.0].as_ptr(), &[]);
+                .ClearRenderTargetView(rtv_handle, &*[0.0, 0.0, 0.3, 0.0].as_ptr(), &[]);
             self.command_list.OMSetRenderTargets(
                 1,
-                [rtv_handle.clone()].as_ptr(),
+                Some(&*[rtv_handle.clone()].as_ptr()),
                 false,
-                std::ptr::null(),
+                None,
             );
-            self.command_list.IASetVertexBuffers(0, &[self.vbv.clone()]);
-            self.command_list.IASetIndexBuffer(&self.ibv);
+            self.command_list.IASetVertexBuffers(0, Some(&[self.vbv.clone()]));
+            self.command_list.IASetIndexBuffer(Some(&self.ibv));
             self.command_list
                 .IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             self.command_list.DrawIndexedInstanced(6, 1, 0, 0, 0);
@@ -577,7 +577,7 @@ impl wita::EventHandler for Application {
                 for i in 0..2 {
                     let buffer: ID3D12Resource = self.swap_chain.GetBuffer(i as _).unwrap();
                     self.device
-                        .CreateRenderTargetView(&buffer, std::ptr::null(), handle);
+                        .CreateRenderTargetView(&buffer, None, handle);
                     buffers.push(buffer);
                     handle.ptr += self.rtv_descriptor_size;
                 }

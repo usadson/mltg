@@ -28,7 +28,7 @@ impl DrawCommand {
     pub fn clear(&self, color: impl Into<Rgba>) {
         unsafe {
             let color: D2D1_COLOR_F = Inner(color.into()).into();
-            self.device_context.Clear(&color);
+            self.device_context.Clear(Some(&color));
         }
     }
 
@@ -288,7 +288,7 @@ where
                 self.backend.device_context(),
                 &self.dwrite_factory,
             ));
-            device_context.EndDraw(std::ptr::null_mut(), std::ptr::null_mut())?;
+            device_context.EndDraw(None, None)?;
             device_context.SetTarget(None);
             self.backend.end_draw(target);
             Ok(ret)

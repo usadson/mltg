@@ -36,19 +36,15 @@ impl Image {
         interpolation: Interpolation,
     ) {
         let dest = Inner(dest_rect).into();
-        let src = src_rect.map(|src| Inner(src).into());
+        let src: Option<D2D_RECT_F> = src_rect.map(|src| Inner(src).into());
         unsafe {
             dc.DrawBitmap2(
                 &self.0,
-                &dest,
+                Some(&dest),
                 1.0,
                 D2D1_INTERPOLATION_MODE(interpolation as _),
-                if let Some(src) = src.as_ref() {
-                    src as *const _
-                } else {
-                    std::ptr::null()
-                },
-                std::ptr::null(),
+                src.as_ref(),
+                None,
             );
         }
     }
@@ -74,7 +70,7 @@ impl<'a> ImageLoader for &'a Path {
         unsafe {
             let decoder = factory.CreateDecoderFromFilename(
                 &HSTRING::from(self.to_str().unwrap()),
-                std::ptr::null(),
+                &windows::core::GUID::zeroed(),
                 GENERIC_READ,
                 WICDecodeMetadataCacheOnDemand,
             )?;
@@ -93,7 +89,7 @@ impl<'a> ImageLoader for &'a Path {
                 converter
             };
             let bitmap = {
-                dc.CreateBitmapFromWicBitmap(&converter, std::ptr::null())?
+                dc.CreateBitmapFromWicBitmap(&converter, None)?
                     .cast()?
             };
             Ok(Image(bitmap))

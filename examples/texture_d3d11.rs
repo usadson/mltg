@@ -49,11 +49,11 @@ impl Application {
                 D3D_DRIVER_TYPE_HARDWARE,
                 HINSTANCE::default(),
                 D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                &FEATURE_LEVELS,
+                Some(&FEATURE_LEVELS),
                 D3D11_SDK_VERSION,
-                &mut p,
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
+                Some(&mut p),
+                None,
+                None,
             )
             .map(|_| p.unwrap())?
         };
@@ -82,13 +82,13 @@ impl Application {
                     },
                     ..Default::default()
                 },
-                std::ptr::null_mut(),
+                None,
                 None,
             )?
         };
         let rtv = unsafe {
             let buffer: ID3D11Texture2D = swap_chain.GetBuffer(0)?;
-            device.CreateRenderTargetView(&buffer, std::ptr::null())?
+            device.CreateRenderTargetView(&buffer, None)?
         };
         let vertex_buffer = unsafe {
             const VERTICES: [Vertex; 4] = [
@@ -101,13 +101,13 @@ impl Application {
                 &D3D11_BUFFER_DESC {
                     ByteWidth: std::mem::size_of::<[Vertex; 4]>() as _,
                     Usage: D3D11_USAGE_DEFAULT,
-                    BindFlags: D3D11_BIND_VERTEX_BUFFER.0,
+                    BindFlags: D3D11_BIND_VERTEX_BUFFER,
                     ..Default::default()
                 },
-                &D3D11_SUBRESOURCE_DATA {
+                Some(&D3D11_SUBRESOURCE_DATA {
                     pSysMem: VERTICES.as_ptr() as _,
                     ..Default::default()
-                },
+                }),
             )?
         };
         let index_buffer = unsafe {
@@ -116,13 +116,13 @@ impl Application {
                 &D3D11_BUFFER_DESC {
                     ByteWidth: std::mem::size_of::<[u32; 6]>() as _,
                     Usage: D3D11_USAGE_DEFAULT,
-                    BindFlags: D3D11_BIND_INDEX_BUFFER.0,
+                    BindFlags: D3D11_BIND_INDEX_BUFFER,
                     ..Default::default()
                 },
-                &D3D11_SUBRESOURCE_DATA {
+                Some(&D3D11_SUBRESOURCE_DATA {
                     pSysMem: INDICES.as_ptr() as _,
                     ..Default::default()
-                },
+                }),
             )?
         };
         let (vs, ps, input_layout) = unsafe {
@@ -169,10 +169,10 @@ impl Application {
                     },
                     ..Default::default()
                 },
-                std::ptr::null(),
+                None,
             )?
         };
-        let tex_view = unsafe { device.CreateShaderResourceView(&tex, std::ptr::null())? };
+        let tex_view = unsafe { device.CreateShaderResourceView(&tex, None)? };
         let sampler = unsafe {
             device.CreateSamplerState(&D3D11_SAMPLER_DESC {
                 Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
@@ -254,7 +254,7 @@ impl wita::EventHandler for Application {
                 }
                 Err(e) => panic!("{:?}", e),
             }
-            dc.ClearRenderTargetView(self.rtv.as_ref(), [0.0, 0.0, 0.3, 0.0].as_ptr());
+            dc.ClearRenderTargetView(self.rtv.as_ref(), &*[0.0, 0.0, 0.3, 0.0].as_ptr());
             dc.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             dc.IASetInputLayout(&self.input_layout);
             dc.IASetIndexBuffer(&self.index_buffer, DXGI_FORMAT_R32_UINT, 0);
@@ -265,18 +265,18 @@ impl wita::EventHandler for Application {
                 [std::mem::size_of::<Vertex>() as u32].as_ptr(),
                 [0].as_ptr(),
             );
-            dc.OMSetRenderTargets(&[Some(self.rtv.clone().unwrap())], None);
-            dc.OMSetBlendState(&self.blend, std::ptr::null(), u32::MAX);
-            dc.VSSetShader(&self.vs, &[]);
-            dc.PSSetShader(&self.ps, &[]);
-            dc.PSSetShaderResources(0, &[Some(self.tex_view.clone())]);
-            dc.PSSetSamplers(0, &[Some(self.sampler.clone())]);
-            dc.RSSetViewports(&[D3D11_VIEWPORT {
+            dc.OMSetRenderTargets(Some(&[Some(self.rtv.clone().unwrap())]), None);
+            dc.OMSetBlendState(&self.blend, None, u32::MAX);
+            dc.VSSetShader(&self.vs, None);
+            dc.PSSetShader(&self.ps, None);
+            dc.PSSetShaderResources(0, Some(&[Some(self.tex_view.clone())]));
+            dc.PSSetSamplers(0, Some(&[Some(self.sampler.clone())]));
+            dc.RSSetViewports(Some(&[D3D11_VIEWPORT {
                 Width: window_size.width as f32,
                 Height: window_size.height as f32,
                 MaxDepth: 1.0,
                 ..Default::default()
-            }]);
+            }]));
             dc.DrawIndexed(6, 0, 0);
             self.swap_chain.Present(1, 0).unwrap();
         }
@@ -292,7 +292,7 @@ impl wita::EventHandler for Application {
             self.rtv = {
                 let buffer: ID3D11Texture2D = self.swap_chain.GetBuffer(0).unwrap();
                 self.device
-                    .CreateRenderTargetView(&buffer, std::ptr::null())
+                    .CreateRenderTargetView(&buffer, None)
                     .ok()
             };
             ev.window.redraw();

@@ -114,11 +114,11 @@ impl Direct2D {
                     D3D_DRIVER_TYPE_HARDWARE,
                     HINSTANCE::default(),
                     D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                    &FEATURE_LEVELS,
+                    Some(&FEATURE_LEVELS),
                     D3D11_SDK_VERSION,
-                    &mut p,
-                    std::ptr::null_mut(),
-                    std::ptr::null_mut(),
+                    Some(&mut p),
+                    None,
+                    None,
                 )
                 .map(|_| p.unwrap())?
             };
@@ -159,7 +159,7 @@ impl Context<Direct2D> {
                     },
                     ..Default::default()
                 },
-                std::ptr::null_mut(),
+                None,
                 None,
             )?
         };

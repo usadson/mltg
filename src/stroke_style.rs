@@ -73,17 +73,17 @@ impl StrokeStyle {
         let (dash_cap, dash_style, dash_offset, dashes) = match props.dash.as_ref() {
             Some(dash) => {
                 let cap = D2D1_CAP_STYLE(dash.cap as _);
-                let (style, dashes): (_, &[f32]) = match dash.style {
-                    DashStyle::Solid => (D2D1_DASH_STYLE_SOLID, &[]),
-                    DashStyle::Dash => (D2D1_DASH_STYLE_DASH, &[]),
-                    DashStyle::Dot => (D2D1_DASH_STYLE_DOT, &[]),
-                    DashStyle::DashDot => (D2D1_DASH_STYLE_DASH_DOT, &[]),
-                    DashStyle::DashDotDot => (D2D1_DASH_STYLE_DASH_DOT_DOT, &[]),
-                    DashStyle::Custom(dashes) => (D2D1_DASH_STYLE_CUSTOM, dashes),
+                let (style, dashes): (_, Option<&[f32]>) = match dash.style {
+                    DashStyle::Solid => (D2D1_DASH_STYLE_SOLID, None),
+                    DashStyle::Dash => (D2D1_DASH_STYLE_DASH, None),
+                    DashStyle::Dot => (D2D1_DASH_STYLE_DOT, None),
+                    DashStyle::DashDot => (D2D1_DASH_STYLE_DASH_DOT, None),
+                    DashStyle::DashDotDot => (D2D1_DASH_STYLE_DASH_DOT_DOT, None),
+                    DashStyle::Custom(dashes) => (D2D1_DASH_STYLE_CUSTOM, Some(dashes)),
                 };
                 (cap, style, dash.offset, dashes)
             }
-            None => (D2D1_CAP_STYLE_FLAT, D2D1_DASH_STYLE_SOLID, 0.0, [].as_ref()),
+            None => (D2D1_CAP_STYLE_FLAT, D2D1_DASH_STYLE_SOLID, 0.0, None),
         };
         let (line_join, miter_limit) = match props.line_join {
             LineJoin::Miter => (D2D1_LINE_JOIN_MITER, 1.0),

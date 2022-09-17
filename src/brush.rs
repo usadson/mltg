@@ -91,7 +91,7 @@ impl Brush {
     #[inline]
     pub(crate) fn solid_color(dc: &ID2D1DeviceContext, color: impl Into<Rgba>) -> Result<Self> {
         let color: D2D1_COLOR_F = Inner(color.into()).into();
-        let brush = unsafe { dc.CreateSolidColorBrush(&color, std::ptr::null())? };
+        let brush = unsafe { dc.CreateSolidColorBrush(&color, None)? };
         Ok(Self::SolidColor(SolidColorBrush(brush)))
     }
 
@@ -110,7 +110,7 @@ impl Brush {
                     startPoint: Inner(start).into(),
                     endPoint: Inner(end).into(),
                 },
-                std::ptr::null(),
+                None,
                 &stop_collection.0,
             )?
         };
@@ -136,7 +136,7 @@ impl Brush {
                     radiusX: radius.x,
                     radiusY: radius.y,
                 },
-                std::ptr::null(),
+                None,
                 &stop_collection.0,
             )?
         };

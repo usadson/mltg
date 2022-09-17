@@ -93,7 +93,7 @@ impl Application {
                             },
                             ..Default::default()
                         },
-                        std::ptr::null(),
+                        None,
                         None,
                     )?
                     .cast()?
@@ -112,7 +112,7 @@ impl Application {
                 let mut buffers = vec![];
                 for i in 0..2 {
                     let buffer: ID3D12Resource = swap_chain.GetBuffer(i as _)?;
-                    d3d12_device.CreateRenderTargetView(&buffer, std::ptr::null(), handle);
+                    d3d12_device.CreateRenderTargetView(&buffer, None, handle);
                     buffers.push(buffer);
                     handle.ptr += rtv_descriptor_size;
                 }
@@ -168,7 +168,7 @@ impl Application {
             let fv = self.fence_value.get();
             self.command_queue.Signal(&self.fence, fv).unwrap();
             if self.fence.GetCompletedValue() < fv {
-                let event = CreateEventW(std::ptr::null_mut(), false, false, None).unwrap();
+                let event = CreateEventW(None, false, false, None).unwrap();
                 self.fence.SetEventOnCompletion(fv, event).unwrap();
                 WaitForSingleObject(event, INFINITE);
                 CloseHandle(event);
@@ -238,7 +238,7 @@ impl wita::EventHandler for Application {
             }];
             self.command_list.RSSetScissorRects(&scissor_rect);
             self.command_list
-                .ClearRenderTargetView(rtv_handle, CLEAR_COLOR.as_ptr(), &[]);
+                .ClearRenderTargetView(rtv_handle, &*CLEAR_COLOR.as_ptr(), &[]);
             self.command_list.Close().unwrap();
             let command_lists = [Some(self.command_list.cast::<ID3D12CommandList>().unwrap())];
             self.command_queue.ExecuteCommandLists(&command_lists);
@@ -294,7 +294,7 @@ impl wita::EventHandler for Application {
             for i in 0..2 {
                 let buffer: ID3D12Resource = self.swap_chain.GetBuffer(i as _).unwrap();
                 self.d3d12_device
-                    .CreateRenderTargetView(&buffer, std::ptr::null(), handle);
+                    .CreateRenderTargetView(&buffer, None, handle);
                 buffers.push(buffer);
                 handle.ptr += self.rtv_descriptor_size;
             }

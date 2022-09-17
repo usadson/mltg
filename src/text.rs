@@ -153,7 +153,7 @@ impl TextFormat {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
                 let font_file = factory.CreateFontFileReference(
                     &HSTRING::from(path.to_string_lossy().as_ref()),
-                    std::ptr::null(),
+                    None,
                 )?;
                 set_builder.AddFontFile(&font_file)?;
                 let font_set = set_builder.CreateFontSet()?;
@@ -164,8 +164,7 @@ impl TextFormat {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
                 let font_file = in_memory_loader.CreateInMemoryFontFileReference(
                     factory,
-                    data.as_ptr() as _,
-                    data.len() as _,
+                    data,
                     None,
                 )?;
                 set_builder.AddFontFile(&font_file)?;

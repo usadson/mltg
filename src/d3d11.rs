@@ -42,9 +42,9 @@ impl Direct3D11 {
         let d3d11_device: ID3D11Device = (*(d3d11_device as *const _ as *const IUnknown)).cast()?;
         let d2d1_factory = D2D1CreateFactory::<ID2D1Factory1>(
             D2D1_FACTORY_TYPE_MULTI_THREADED,
-            &D2D1_FACTORY_OPTIONS {
+            Some(&D2D1_FACTORY_OPTIONS {
                 debugLevel: D2D1_DEBUG_LEVEL_ERROR,
-            },
+            }),
         )?;
         let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
         let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
@@ -62,7 +62,7 @@ impl Direct3D11 {
             let bitmap = {
                 self.device_context.CreateBitmapFromDxgiSurface(
                     &surface,
-                    &D2D1_BITMAP_PROPERTIES1 {
+                    Some(&D2D1_BITMAP_PROPERTIES1 {
                         pixelFormat: D2D1_PIXEL_FORMAT {
                             format: desc.Format,
                             alphaMode: D2D1_ALPHA_MODE_IGNORE,
@@ -71,7 +71,7 @@ impl Direct3D11 {
                         dpiX: 96.0,
                         dpiY: 96.0,
                         ..Default::default()
-                    },
+                    }),
                 )?
             };
             Ok(vec![RenderTarget(bitmap)])
@@ -108,14 +108,14 @@ impl Context<Direct3D11> {
         let bitmap = {
             self.backend.device_context.CreateBitmapFromDxgiSurface(
                 &surface,
-                &D2D1_BITMAP_PROPERTIES1 {
+                Some(&D2D1_BITMAP_PROPERTIES1 {
                     pixelFormat: D2D1_PIXEL_FORMAT {
                         format: desc.Format,
                         alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED,
                     },
                     bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                     ..Default::default()
-                },
+                }),
             )?
         };
         Ok(RenderTarget(bitmap))
