@@ -261,9 +261,9 @@ impl wita::EventHandler for Application {
             dc.IASetVertexBuffers(
                 0,
                 1,
-                [Some(self.vertex_buffer.clone())].as_mut_ptr(),
-                [std::mem::size_of::<Vertex>() as u32].as_ptr(),
-                [0].as_ptr(),
+                Some([Some(self.vertex_buffer.clone())].as_mut_ptr()),
+                Some([std::mem::size_of::<Vertex>() as u32].as_ptr()),
+                Some([0].as_ptr()),
             );
             dc.OMSetRenderTargets(Some(&[Some(self.rtv.clone().unwrap())]), None);
             dc.OMSetBlendState(&self.blend, None, u32::MAX);

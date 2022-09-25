@@ -162,8 +162,12 @@ impl TextFormat {
             },
             Font::Memory(data, font_name) => unsafe {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
-                let font_file =
-                    in_memory_loader.CreateInMemoryFontFileReference(factory, data, None)?;
+                let font_file = in_memory_loader.CreateInMemoryFontFileReference(
+                    factory,
+                    data.as_ptr() as _,
+                    data.len() as _,
+                    None,
+                )?;
                 set_builder.AddFontFile(&font_file)?;
                 let font_set = set_builder.CreateFontSet()?;
                 let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;

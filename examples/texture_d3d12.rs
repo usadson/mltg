@@ -183,7 +183,7 @@ impl Application {
                     )
                     .map(|_| vb.unwrap())?;
                 let mut p = std::ptr::null_mut();
-                vb.Map(0, None, &mut p).unwrap();
+                vb.Map(0, None, Some(&mut p)).unwrap();
                 std::ptr::copy_nonoverlapping(&VERTICES, p as _, VERTICES.len());
                 vb.Unmap(0, None);
                 vb
@@ -224,7 +224,7 @@ impl Application {
                     )
                     .map(|_| ib.unwrap())?;
                 let mut p = std::ptr::null_mut();
-                ib.Map(0, None, &mut p).unwrap();
+                ib.Map(0, None, Some(&mut p)).unwrap();
                 std::ptr::copy_nonoverlapping(&INDICES, p as _, INDICES.len());
                 ib.Unmap(0, None);
                 ib

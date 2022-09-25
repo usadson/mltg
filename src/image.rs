@@ -43,7 +43,7 @@ impl Image {
                 Some(&dest),
                 1.0,
                 D2D1_INTERPOLATION_MODE(interpolation as _),
-                src.as_ref(),
+                src.as_ref().map(|src| src as _),
                 None,
             );
         }

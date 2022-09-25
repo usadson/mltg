@@ -18,7 +18,7 @@ all-featurse = true
 gecl = "0.1.2"
 
 [dependencies.windows]
-version = "0.40.0"
+version = "0.41.0"
 features = [
 	"Win32_Graphics_Direct3D",
 	"Win32_Graphics_Direct3D11",
@@ -42,6 +42,6 @@ features = [
 
 [dev-dependencies]
 anyhow = { version = "1.0.65", features = ["backtrace"] }
-coinit = "0.1.7"
+coinit = "0.1.9"
 winit = "0.27.3"
-wita = "0.18.2"
+wita = "0.19.1"
