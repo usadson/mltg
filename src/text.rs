@@ -401,12 +401,8 @@ mod tests {
 
     #[test]
     fn from_file() {
-        let factory: IDWriteFactory5 = unsafe {
-            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
-                .unwrap()
-                .cast()
-                .unwrap()
-        };
+        let factory =
+            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
@@ -429,12 +425,8 @@ mod tests {
 
     #[test]
     fn from_memory() {
-        let factory: IDWriteFactory5 = unsafe {
-            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
-                .unwrap()
-                .cast()
-                .unwrap()
-        };
+        let factory =
+            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
@@ -457,12 +449,8 @@ mod tests {
 
     #[test]
     fn hit_test() {
-        let factory: IDWriteFactory5 = unsafe {
-            DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)
-                .unwrap()
-                .cast()
-                .unwrap()
-        };
+        let factory =
+            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();

@@ -241,8 +241,8 @@ where
     #[inline]
     pub fn new(backend: T) -> Result<Self> {
         unsafe {
-            let dwrite_factory: IDWriteFactory5 =
-                DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IDWriteFactory5::IID)?.cast()?;
+            let dwrite_factory =
+                DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED)?;
             let dwrite_in_memory_loader = dwrite_factory.CreateInMemoryFontFileLoader()?;
             dwrite_factory.RegisterFontFileLoader(&dwrite_in_memory_loader)?;
             let wic_imaging_factory =
