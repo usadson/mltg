@@ -20,6 +20,8 @@ version = ">= 0.42"
 features = [
 	"interface",
 	"Win32_Graphics_Direct3D",
+	"Win32_Graphics_Direct3D_Fxc",
+	"Win32_Graphics_Direct3D_Dxc",
 	"Win32_Graphics_Direct3D11",
 	"Win32_Graphics_Direct3D12",
 	"Win32_Graphics_Direct3D11on12",
@@ -45,10 +47,6 @@ coinit = "0.1.10"
 winit = "0.27.5"
 witas = "0.2.0"
 tokio = { version = "1.22.0", features = ["full"] }
-windows = { version = "0.43.0", features = [
-	"Win32_Graphics_Direct3D_Fxc",
-	"Win32_Graphics_Direct3D_Dxc",
-] }
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
