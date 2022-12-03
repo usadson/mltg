@@ -1,112 +1,147 @@
 use crate::*;
+use windows::Win32::Graphics::{Direct2D::Common::*, Direct2D::*};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Line(Point, Point);
+pub type Point<T> = gecl::Point<T>;
+pub type Size<T> = gecl::Size<T>;
+pub type Rect<T> = gecl::Rect<T>;
+pub type Vector<T> = gecl::Vector<T>;
+pub type Circle = gecl::Circle<f32>;
+pub type Ellipse = gecl::Ellipse<f32>;
 
-impl Line {
+impl From<Wrapper<Point<f32>>> for D2D_POINT_2F {
     #[inline]
-    pub fn new(x0: impl Into<Point>, x1: impl Into<Point>) -> Self {
-        Self(x0.into(), x1.into())
+    fn from(src: Wrapper<Point<f32>>) -> Self {
+        Self {
+            x: src.0.x,
+            y: src.0.y,
+        }
     }
 }
 
-#[inline]
-pub fn line(x0: impl Into<Point>, x1: impl Into<Point>) -> Line {
-    Line::new(x0, x1)
+impl From<Wrapper<D2D_POINT_2F>> for Point<f32> {
+    #[inline]
+    fn from(src: Wrapper<D2D_POINT_2F>) -> Self {
+        Self {
+            x: src.0.x,
+            y: src.0.y,
+        }
+    }
 }
 
-impl Stroke for Line {
+impl From<Wrapper<Size<f32>>> for D2D_SIZE_F {
+    #[inline]
+    fn from(src: Wrapper<Size<f32>>) -> Self {
+        Self {
+            width: src.0.width,
+            height: src.0.height,
+        }
+    }
+}
+
+impl From<Wrapper<D2D_SIZE_F>> for Size<f32> {
+    #[inline]
+    fn from(src: Wrapper<D2D_SIZE_F>) -> Self {
+        Self {
+            width: src.0.width,
+            height: src.0.height,
+        }
+    }
+}
+
+impl From<Wrapper<Size<u32>>> for D2D_SIZE_U {
+    #[inline]
+    fn from(src: Wrapper<Size<u32>>) -> Self {
+        Self {
+            width: src.0.width,
+            height: src.0.height,
+        }
+    }
+}
+
+impl From<Wrapper<D2D_SIZE_U>> for Size<u32> {
+    #[inline]
+    fn from(src: Wrapper<D2D_SIZE_U>) -> Self {
+        Self {
+            width: src.0.width,
+            height: src.0.height,
+        }
+    }
+}
+
+impl From<Wrapper<Vector<f32>>> for D2D_POINT_2F {
+    #[inline]
+    fn from(src: Wrapper<Vector<f32>>) -> Self {
+        Self {
+            x: src.0.x,
+            y: src.0.y,
+        }
+    }
+}
+
+impl From<Wrapper<Rect<f32>>> for D2D_RECT_F {
+    #[inline]
+    fn from(src: Wrapper<Rect<f32>>) -> Self {
+        let ep = src.0.endpoint();
+        Self {
+            left: src.0.origin.x,
+            top: src.0.origin.y,
+            right: ep.x,
+            bottom: ep.y,
+        }
+    }
+}
+
+impl From<Wrapper<Circle>> for D2D1_ELLIPSE {
+    #[inline]
+    fn from(src: Wrapper<Circle>) -> Self {
+        Self {
+            point: Wrapper(src.0.center).into(),
+            radiusX: src.0.radius,
+            radiusY: src.0.radius,
+        }
+    }
+}
+
+impl From<Wrapper<Ellipse>> for D2D1_ELLIPSE {
+    #[inline]
+    fn from(src: Wrapper<Ellipse>) -> Self {
+        Self {
+            point: Wrapper(src.0.center).into(),
+            radiusX: src.0.radius.x,
+            radiusY: src.0.radius.y,
+        }
+    }
+}
+
+impl Fill for Rect<f32> {
+    #[inline]
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush) {
+        unsafe {
+            dc.FillRectangle(&Wrapper(*self).into(), brush);
+        }
+    }
+}
+
+impl Stroke for Rect<f32> {
     #[inline]
     fn stroke(
         &self,
-        dc: &ID2D1DeviceContext,
+        dc: &ID2D1DeviceContext5,
         brush: &ID2D1Brush,
         width: f32,
-        style: Option<ID2D1StrokeStyle>,
-    ) {
-        let x0: D2D_POINT_2F = Inner(self.0).into();
-        let x1: D2D_POINT_2F = Inner(self.1).into();
-        unsafe {
-            dc.DrawLine(x0, x1, brush, width, style.as_ref());
-        }
-    }
-}
-
-impl Fill for Rect {
-    #[inline]
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
-        unsafe {
-            dc.FillRectangle(&D2D_RECT_F::from(Inner(*self)), brush);
-        }
-    }
-}
-
-impl Stroke for Rect {
-    #[inline]
-    fn stroke(
-        &self,
-        dc: &ID2D1DeviceContext,
-        brush: &ID2D1Brush,
-        width: f32,
-        style: Option<ID2D1StrokeStyle>,
+        style: Option<&ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawRectangle(
-                &D2D_RECT_F::from(Inner(*self)),
-                brush,
-                width,
-                style.as_ref(),
-            );
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Ellipse {
-    pub center: Point,
-    pub radius: Vector,
-}
-
-impl From<Ellipse> for D2D1_ELLIPSE {
-    #[inline]
-    fn from(src: Ellipse) -> D2D1_ELLIPSE {
-        D2D1_ELLIPSE {
-            point: Inner(src.center).into(),
-            radiusX: src.radius.x,
-            radiusY: src.radius.y,
-        }
-    }
-}
-
-impl Fill for Ellipse {
-    #[inline]
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
-        unsafe {
-            dc.FillEllipse(&D2D1_ELLIPSE::from(*self), brush);
-        }
-    }
-}
-
-impl Stroke for Ellipse {
-    #[inline]
-    fn stroke(
-        &self,
-        dc: &ID2D1DeviceContext,
-        brush: &ID2D1Brush,
-        width: f32,
-        style: Option<ID2D1StrokeStyle>,
-    ) {
-        unsafe {
-            dc.DrawEllipse(&D2D1_ELLIPSE::from(*self), brush, width, style.as_ref());
+            dc.DrawRectangle(&Wrapper(*self).into(), brush, width, style);
         }
     }
 }
 
 impl Fill for Circle {
     #[inline]
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush) {
         unsafe {
-            dc.FillEllipse(&D2D1_ELLIPSE::from(Inner(*self)), brush);
+            dc.FillEllipse(&Wrapper(Ellipse::from(*self)).into(), brush);
         }
     }
 }
@@ -115,17 +150,72 @@ impl Stroke for Circle {
     #[inline]
     fn stroke(
         &self,
-        dc: &ID2D1DeviceContext,
+        dc: &ID2D1DeviceContext5,
         brush: &ID2D1Brush,
         width: f32,
-        style: Option<ID2D1StrokeStyle>,
+        style: Option<&ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawEllipse(
-                &D2D1_ELLIPSE::from(Inner(*self)),
+            dc.DrawEllipse(&Wrapper(Ellipse::from(*self)).into(), brush, width, style);
+        }
+    }
+}
+
+impl Fill for Ellipse {
+    #[inline]
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush) {
+        unsafe {
+            dc.FillEllipse(&Wrapper(*self).into(), brush);
+        }
+    }
+}
+
+impl Stroke for Ellipse {
+    #[inline]
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext5,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<&ID2D1StrokeStyle>,
+    ) {
+        unsafe {
+            dc.DrawEllipse(&Wrapper(*self).into(), brush, width, style);
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Line(pub Point<f32>, pub Point<f32>);
+
+impl Line {
+    #[inline]
+    pub fn new(x0: impl Into<Point<f32>>, x1: impl Into<Point<f32>>) -> Self {
+        Self(x0.into(), x1.into())
+    }
+}
+
+#[inline]
+pub fn line(x0: impl Into<Point<f32>>, x1: impl Into<Point<f32>>) -> Line {
+    Line::new(x0, x1)
+}
+
+impl Stroke for Line {
+    #[inline]
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext5,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<&ID2D1StrokeStyle>,
+    ) {
+        unsafe {
+            dc.DrawLine(
+                Wrapper(self.0).into(),
+                Wrapper(self.1).into(),
                 brush,
                 width,
-                style.as_ref(),
+                style,
             );
         }
     }
@@ -133,13 +223,13 @@ impl Stroke for Circle {
 
 #[derive(Clone, Copy, Debug)]
 pub struct RoundedRect {
-    pub rect: Rect,
-    pub radius: Vector,
+    pub rect: Rect<f32>,
+    pub radius: Vector<f32>,
 }
 
 impl RoundedRect {
     #[inline]
-    pub fn new(rect: impl Into<Rect>, radius: impl Into<Vector>) -> Self {
+    pub fn new(rect: impl Into<Rect<f32>>, radius: impl Into<Vector<f32>>) -> Self {
         Self {
             rect: rect.into(),
             radius: radius.into(),
@@ -149,20 +239,25 @@ impl RoundedRect {
 
 impl From<RoundedRect> for D2D1_ROUNDED_RECT {
     #[inline]
-    fn from(src: RoundedRect) -> D2D1_ROUNDED_RECT {
-        D2D1_ROUNDED_RECT {
-            rect: Inner(src.rect).into(),
+    fn from(src: RoundedRect) -> Self {
+        Self {
+            rect: Wrapper(src.rect).into(),
             radiusX: src.radius.x,
             radiusY: src.radius.y,
         }
     }
 }
 
+#[inline]
+pub fn rounded_rect(rect: impl Into<Rect<f32>>, radius: impl Into<Vector<f32>>) -> RoundedRect {
+    RoundedRect::new(rect, radius)
+}
+
 impl Fill for RoundedRect {
     #[inline]
-    fn fill(&self, dc: &ID2D1DeviceContext, brush: &ID2D1Brush) {
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush) {
         unsafe {
-            dc.FillRoundedRectangle(&D2D1_ROUNDED_RECT::from(*self), brush);
+            dc.FillRoundedRectangle(&(*self).into(), brush);
         }
     }
 }
@@ -171,18 +266,13 @@ impl Stroke for RoundedRect {
     #[inline]
     fn stroke(
         &self,
-        dc: &ID2D1DeviceContext,
+        dc: &ID2D1DeviceContext5,
         brush: &ID2D1Brush,
         width: f32,
-        style: Option<ID2D1StrokeStyle>,
+        style: Option<&ID2D1StrokeStyle>,
     ) {
         unsafe {
-            dc.DrawRoundedRectangle(
-                &D2D1_ROUNDED_RECT::from(*self),
-                brush,
-                width,
-                style.as_ref(),
-            );
+            dc.DrawRoundedRectangle(&(*self).into(), brush, width, style);
         }
     }
 }

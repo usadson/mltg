@@ -1,6 +1,6 @@
 use crate::*;
-use windows::core::{IUnknown, Interface};
-use windows::Win32::Graphics::{Direct3D11::*, Dxgi::*};
+use windows::core::Interface;
+use windows::Win32::Graphics::{Direct2D::Common::*, Direct2D::*, Direct3D11::*, Dxgi::*};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct RenderTarget(pub(crate) ID2D1Bitmap1);
@@ -10,103 +10,89 @@ impl Target for RenderTarget {
         &self.0
     }
 
-    fn size(&self) -> Size {
-        unsafe {
-            let size = self.0.GetSize();
-            Size::new(size.width, size.height)
-        }
+    fn size(&self) -> Size<f32> {
+        unsafe { Wrapper(self.0.GetSize()).into() }
     }
 
-    fn physical_size(&self) -> gecl::Size<u32> {
-        unsafe {
-            let size = self.0.GetPixelSize();
-            gecl::Size::new(size.width, size.height)
-        }
+    fn physical_size(&self) -> Size<u32> {
+        unsafe { Wrapper(self.0.GetPixelSize()).into() }
     }
 }
 
-unsafe impl Send for RenderTarget {}
-unsafe impl Sync for RenderTarget {}
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Direct3D11 {
-    d2d1_factory: ID2D1Factory1,
-    device_context: ID2D1DeviceContext,
+    d2d1_factory: ID2D1Factory6,
+    d2d1_device: ID2D1Device5,
 }
 
 impl Direct3D11 {
-    /// # Safety
-    ///
-    /// `d3d12_device` must be a `ID3D11Device`.
-    pub unsafe fn new<T>(d3d11_device: &T) -> Result<Self> {
-        let d3d11_device: ID3D11Device = (*(d3d11_device as *const _ as *const IUnknown)).cast()?;
-        let d2d1_factory = D2D1CreateFactory::<ID2D1Factory1>(
-            D2D1_FACTORY_TYPE_MULTI_THREADED,
-            Some(&D2D1_FACTORY_OPTIONS {
-                debugLevel: D2D1_DEBUG_LEVEL_ERROR,
-            }),
-        )?;
-        let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
-        let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?;
-        let device_context = d2d1_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
-        Ok(Self {
-            d2d1_factory,
-            device_context,
-        })
+    pub fn new<T>(d3d11_device: &T) -> Result<Self>
+    where
+        T: Interface,
+    {
+        unsafe {
+            let d3d11_device: ID3D11Device = d3d11_device.cast()?;
+            let d2d1_factory =
+                D2D1CreateFactory::<ID2D1Factory6>(D2D1_FACTORY_TYPE_MULTI_THREADED, None)?;
+            let dxgi_device: IDXGIDevice = d3d11_device.cast()?;
+            let d2d1_device = d2d1_factory.CreateDevice(&dxgi_device)?.cast()?;
+            Ok(Self {
+                d2d1_factory,
+                d2d1_device,
+            })
+        }
     }
 
-    pub(crate) fn back_buffers(&self, swap_chain: &IDXGISwapChain1) -> Result<Vec<RenderTarget>> {
+    pub(crate) fn create_render_target_from_swap_chain(
+        &self,
+        ctx: &ID2D1DeviceContext5,
+        swap_chain: &IDXGISwapChain1,
+    ) -> Result<RenderTarget> {
         unsafe {
+            let swap_chain: IDXGISwapChain1 =
+                swap_chain.cast().expect("cannot cast to IDXGISwapChain1");
             let desc = swap_chain.GetDesc1()?;
             let surface: IDXGISurface = swap_chain.GetBuffer(0)?;
-            let bitmap = {
-                self.device_context.CreateBitmapFromDxgiSurface(
-                    &surface,
-                    Some(&D2D1_BITMAP_PROPERTIES1 {
-                        pixelFormat: D2D1_PIXEL_FORMAT {
-                            format: desc.Format,
-                            alphaMode: D2D1_ALPHA_MODE_IGNORE,
-                        },
-                        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-                        dpiX: 96.0,
-                        dpiY: 96.0,
-                        ..Default::default()
-                    }),
-                )?
-            };
-            Ok(vec![RenderTarget(bitmap)])
+            let bitmap = ctx.CreateBitmapFromDxgiSurface(
+                &surface,
+                Some(&D2D1_BITMAP_PROPERTIES1 {
+                    pixelFormat: D2D1_PIXEL_FORMAT {
+                        format: desc.Format,
+                        alphaMode: D2D1_ALPHA_MODE_IGNORE,
+                    },
+                    bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                    dpiX: 96.0,
+                    dpiY: 96.0,
+                    ..Default::default()
+                }),
+            )?;
+            Ok(RenderTarget(bitmap))
         }
     }
 }
 
 impl Context<Direct3D11> {
-    /// # Safety
-    ///
-    /// `target` must be an `ID3D11SwapChain1`.
     #[inline]
-    pub unsafe fn create_back_buffers<T>(&self, swap_chain: &T) -> Result<Vec<RenderTarget>> {
-        let p = swap_chain as *const _ as *const IUnknown;
-        let swap_chain: IDXGISwapChain1 = (*p).cast()?;
-        self.backend.back_buffers(&swap_chain)
+    pub fn create_render_target_from_swap_chain<T>(&self, swap_chain: &T) -> Result<RenderTarget>
+    where
+        T: Interface,
+    {
+        let swap_chain = swap_chain.cast().expect("cannot cast to IDXGISwapChain1");
+        self.backend
+            .create_render_target_from_swap_chain(&self.d2d1_device_context, &swap_chain)
     }
 
-    /// # Safety
-    ///
-    /// `target` must be an `ID3D11Texture2D`.
-    pub unsafe fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget> {
-        let target = target as *const _ as *const IUnknown;
-        let texture: ID3D11Texture2D = (*target).cast()?;
-        let desc = {
+    #[inline]
+    pub fn create_render_target<T>(&self, target: &T) -> Result<RenderTarget>
+    where
+        T: Interface,
+    {
+        unsafe {
+            let target: ID3D11Texture2D = target.cast().expect("cannot cast to ID3D11Texture2D");
             let mut desc = D3D11_TEXTURE2D_DESC::default();
-            texture.GetDesc(&mut desc);
-            desc
-        };
-        if cfg!(debug_assertions) {
-            assert!((desc.BindFlags & D3D11_BIND_RENDER_TARGET) == D3D11_BIND_RENDER_TARGET);
-        }
-        let surface: IDXGISurface = texture.cast()?;
-        let bitmap = {
-            self.backend.device_context.CreateBitmapFromDxgiSurface(
+            target.GetDesc(&mut desc);
+            let surface: IDXGISurface = target.cast().unwrap();
+            let bitmap = self.d2d1_device_context.CreateBitmapFromDxgiSurface(
                 &surface,
                 Some(&D2D1_BITMAP_PROPERTIES1 {
                     pixelFormat: D2D1_PIXEL_FORMAT {
@@ -116,28 +102,26 @@ impl Context<Direct3D11> {
                     bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
                     ..Default::default()
                 }),
-            )?
-        };
-        Ok(RenderTarget(bitmap))
+            )?;
+            Ok(RenderTarget(bitmap))
+        }
     }
 }
-
-unsafe impl Send for Direct3D11 {}
-unsafe impl Sync for Direct3D11 {}
 
 impl Backend for Direct3D11 {
     type RenderTarget = RenderTarget;
 
-    #[inline]
-    fn device_context(&self) -> &ID2D1DeviceContext {
-        &self.device_context
-    }
-
-    #[inline]
-    fn d2d1_factory(&self) -> &ID2D1Factory1 {
+    fn d2d1_factory(&self) -> &ID2D1Factory6 {
         &self.d2d1_factory
     }
 
-    fn begin_draw(&self, _target: &RenderTarget) {}
-    fn end_draw(&self, _target: &RenderTarget) {}
+    fn d2d1_device(&self) -> &ID2D1Device5 {
+        &self.d2d1_device
+    }
+
+    fn begin_draw(&self, _target: &Self::RenderTarget) {}
+
+    fn end_draw(&self, _target: &Self::RenderTarget, ret: Result<()>) -> Result<()> {
+        ret
+    }
 }

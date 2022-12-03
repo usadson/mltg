@@ -3,73 +3,43 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"command": "build",
-			"args": ["--example", "hello"],
-			"problemMatcher": [
-				"$rustc"
-			],
 			"group": "build",
-			"label": "debug hello"
-		},
-		{
-			"type": "cargo",
+			"label": "debug d2d",
 			"command": "build",
 			"args": ["--example", "d2d"],
 			"problemMatcher": [
 				"$rustc"
-			],
-			"group": "build",
-			"label": "debug d2d"
+			]
 		},
 		{
 			"type": "cargo",
+			"group": "build",
+			"label": "debug to_d3d11_texture",
 			"command": "build",
-			"args": ["--example", "d3d12"],
+			"args": ["--example", "to_d3d11_texture"],
 			"problemMatcher": [
 				"$rustc"
-			],
-			"group": "build",
-			"label": "debug d3d12"
+			]
 		},
 		{
 			"type": "cargo",
+			"group": "build",
+			"label": "debug to_d3d12_texture",
 			"command": "build",
-			"args": ["--example", "winit_d2d"],
+			"args": ["--example", "to_d3d12_texture"],
 			"problemMatcher": [
 				"$rustc"
-			],
-			"group": "build",
-			"label": "debug winit_d2d"
+			]
 		},
 		{
 			"type": "cargo",
+			"group": "build",
+			"label": "debug witas",
+			"args": ["--example", "witas"],
 			"command": "build",
-			"args": ["--example", "texture_d3d11"],
 			"problemMatcher": [
 				"$rustc"
 			],
-			"group": "build",
-			"label": "debug texture_d3d11"
-		},
-		{
-			"type": "cargo",
-			"command": "build",
-			"args": ["--example", "texture_d3d12"],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build",
-			"label": "debug texture_d3d12"
-		},
-		{
-			"type": "cargo",
-			"command": "build",
-			"args": ["--example", "text"],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build",
-			"label": "debug text"
 		}
 	]
 }

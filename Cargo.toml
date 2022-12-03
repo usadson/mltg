@@ -8,18 +8,17 @@ description = "Direct2D wrapper library"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/LNSEAB/mltg"
-documentation = "https://lnseab.github.io/mltg/"
-
-[package.metadata.docs.rs]
-targets = ["x86_64-pc-windows-msvc"]
-all-featurse = true
+documentation = "https://docs.rs/mltg/"
 
 [dependencies]
-gecl = "0.1.2"
+gecl = ">= 0.2.0"
+thiserror = "1.0.37"
+raw-window-handle = ">= 0.5.0"
 
 [dependencies.windows]
-version = "0.42.0"
+version = ">= 0.42"
 features = [
+	"interface",
 	"Win32_Graphics_Direct3D",
 	"Win32_Graphics_Direct3D11",
 	"Win32_Graphics_Direct3D12",
@@ -41,7 +40,22 @@ features = [
 ]
 
 [dev-dependencies]
-anyhow = { version = "1.0.65", features = ["backtrace"] }
-coinit = "0.1.9"
-winit = "0.27.3"
-wita = "0.19.1"
+anyhow = { version = "1.0.66", features = ["backtrace"] }
+coinit = "0.1.10"
+winit = "0.27.5"
+windows = { version = "0.43.0", features = [
+	"Win32_Graphics_Direct3D",
+	"Win32_Graphics_Direct3D_Fxc",
+	"Win32_Graphics_Direct3D_Dxc",
+	"Win32_Graphics_Direct3D11",
+	"Win32_Graphics_Direct3D12",
+	"Win32_Graphics_Dxgi",
+	"Win32_Graphics_Dxgi_Common",
+] }
+witas = "0.2.0"
+tokio = { version = "1.22.0", features = ["full"] }
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["x86_64-pc-windows-msvc"]
+all-featurse = true

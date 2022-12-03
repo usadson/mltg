@@ -1,40 +1,41 @@
-use crate::utility::*;
 use crate::*;
+use std::sync::Arc;
 use windows::core::Interface;
-use windows::{
-    Foundation::Numerics::*,
-    Win32::Graphics::{DirectWrite::*, Imaging::D2D::*, Imaging::*},
-    Win32::System::Com::*,
+use windows::Win32::Graphics::{
+    Direct2D::Common::*, Direct2D::*, DirectWrite::*, Imaging::D2D::*, Imaging::*,
 };
+use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
 
-#[derive(Clone)]
+pub trait Fill {
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush);
+}
+
+pub trait Stroke {
+    fn stroke(
+        &self,
+        dc: &ID2D1DeviceContext5,
+        brush: &ID2D1Brush,
+        width: f32,
+        style: Option<&ID2D1StrokeStyle>,
+    );
+}
+
 pub struct DrawCommand {
-    device_context: ID2D1DeviceContext,
-    dwrite_factory: IDWriteFactory5,
+    dc: ID2D1DeviceContext5,
 }
 
 impl DrawCommand {
-    pub(crate) fn new(
-        device_context: &ID2D1DeviceContext,
-        dwrite_factory: &IDWriteFactory5,
-    ) -> Self {
-        Self {
-            device_context: device_context.clone(),
-            dwrite_factory: dwrite_factory.clone(),
-        }
-    }
-
     #[inline]
-    pub fn clear(&self, color: impl Into<Rgba>) {
+    pub fn clear(&self, color: impl Into<Rgba<f32>>) {
         unsafe {
-            let color: D2D1_COLOR_F = Inner(color.into()).into();
-            self.device_context.Clear(Some(&color));
+            let color = Wrapper(color.into()).into();
+            self.dc.Clear(Some(&color));
         }
     }
 
     #[inline]
     pub fn fill(&self, object: &impl Fill, brush: &Brush) {
-        object.fill(&self.device_context, &brush.handle());
+        object.fill(&self.dc, &brush.handle());
     }
 
     #[inline]
@@ -43,146 +44,129 @@ impl DrawCommand {
         object: &impl Stroke,
         brush: &Brush,
         width: f32,
-        style: Option<&StrokeStyle>,
+        stroke_style: Option<&StrokeStyle>,
     ) {
         object.stroke(
-            &self.device_context,
+            &self.dc,
             &brush.handle(),
             width,
-            style.map(|s| s.0.clone()),
+            stroke_style.map(|ss| ss.handle()),
         );
-    }
-
-    #[inline]
-    pub fn draw_text(
-        &self,
-        text: &str,
-        format: &TextFormat,
-        brush: &Brush,
-        origin: impl Into<Point>,
-    ) {
-        let layout = TextLayout::new(
-            &self.dwrite_factory.cast().unwrap(),
-            text,
-            format,
-            TextAlignment::Leading,
-            None,
-        );
-        if let Ok(layout) = layout {
-            self.draw_text_layout(&layout, brush, origin);
-        }
-    }
-
-    #[inline]
-    pub fn draw_text_layout(&self, layout: &TextLayout, brush: &Brush, origin: impl Into<Point>) {
-        layout.draw(&self.device_context, brush, origin.into());
     }
 
     #[inline]
     pub fn draw_image(
         &self,
         image: &Image,
-        dest_rect: impl Into<Rect>,
-        src_rect: Option<Rect>,
+        dest_rect: impl Into<Rect<f32>>,
+        src_rect: Option<Rect<f32>>,
         interpolation: Interpolation,
     ) {
-        image.draw(
-            &self.device_context,
-            dest_rect.into(),
-            src_rect,
-            interpolation,
-        );
-    }
-
-    #[inline]
-    pub fn clip(&self, rect: impl Into<Rect>, f: impl FnOnce(&DrawCommand)) {
-        let rect: D2D_RECT_F = Inner(rect.into()).into();
+        let dest: D2D_RECT_F = Wrapper(dest_rect.into()).into();
+        let src: Option<D2D_RECT_F> = src_rect.map(|src| Wrapper(src).into());
         unsafe {
-            self.device_context
-                .PushAxisAlignedClip(&rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-            f(self);
-            self.device_context.PopAxisAlignedClip();
+            self.dc.DrawBitmap2(
+                image.handle(),
+                Some(&dest),
+                1.0,
+                D2D1_INTERPOLATION_MODE(interpolation as _),
+                src.as_ref().map(|src| src as _),
+                None,
+            );
         }
     }
+}
 
-    #[inline]
-    pub fn set_offset(&self, point: impl Into<Point>) {
-        let point = point.into();
-        let m = Matrix3x2::translation(point.x, point.y);
-        unsafe {
-            self.device_context.SetTransform(&m);
-        }
-    }
+pub trait Target {
+    fn bitmap(&self) -> &ID2D1Bitmap1;
+    fn size(&self) -> Size<f32>;
+    fn physical_size(&self) -> Size<u32>;
 }
 
 pub trait Backend {
     type RenderTarget: Target;
 
-    fn device_context(&self) -> &ID2D1DeviceContext;
-    fn d2d1_factory(&self) -> &ID2D1Factory1;
+    fn d2d1_factory(&self) -> &ID2D1Factory6;
+    fn d2d1_device(&self) -> &ID2D1Device5;
     fn begin_draw(&self, target: &Self::RenderTarget);
-    fn end_draw(&self, target: &Self::RenderTarget);
+    fn end_draw(&self, target: &Self::RenderTarget, ret: Result<()>) -> Result<()>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+struct FontFileLoader {
+    factory: IDWriteFactory6,
+    loader: IDWriteInMemoryFontFileLoader,
+}
+
+impl Drop for FontFileLoader {
+    fn drop(&mut self) {
+        unsafe {
+            self.factory
+                .UnregisterFontFileLoader(&self.loader)
+                .unwrap_or(());
+        }
+    }
+}
+
+pub struct LockGuard<'a> {
+    multithread: &'a ID2D1Multithread,
+}
+
+impl<'a> Drop for LockGuard<'a> {
+    #[inline]
+    fn drop(&mut self) {
+        unsafe {
+            self.multithread.Leave();
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Factory {
-    d2d1_factory: ID2D1Factory1,
-    device_context: ID2D1DeviceContext,
-    dwrite_factory: IDWriteFactory5,
-    dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
+    d2d1_factory: ID2D1Factory6,
+    d2d1_device_context: ID2D1DeviceContext5,
+    dwrite_factory: IDWriteFactory6,
     wic_imaging_factory: IWICImagingFactory2,
+    font_loader: Arc<FontFileLoader>,
+    multithread: ID2D1Multithread,
 }
 
 impl Factory {
     #[inline]
-    pub fn create_gradient_stop_collection<U>(&self, stops: &[U]) -> Result<GradientStopCollection>
-    where
-        U: Into<GradientStop> + Clone,
-    {
-        GradientStopCollection::new(&self.device_context, stops)
+    pub fn create_solid_color_brush(&self, color: impl Into<Rgba<f32>>) -> Result<Brush> {
+        Brush::solid_color(&self.d2d1_device_context, color)
     }
 
     #[inline]
-    pub fn create_solid_color_brush(&self, color: impl Into<Rgba>) -> Result<Brush> {
-        Brush::solid_color(&self.device_context, color)
+    pub fn create_gradient_stop_collection<T>(
+        &self,
+        mode: GradientMode,
+        stops: &[T],
+    ) -> Result<GradientStopCollection>
+    where
+        T: Into<GradientStop> + Clone,
+    {
+        GradientStopCollection::new(&self.d2d1_device_context, mode, stops)
     }
 
     #[inline]
     pub fn create_linear_gradient_brush(
         &self,
-        start: impl Into<Point>,
-        end: impl Into<Point>,
-        stop_collection: &GradientStopCollection,
+        start: impl Into<Point<f32>>,
+        end: impl Into<Point<f32>>,
+        stops: &GradientStopCollection,
     ) -> Result<Brush> {
-        Brush::linear_gradient(&self.device_context, start, end, stop_collection)
+        Brush::linear_gradient(&self.d2d1_device_context, start, end, stops)
     }
 
     #[inline]
     pub fn create_radial_gradient_brush(
         &self,
-        center: impl Into<Point>,
-        offset: impl Into<Point>,
-        radius: impl Into<Vector>,
-        stop_collection: &GradientStopCollection,
+        ellipse: impl Into<Ellipse>,
+        offset: impl Into<Point<f32>>,
+        stops: &GradientStopCollection,
     ) -> Result<Brush> {
-        Brush::radial_gradient(
-            &self.device_context,
-            center,
-            offset,
-            radius,
-            stop_collection,
-        )
-    }
-
-    #[inline]
-    pub fn create_path(&self) -> PathBuilder {
-        let geometry = unsafe { self.d2d1_factory.CreatePathGeometry().unwrap() };
-        PathBuilder::new(geometry)
-    }
-
-    #[inline]
-    pub fn create_stroke_style(&self, props: &StrokeStyleProperties) -> Result<StrokeStyle> {
-        StrokeStyle::new(&self.d2d1_factory, props)
+        Brush::radial_gradient(&self.d2d1_device_context, ellipse, offset, stops)
     }
 
     #[inline]
@@ -191,13 +175,15 @@ impl Factory {
         font: Font,
         size: impl Into<f32>,
         style: Option<&TextStyle>,
+        locale: Option<&str>,
     ) -> Result<TextFormat> {
         TextFormat::new(
             &self.dwrite_factory,
-            &self.dwrite_in_memory_loader,
+            &self.font_loader.loader,
             font,
             size.into(),
             style,
+            locale.unwrap_or(""),
         )
     }
 
@@ -207,51 +193,82 @@ impl Factory {
         text: impl AsRef<str>,
         format: &TextFormat,
         alignment: TextAlignment,
-        size: Option<Size>,
+        size: Option<Size<f32>>,
     ) -> Result<TextLayout> {
-        TextLayout::new(
-            &self.dwrite_factory.clone(),
-            text.as_ref(),
-            format,
-            alignment,
-            size,
-        )
+        TextLayout::new(&self.dwrite_factory, text.as_ref(), format, alignment, size)
     }
 
     #[inline]
-    pub fn create_image(&self, loader: impl ImageLoader) -> Result<Image> {
-        Image::new(&self.device_context, &self.wic_imaging_factory, loader)
+    pub fn create_stroke_style(&self, props: &StrokeStyleProperties) -> Result<StrokeStyle> {
+        StrokeStyle::new(&self.d2d1_factory, props)
+    }
+
+    #[inline]
+    pub fn create_image_from_file(&self, path: impl AsRef<std::path::Path>) -> Result<Image> {
+        Image::from_file(&self.d2d1_device_context, &self.wic_imaging_factory, path)
+    }
+
+    #[inline]
+    pub fn create_filled_path(&self) -> Result<PathBuilder<FilledPath>> {
+        let geometry = unsafe { self.d2d1_factory.CreatePathGeometry()? };
+        PathBuilder::new(geometry)
+    }
+
+    #[inline]
+    pub fn create_hollow_path(&self) -> Result<PathBuilder<HollowPath>> {
+        let geometry = unsafe { self.d2d1_factory.CreatePathGeometry()? };
+        PathBuilder::new(geometry)
+    }
+
+    #[inline]
+    pub fn lock(&self) -> LockGuard {
+        unsafe {
+            self.multithread.Enter();
+        }
+        LockGuard {
+            multithread: &self.multithread,
+        }
     }
 }
 
-unsafe impl Send for Factory {}
-unsafe impl Sync for Factory {}
-
-pub struct Context<T> {
+#[derive(Debug)]
+pub struct Context<T>
+where
+    T: Backend,
+{
     pub(crate) backend: T,
-    dwrite_factory: IDWriteFactory5,
-    dwrite_in_memory_loader: IDWriteInMemoryFontFileLoader,
+    pub(crate) d2d1_device_context: ID2D1DeviceContext5,
+    dwrite_factory: IDWriteFactory6,
     wic_imaging_factory: IWICImagingFactory2,
+    font_loader: Arc<FontFileLoader>,
 }
 
 impl<T> Context<T>
 where
-    T: Backend + Clone,
+    T: Backend,
 {
-    #[inline]
     pub fn new(backend: T) -> Result<Self> {
         unsafe {
-            let dwrite_factory =
-                DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED)?;
-            let dwrite_in_memory_loader = dwrite_factory.CreateInMemoryFontFileLoader()?;
-            dwrite_factory.RegisterFontFileLoader(&dwrite_in_memory_loader)?;
+            let d2d1_device_context = backend
+                .d2d1_device()
+                .CreateDeviceContext6(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
+            let dwrite_factory: IDWriteFactory6 = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED)?;
             let wic_imaging_factory =
                 CoCreateInstance(&CLSID_WICImagingFactory2, None, CLSCTX_INPROC_SERVER)?;
+            let font_loader = {
+                let loader = dwrite_factory.CreateInMemoryFontFileLoader()?;
+                dwrite_factory.RegisterFontFileLoader(&loader)?;
+                Arc::new(FontFileLoader {
+                    factory: dwrite_factory.clone(),
+                    loader,
+                })
+            };
             Ok(Self {
                 backend,
+                d2d1_device_context,
                 dwrite_factory,
-                dwrite_in_memory_loader,
                 wic_imaging_factory,
+                font_loader,
             })
         }
     }
@@ -260,48 +277,42 @@ where
     pub fn create_factory(&self) -> Factory {
         Factory {
             d2d1_factory: self.backend.d2d1_factory().clone(),
-            device_context: self.backend.device_context().clone(),
+            d2d1_device_context: self.d2d1_device_context.clone(),
             dwrite_factory: self.dwrite_factory.clone(),
-            dwrite_in_memory_loader: self.dwrite_in_memory_loader.clone(),
             wic_imaging_factory: self.wic_imaging_factory.clone(),
+            font_loader: self.font_loader.clone(),
+            multithread: self.backend.d2d1_factory().cast().unwrap(),
         }
     }
 
     #[inline]
     pub fn set_dpi(&self, dpi: f32) {
         unsafe {
-            self.backend.device_context().SetDpi(dpi, dpi);
+            self.d2d1_device_context.SetDpi(dpi, dpi);
         }
     }
 
+    #[inline]
+    pub fn set_scale_factor(&self, scale: f32) {
+        self.set_dpi(scale * 96.0)
+    }
+
+    #[inline]
     pub fn draw<R>(
         &self,
         target: &T::RenderTarget,
         f: impl FnOnce(&DrawCommand) -> R,
     ) -> Result<R> {
-        let device_context = self.backend.device_context();
+        let ctx = &self.d2d1_device_context;
         unsafe {
             self.backend.begin_draw(target);
-            device_context.SetTarget(target.bitmap());
-            device_context.BeginDraw();
-            let ret = f(&DrawCommand::new(
-                self.backend.device_context(),
-                &self.dwrite_factory,
-            ));
-            device_context.EndDraw(None, None)?;
-            device_context.SetTarget(None);
-            self.backend.end_draw(target);
+            ctx.SetTarget(target.bitmap());
+            ctx.BeginDraw();
+            let ret = f(&DrawCommand { dc: ctx.clone() });
+            let e = ctx.EndDraw(None, None);
+            ctx.SetTarget(None);
+            self.backend.end_draw(target, e.map_err(|e| e.into()))?;
             Ok(ret)
-        }
-    }
-}
-
-impl<T> Drop for Context<T> {
-    fn drop(&mut self) {
-        unsafe {
-            self.dwrite_factory
-                .UnregisterFontFileLoader(&self.dwrite_in_memory_loader)
-                .ok();
         }
     }
 }

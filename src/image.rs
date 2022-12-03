@@ -1,7 +1,10 @@
 use crate::*;
-use std::path::{Path, PathBuf};
-use windows::core::{Interface, HSTRING};
-use windows::Win32::{Graphics::Imaging::D2D::*, Graphics::Imaging::*, System::SystemServices::*};
+use std::path::Path;
+use windows::core::{Interface, GUID, HSTRING};
+use windows::Win32::{
+    Graphics::Direct2D::*, Graphics::Imaging::D2D::*, Graphics::Imaging::*,
+    System::SystemServices::*,
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
@@ -18,59 +21,15 @@ pub enum Interpolation {
 pub struct Image(ID2D1Bitmap1);
 
 impl Image {
-    #[inline]
-    pub(crate) fn new(
-        dc: &ID2D1DeviceContext,
+    pub(crate) fn from_file(
+        dc: &ID2D1DeviceContext5,
         factory: &IWICImagingFactory2,
-        loader: impl ImageLoader,
-    ) -> Result<Self> {
-        loader.load(dc, factory)
-    }
-
-    #[inline]
-    pub(crate) fn draw(
-        &self,
-        dc: &ID2D1DeviceContext,
-        dest_rect: Rect,
-        src_rect: Option<Rect>,
-        interpolation: Interpolation,
-    ) {
-        let dest = Inner(dest_rect).into();
-        let src: Option<D2D_RECT_F> = src_rect.map(|src| Inner(src).into());
-        unsafe {
-            dc.DrawBitmap2(
-                &self.0,
-                Some(&dest),
-                1.0,
-                D2D1_INTERPOLATION_MODE(interpolation as _),
-                src.as_ref().map(|src| src as _),
-                None,
-            );
-        }
-    }
-
-    #[inline]
-    pub fn size(&self) -> gecl::Size<u32> {
-        unsafe {
-            let size = self.0.GetPixelSize();
-            gecl::Size::new(size.width, size.height)
-        }
-    }
-}
-
-unsafe impl Send for Image {}
-unsafe impl Sync for Image {}
-
-pub trait ImageLoader {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image>;
-}
-
-impl<'a> ImageLoader for &'a Path {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
+        path: impl AsRef<Path>,
+    ) -> Result<Image> {
         unsafe {
             let decoder = factory.CreateDecoderFromFilename(
-                &HSTRING::from(self.to_str().unwrap()),
-                &windows::core::GUID::zeroed(),
+                &HSTRING::from(path.as_ref().to_string_lossy().as_ref()),
+                &GUID::zeroed(),
                 GENERIC_READ,
                 WICDecodeMetadataCacheOnDemand,
             )?;
@@ -88,26 +47,16 @@ impl<'a> ImageLoader for &'a Path {
                 )?;
                 converter
             };
-            let bitmap = { dc.CreateBitmapFromWicBitmap(&converter, None)?.cast()? };
+            let bitmap = dc.CreateBitmapFromWicBitmap(&converter, None)?.cast()?;
             Ok(Image(bitmap))
         }
     }
-}
 
-impl ImageLoader for PathBuf {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
-        self.as_path().load(dc, factory)
+    pub fn size(&self) -> Size<u32> {
+        unsafe { Wrapper(self.0.GetPixelSize()).into() }
     }
-}
 
-impl<'a> ImageLoader for &'a str {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
-        Path::new(self).load(dc, factory)
-    }
-}
-
-impl<'a> ImageLoader for &'a String {
-    fn load(&self, dc: &ID2D1DeviceContext, factory: &IWICImagingFactory2) -> Result<Image> {
-        Path::new(self).load(dc, factory)
+    pub(crate) fn handle(&self) -> &ID2D1Bitmap1 {
+        &self.0
     }
 }

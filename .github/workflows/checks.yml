@@ -1,0 +1,28 @@
+name: Checks
+
+on:
+  push:
+    branches-ignore:
+      - "release"
+      - "master"
+
+jobs:
+  checks:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Load cache
+        uses: ./.github/actions/cache_cargo
+      - name: Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+      - name: Clippy
+        run: cargo clippy 
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Test
+        run: cargo test --all-features

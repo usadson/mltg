@@ -1,20 +1,19 @@
+use crate::utility::*;
 use crate::*;
+use windows::Win32::Graphics::Direct2D::*;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SolidColorBrush(ID2D1SolidColorBrush);
 
-unsafe impl Send for SolidColorBrush {}
-unsafe impl Sync for SolidColorBrush {}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct GradientStop {
     pub position: f32,
-    pub color: Rgba,
+    pub color: Rgba<f32>,
 }
 
 impl GradientStop {
     #[inline]
-    pub fn new(position: f32, color: impl Into<Rgba>) -> Self {
+    pub fn new(position: f32, color: impl Into<Rgba<f32>>) -> Self {
         Self {
             position,
             color: color.into(),
@@ -24,32 +23,40 @@ impl GradientStop {
 
 impl From<GradientStop> for D2D1_GRADIENT_STOP {
     #[inline]
-    fn from(src: GradientStop) -> D2D1_GRADIENT_STOP {
-        D2D1_GRADIENT_STOP {
+    fn from(src: GradientStop) -> Self {
+        Self {
             position: src.position,
-            color: Inner(src.color).into(),
+            color: Wrapper(src.color).into(),
         }
     }
 }
 
 impl<T> From<(f32, T)> for GradientStop
 where
-    T: Into<Rgba>,
+    T: Into<Rgba<f32>>,
 {
     #[inline]
-    fn from(src: (f32, T)) -> GradientStop {
-        GradientStop {
+    fn from(src: (f32, T)) -> Self {
+        Self {
             position: src.0,
             color: src.1.into(),
         }
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
+pub enum GradientMode {
+    Clamp = D2D1_EXTEND_MODE_CLAMP.0,
+    Mirror = D2D1_EXTEND_MODE_MIRROR.0,
+    Wrap = D2D1_EXTEND_MODE_WRAP.0,
+}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GradientStopCollection(ID2D1GradientStopCollection);
 
 impl GradientStopCollection {
-    pub(crate) fn new<T>(dc: &ID2D1DeviceContext, stops: &[T]) -> Result<Self>
+    pub(crate) fn new<T>(dc: &ID2D1DeviceContext5, mode: GradientMode, stops: &[T]) -> Result<Self>
     where
         T: Into<GradientStop> + Clone,
     {
@@ -59,26 +66,17 @@ impl GradientStopCollection {
             .map(|stop| stop.into().into())
             .collect::<Vec<_>>();
         let collection = unsafe {
-            dc.CreateGradientStopCollection(&stops, D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_WRAP)?
+            dc.CreateGradientStopCollection(&stops, D2D1_GAMMA_2_2, D2D1_EXTEND_MODE(mode as u32))?
         };
         Ok(Self(collection))
     }
 }
 
-unsafe impl Send for GradientStopCollection {}
-unsafe impl Sync for GradientStopCollection {}
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct LinearGradientBrush(ID2D1LinearGradientBrush);
 
-unsafe impl Send for LinearGradientBrush {}
-unsafe impl Sync for LinearGradientBrush {}
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct RadialGradientBrush(ID2D1RadialGradientBrush);
-
-unsafe impl Send for RadialGradientBrush {}
-unsafe impl Sync for RadialGradientBrush {}
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Brush {
@@ -88,63 +86,61 @@ pub enum Brush {
 }
 
 impl Brush {
-    #[inline]
-    pub(crate) fn solid_color(dc: &ID2D1DeviceContext, color: impl Into<Rgba>) -> Result<Self> {
-        let color: D2D1_COLOR_F = Inner(color.into()).into();
+    pub(crate) fn solid_color(
+        dc: &ID2D1DeviceContext5,
+        color: impl Into<Rgba<f32>>,
+    ) -> Result<Self> {
+        let color = Wrapper(color.into()).into();
         let brush = unsafe { dc.CreateSolidColorBrush(&color, None)? };
         Ok(Self::SolidColor(SolidColorBrush(brush)))
     }
 
-    #[inline]
     pub(crate) fn linear_gradient(
-        dc: &ID2D1DeviceContext,
-        start: impl Into<Point>,
-        end: impl Into<Point>,
-        stop_collection: &GradientStopCollection,
+        dc: &ID2D1DeviceContext5,
+        start: impl Into<Point<f32>>,
+        end: impl Into<Point<f32>>,
+        stops: &GradientStopCollection,
     ) -> Result<Self> {
         let start = start.into();
         let end = end.into();
         let brush = unsafe {
             dc.CreateLinearGradientBrush(
                 &D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES {
-                    startPoint: Inner(start).into(),
-                    endPoint: Inner(end).into(),
+                    startPoint: Wrapper(start).into(),
+                    endPoint: Wrapper(end).into(),
                 },
                 None,
-                &stop_collection.0,
+                &stops.0,
             )?
         };
         Ok(Self::LinearGradient(LinearGradientBrush(brush)))
     }
 
-    #[inline]
     pub(crate) fn radial_gradient(
-        dc: &ID2D1DeviceContext,
-        center: impl Into<Point>,
-        offset: impl Into<Point>,
-        radius: impl Into<Vector>,
-        stop_collection: &GradientStopCollection,
+        dc: &ID2D1DeviceContext5,
+        ellipse: impl Into<Ellipse>,
+        offset: impl Into<Point<f32>>,
+        stops: &GradientStopCollection,
     ) -> Result<Self> {
-        let center = center.into();
+        let ellipse = ellipse.into();
         let offset = offset.into();
-        let radius = radius.into();
         let brush = unsafe {
             dc.CreateRadialGradientBrush(
                 &D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES {
-                    center: Inner(center).into(),
-                    gradientOriginOffset: Inner(offset).into(),
-                    radiusX: radius.x,
-                    radiusY: radius.y,
+                    center: Wrapper(ellipse.center).into(),
+                    radiusX: ellipse.radius.x,
+                    radiusY: ellipse.radius.y,
+                    gradientOriginOffset: Wrapper(offset).into(),
                 },
                 None,
-                &stop_collection.0,
+                &stops.0,
             )?
         };
         Ok(Self::RadialGradient(RadialGradientBrush(brush)))
     }
 
     #[inline]
-    pub fn handle(&self) -> ID2D1Brush {
+    pub(crate) fn handle(&self) -> ID2D1Brush {
         match self {
             Self::SolidColor(b) => b.0.clone().into(),
             Self::LinearGradient(b) => b.0.clone().into(),

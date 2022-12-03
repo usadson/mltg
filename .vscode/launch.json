@@ -2,16 +2,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "debug hello",
-            "request": "launch",
-            "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/hello.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "debug hello"
-        },
-        {
             "name": "debug d2d",
             "request": "launch",
             "type": "cppvsdbg",
@@ -22,54 +12,34 @@
             "preLaunchTask": "debug d2d"
         },
         {
-            "name": "debug d3d12",
+            "name": "debug to_d3d11_texture",
             "request": "launch",
             "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/d3d12.exe",
+            "program": "${workspaceFolder}/target/debug/examples/to_d3d11_texture.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "preLaunchTask": "debug d3d12"
+            "preLaunchTask": "debug to_d3d11_texture"
         },
         {
-            "name": "debug winit d2d",
+            "name": "debug to_d3d12_texture",
             "request": "launch",
             "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/winit_d2d.exe",
+            "program": "${workspaceFolder}/target/debug/examples/to_d3d12_texture.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "preLaunchTask": "debug winit_d2d"
+            "preLaunchTask": "debug to_d3d12_texture"
         },
         {
-            "name": "debug texture d3d11",
+            "name": "debug witas",
             "request": "launch",
             "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/texture_d3d11.exe",
+            "program": "${workspaceFolder}/target/debug/examples/witas.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "preLaunchTask": "debug texture_d3d11"
-        },
-        {
-            "name": "debug texture d3d12",
-            "request": "launch",
-            "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/texture_d3d12.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "debug texture_d3d12"
-        },
-        {
-            "name": "debug text",
-            "request": "launch",
-            "type": "cppvsdbg",
-            "program": "${workspaceFolder}/target/debug/examples/text.exe",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "debug text"
+            "preLaunchTask": "debug witas"
         }
     ]
 }

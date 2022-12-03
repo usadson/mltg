@@ -1,7 +1,6 @@
 use crate::*;
-use std::convert::TryInto;
 use windows::core::{Interface, HSTRING};
-use windows::Win32::{Foundation::*, Graphics::DirectWrite::*};
+use windows::Win32::{Foundation::*, Graphics::Direct2D::*, Graphics::DirectWrite::*};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(i32)]
@@ -84,72 +83,51 @@ pub enum TextAlignment {
     Justified = DWRITE_TEXT_ALIGNMENT_JUSTIFIED.0,
 }
 
-impl std::convert::TryFrom<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
-    type Error = ();
-
-    fn try_from(src: DWRITE_TEXT_ALIGNMENT) -> core::result::Result<Self, ()> {
-        let dest = match src {
+impl From<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
+    #[inline]
+    fn from(src: DWRITE_TEXT_ALIGNMENT) -> Self {
+        match src {
             DWRITE_TEXT_ALIGNMENT_LEADING => TextAlignment::Leading,
             DWRITE_TEXT_ALIGNMENT_CENTER => TextAlignment::Center,
             DWRITE_TEXT_ALIGNMENT_TRAILING => TextAlignment::Trailing,
             DWRITE_TEXT_ALIGNMENT_JUSTIFIED => TextAlignment::Justified,
-            _ => return Err(()),
-        };
-        Ok(dest)
+            _ => unreachable!(),
+        }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Font<'a, 'b> {
     System(&'a str),
     File(&'a std::path::Path, &'b str),
     Memory(&'a [u8], &'b str),
 }
 
-impl<'a, 'b> Font<'a, 'b> {
-    #[inline]
-    pub fn name(&self) -> &str {
-        match self {
-            Self::System(name) => name,
-            Self::File(_, name) => name,
-            Self::Memory(_, name) => name,
-        }
-    }
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct HitTestResult {
+    pub text_position: usize,
+    pub inside: bool,
+    pub trailing_hit: bool,
 }
 
-impl<'a, 'b> std::fmt::Debug for Font<'a, 'b> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::System(font_name) => write!(f, "Font::System({})", font_name),
-            Self::File(path, font_name) => {
-                write!(f, "Font::File({}, {})", path.display(), font_name)
-            }
-            Self::Memory(_, font_name) => write!(f, "Font::Memory({})", font_name),
-        }
-    }
-}
-
-#[derive(Clone)]
+#[derive(Debug)]
 pub struct TextFormat {
     format: IDWriteTextFormat,
-    name: String,
-    size: f32,
-    style: TextStyle,
+    _not_sync: std::cell::UnsafeCell<()>, // !Sync
 }
 
 impl TextFormat {
-    #[inline]
     pub(crate) fn new(
-        factory: &IDWriteFactory5,
-        in_memory_loader: &IDWriteInMemoryFontFileLoader,
+        factory: &IDWriteFactory6,
+        loader: &IDWriteInMemoryFontFileLoader,
         font: Font,
         size: f32,
         style: Option<&TextStyle>,
+        locale: &str,
     ) -> Result<Self> {
-        let style = style.cloned().unwrap_or_default();
         let (font_name, font_collection): (_, Option<IDWriteFontCollection>) = match font {
-            Font::System(font_name) => (font_name, None),
-            Font::File(path, font_name) => unsafe {
+            Font::System(name) => (name, None),
+            Font::File(path, name) => unsafe {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
                 let font_file = factory.CreateFontFileReference(
                     &HSTRING::from(path.to_string_lossy().as_ref()),
@@ -158,11 +136,11 @@ impl TextFormat {
                 set_builder.AddFontFile(&font_file)?;
                 let font_set = set_builder.CreateFontSet()?;
                 let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;
-                (font_name, Some(font_collection.into()))
+                (name, Some(font_collection.into()))
             },
-            Font::Memory(data, font_name) => unsafe {
+            Font::Memory(data, name) => unsafe {
                 let set_builder: IDWriteFontSetBuilder1 = factory.CreateFontSetBuilder()?.cast()?;
-                let font_file = in_memory_loader.CreateInMemoryFontFileReference(
+                let font_file = loader.CreateInMemoryFontFileReference(
                     factory,
                     data.as_ptr() as _,
                     data.len() as _,
@@ -171,9 +149,10 @@ impl TextFormat {
                 set_builder.AddFontFile(&font_file)?;
                 let font_set = set_builder.CreateFontSet()?;
                 let font_collection = factory.CreateFontCollectionFromFontSet(&font_set)?;
-                (font_name, Some(font_collection.into()))
+                (name, Some(font_collection.into()))
             },
         };
+        let style = style.cloned().unwrap_or_default();
         let format = unsafe {
             factory.CreateTextFormat(
                 &HSTRING::from(font_name),
@@ -182,30 +161,13 @@ impl TextFormat {
                 DWRITE_FONT_STYLE(style.style as _),
                 DWRITE_FONT_STRETCH(style.stretch as _),
                 size,
-                windows::w!(""),
+                &HSTRING::from(locale),
             )?
         };
         Ok(Self {
             format,
-            name: font_name.to_string(),
-            size,
-            style,
+            _not_sync: std::cell::UnsafeCell::new(()),
         })
-    }
-
-    #[inline]
-    pub fn font_name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    pub fn font_size(&self) -> f32 {
-        self.size
-    }
-
-    #[inline]
-    pub fn style(&self) -> &TextStyle {
-        &self.style
     }
 }
 
@@ -218,32 +180,32 @@ impl PartialEq for TextFormat {
 
 impl Eq for TextFormat {}
 
-unsafe impl Send for TextFormat {}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct HitTestResult {
-    pub text_position: usize,
-    pub inside: bool,
-    pub trailing_hit: bool,
+impl Clone for TextFormat {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            format: self.format.clone(),
+            _not_sync: std::cell::UnsafeCell::new(()),
+        }
+    }
 }
 
-#[derive(Clone)]
+#[derive(Debug)]
 pub struct TextLayout {
     layout: IDWriteTextLayout,
-    _typography: IDWriteTypography,
     format: TextFormat,
-    text: String,
-    size: Size,
+    typography: IDWriteTypography,
+    size: Size<f32>,
+    _not_sync: std::cell::UnsafeCell<()>, // !Sync
 }
 
 impl TextLayout {
-    #[inline]
     pub(crate) fn new(
-        factory: &IDWriteFactory5,
+        factory: &IDWriteFactory6,
         text: &str,
         format: &TextFormat,
         alignment: TextAlignment,
-        size: Option<Size>,
+        size: Option<Size<f32>>,
     ) -> Result<Self> {
         let layout = unsafe {
             let text = text.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
@@ -280,24 +242,11 @@ impl TextLayout {
         };
         Ok(Self {
             layout,
-            _typography: typography,
+            typography,
             format: format.clone(),
-            text: text.into(),
             size: max_size,
+            _not_sync: std::cell::UnsafeCell::new(()),
         })
-    }
-
-    #[inline]
-    pub(crate) fn draw(&self, dc: &ID2D1DeviceContext, brush: &Brush, origin: Point) {
-        unsafe {
-            let origin: D2D_POINT_2F = Inner(origin).into();
-            dc.DrawTextLayout(
-                origin,
-                &self.layout,
-                &brush.handle(),
-                D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT | D2D1_DRAW_TEXT_OPTIONS_CLIP,
-            );
-        }
     }
 
     #[inline]
@@ -306,81 +255,82 @@ impl TextLayout {
     }
 
     #[inline]
-    pub fn text(&self) -> &str {
-        &self.text
-    }
-
-    #[inline]
-    pub fn alignment(&self) -> TextAlignment {
-        unsafe { self.layout.GetTextAlignment().try_into().unwrap() }
-    }
-
-    #[inline]
-    pub fn size(&self) -> Size {
+    pub fn size(&self) -> Size<f32> {
         self.size
     }
 
     #[inline]
-    pub fn set_alignment(&self, alignment: TextAlignment) {
-        unsafe {
-            self.layout
-                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(alignment as _))
-                .unwrap();
-        }
-    }
-
-    #[inline]
-    pub fn reset_size(&self) {
-        let size: Size = unsafe {
-            let metrics = self.layout.GetMetrics().unwrap();
+    pub fn reset_size(&mut self) {
+        let size: Size<f32> = unsafe {
+            let Ok(metrics) = self.layout.GetMetrics() else { return };
             (metrics.width, metrics.height).into()
         };
         self.set_size(size);
     }
 
     #[inline]
-    pub fn set_size(&self, size: impl Into<Size>) {
+    pub fn set_size(&mut self, size: impl Into<Size<f32>>) {
+        self.size = size.into();
         unsafe {
-            let size = size.into();
-            self.layout.SetMaxWidth(size.width).unwrap();
-            self.layout.SetMaxHeight(size.height).unwrap();
+            self.layout.SetMaxWidth(self.size.width).unwrap_or(());
+            self.layout.SetMaxHeight(self.size.height).unwrap_or(());
         }
     }
 
     #[inline]
-    pub fn hit_test(&self, pt: impl Into<Point>) -> HitTestResult {
+    pub fn alignment(&self) -> TextAlignment {
+        unsafe { self.layout.GetTextAlignment().into() }
+    }
+
+    #[inline]
+    pub fn set_alignment(&self, align: TextAlignment) {
         unsafe {
-            let pt = pt.into();
-            let mut trailing_hit = BOOL(0);
-            let mut inside = BOOL(0);
-            let mut matrics = DWRITE_HIT_TEST_METRICS::default();
             self.layout
-                .HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut matrics)
-                .unwrap();
-            HitTestResult {
-                text_position: matrics.textPosition as _,
-                inside: inside.as_bool(),
-                trailing_hit: trailing_hit.as_bool(),
-            }
+                .SetTextAlignment(DWRITE_TEXT_ALIGNMENT(align as _))
+                .unwrap_or(());
         }
     }
 
     #[inline]
-    pub fn text_position_to_point(&self, position: usize, trailing_hit: bool) -> Point {
+    pub fn hit_test(&self, pt: impl Into<Point<f32>>) -> Result<HitTestResult> {
+        let pt = pt.into();
+        let mut trailing_hit = BOOL::default();
+        let mut inside = BOOL::default();
+        let mut metrics = DWRITE_HIT_TEST_METRICS::default();
         unsafe {
-            let mut point = point(0.0, 0.0);
-            let mut metrics = DWRITE_HIT_TEST_METRICS::default();
             self.layout
-                .HitTestTextPosition(
-                    position as _,
-                    trailing_hit,
-                    &mut point.x,
-                    &mut point.y,
-                    &mut metrics,
-                )
-                .unwrap();
-            point
+                .HitTestPoint(pt.x, pt.y, &mut trailing_hit, &mut inside, &mut metrics)?;
         }
+        Ok(HitTestResult {
+            text_position: metrics.textPosition as _,
+            inside: inside.as_bool(),
+            trailing_hit: trailing_hit.as_bool(),
+        })
+    }
+
+    #[inline]
+    pub fn text_position_to_point(
+        &self,
+        position: usize,
+        trailing_hit: bool,
+    ) -> Result<Point<f32>> {
+        let mut point = Point::new(0.0, 0.0);
+        let mut metrics = DWRITE_HIT_TEST_METRICS::default();
+        unsafe {
+            self.layout.HitTestTextPosition(
+                position as _,
+                trailing_hit,
+                &mut point.x,
+                &mut point.y,
+                &mut metrics,
+            )?;
+        }
+        Ok(point)
+    }
+
+    #[inline]
+    pub fn position(&self, pt: impl Into<Point<f32>>) -> (&Self, Point<f32>) {
+        (self, pt.into())
     }
 }
 
@@ -393,7 +343,36 @@ impl PartialEq for TextLayout {
 
 impl Eq for TextLayout {}
 
-unsafe impl Send for TextLayout {}
+impl Clone for TextLayout {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            layout: self.layout.clone(),
+            format: self.format.clone(),
+            typography: self.typography.clone(),
+            size: self.size,
+            _not_sync: std::cell::UnsafeCell::new(()),
+        }
+    }
+}
+
+impl<T> Fill for (&TextLayout, T)
+where
+    T: Into<Point<f32>> + Clone,
+{
+    #[inline]
+    fn fill(&self, dc: &ID2D1DeviceContext5, brush: &ID2D1Brush) {
+        unsafe {
+            let point = self.1.clone().into();
+            dc.DrawTextLayout(
+                Wrapper(point).into(),
+                &self.0.layout,
+                brush,
+                D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT | D2D1_DRAW_TEXT_OPTIONS_CLIP,
+            );
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -402,7 +381,7 @@ mod tests {
     #[test]
     fn from_file() {
         let factory =
-            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
+            unsafe { DWriteCreateFactory::<IDWriteFactory6>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
@@ -413,12 +392,13 @@ mod tests {
             &loader,
             Font::File(
                 std::path::Path::new(
-                    "./test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf",
+                    "./resources/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf",
                 ),
                 "Inconsolata",
             ),
             14.0,
             None,
+            "",
         )
         .unwrap();
     }
@@ -426,7 +406,7 @@ mod tests {
     #[test]
     fn from_memory() {
         let factory =
-            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
+            unsafe { DWriteCreateFactory::<IDWriteFactory6>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
@@ -436,13 +416,12 @@ mod tests {
             &factory,
             &loader,
             Font::Memory(
-                include_bytes!(
-                    "../test_resource/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf"
-                ),
+                include_bytes!("../resources/Inconsolata/Inconsolata-VariableFont_wdth,wght.ttf"),
                 "Inconsolata",
             ),
             14.0,
             None,
+            "",
         )
         .unwrap();
     }
@@ -450,7 +429,7 @@ mod tests {
     #[test]
     fn hit_test() {
         let factory =
-            unsafe { DWriteCreateFactory::<IDWriteFactory5>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
+            unsafe { DWriteCreateFactory::<IDWriteFactory6>(DWRITE_FACTORY_TYPE_SHARED).unwrap() };
         let loader = unsafe {
             let loader = factory.CreateInMemoryFontFileLoader().unwrap();
             factory.RegisterFontFileLoader(&loader).unwrap();
@@ -462,13 +441,14 @@ mod tests {
             Font::System("Meiryo"),
             FontPoint(14.0).0,
             None,
+            "",
         )
         .unwrap();
         let layout =
             TextLayout::new(&factory, "abcd", &format, TextAlignment::Leading, None).unwrap();
         let size = layout.size();
         assert!(
-            layout.hit_test([0.0, 0.0])
+            layout.hit_test([0.0, 0.0]).unwrap()
                 == HitTestResult {
                     text_position: 0,
                     inside: true,
@@ -476,7 +456,7 @@ mod tests {
                 }
         );
         assert!(
-            layout.hit_test([size.width - 0.1, 0.0])
+            layout.hit_test([size.width - 0.1, 0.0]).unwrap()
                 == HitTestResult {
                     text_position: 3,
                     inside: true,
@@ -484,7 +464,7 @@ mod tests {
                 }
         );
         assert!(
-            layout.hit_test([-100.0, 0.0])
+            layout.hit_test([-100.0, 0.0]).unwrap()
                 == HitTestResult {
                     text_position: 0,
                     inside: false,
