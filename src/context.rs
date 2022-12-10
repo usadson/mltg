@@ -232,10 +232,7 @@ impl Factory {
 }
 
 #[derive(Debug)]
-pub struct Context<T>
-where
-    T: Backend,
-{
+pub struct Context<T> {
     pub(crate) backend: T,
     pub(crate) d2d1_device_context: ID2D1DeviceContext5,
     dwrite_factory: IDWriteFactory6,
