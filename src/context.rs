@@ -75,6 +75,22 @@ impl DrawCommand {
             );
         }
     }
+
+    #[inline]
+    pub fn clip<F, R>(&self, rect: impl Into<Rect<f32>>, f: F) -> R
+    where
+        F: FnOnce(&Self) -> R,
+    {
+        unsafe {
+            self.dc.PushAxisAlignedClip(
+                &Wrapper(rect.into()).into(),
+                D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+            );
+            let ret = f(self);
+            self.dc.PopAxisAlignedClip();
+            ret
+        }
+    }
 }
 
 pub trait Target {
