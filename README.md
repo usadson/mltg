@@ -11,7 +11,7 @@ Direct2D wrapper library
 
 ### 1. Create a `mltg::Context` and a `mltg::Factory`
 ```rust
-let ctx = mltg::Context(mltg::Direct2D()?)?;
+let ctx = mltg::Context::new(mltg::Direct2D::new()?)?;
 let factory = ctx.create_factory();
 ```
 
