@@ -2,7 +2,7 @@ use crate::*;
 use windows::core::{Interface, HSTRING};
 use windows::Win32::{Foundation::*, Graphics::Direct2D::*, Graphics::DirectWrite::*};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i32)]
 pub enum FontWeight {
     Thin = DWRITE_FONT_WEIGHT_THIN.0,
@@ -18,7 +18,7 @@ pub enum FontWeight {
     UltraBlack = DWRITE_FONT_WEIGHT_ULTRA_BLACK.0,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i32)]
 pub enum FontStyle {
     Normal = DWRITE_FONT_STYLE_NORMAL.0,
@@ -26,7 +26,7 @@ pub enum FontStyle {
     Italic = DWRITE_FONT_STYLE_ITALIC.0,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(i32)]
 pub enum FontStretch {
     Undefined = DWRITE_FONT_STRETCH_UNDEFINED.0,
@@ -56,7 +56,7 @@ pub fn font_point(value: f32) -> FontPoint {
     FontPoint(value)
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TextStyle {
     pub weight: FontWeight,
     pub style: FontStyle,
