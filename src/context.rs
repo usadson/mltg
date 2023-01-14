@@ -1,5 +1,6 @@
 use crate::*;
 use std::sync::Arc;
+use windows::Foundation::Numerics::Matrix3x2;
 use windows::core::Interface;
 use windows::Win32::Graphics::{
     Direct2D::Common::*, Direct2D::*, DirectWrite::*, Imaging::D2D::*, Imaging::*,
@@ -102,6 +103,21 @@ impl DrawCommand {
         let ret = f(self);
         self.pop_clip();
         ret
+    }
+
+    #[inline]
+    pub fn translate(&self, point: impl Into<Point<f32>>) {
+        let point = point.into();
+        unsafe {
+            let transform = Matrix3x2::translation(point.x, point.y);
+            self.dc.SetTransform(&transform);
+        }
+    }
+
+    pub fn reset_transform(&self) {
+        unsafe {
+            self.dc.SetTransform(&Matrix3x2::identity());
+        }
     }
 }
 
