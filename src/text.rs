@@ -116,9 +116,9 @@ impl From<DWRITE_LINE_SPACING_METHOD> for LineSpacingMethod {
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct LineSpacing {
-    method: LineSpacingMethod,
-    height: f32,
-    baseline: f32,
+    pub method: LineSpacingMethod,
+    pub height: f32,
+    pub baseline: f32,
 }
 
 #[derive(Clone, Debug)]
