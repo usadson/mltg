@@ -96,6 +96,31 @@ impl From<DWRITE_TEXT_ALIGNMENT> for TextAlignment {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LineSpacingMethod {
+    Default,
+    Uniform,
+    Proportional,
+}
+
+impl From<DWRITE_LINE_SPACING_METHOD> for LineSpacingMethod {
+    fn from(src: DWRITE_LINE_SPACING_METHOD) -> Self {
+        match src {
+            DWRITE_LINE_SPACING_METHOD_DEFAULT => LineSpacingMethod::Default,
+            DWRITE_LINE_SPACING_METHOD_UNIFORM => LineSpacingMethod::Uniform,
+            DWRITE_LINE_SPACING_METHOD_PROPORTIONAL => LineSpacingMethod::Proportional,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct LineSpacing {
+    method: LineSpacingMethod,
+    height: f32,
+    baseline: f32,
+}
+
 #[derive(Clone, Debug)]
 pub enum Font<'a, 'b> {
     System(&'a str),
@@ -167,6 +192,22 @@ impl TextFormat {
         Ok(Self {
             format,
             _not_sync: std::cell::UnsafeCell::new(()),
+        })
+    }
+
+    pub fn line_spacing(&self) -> Result<LineSpacing> {
+        let mut method = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+        let mut height = 0.0;
+        let mut baseline = 0.0;
+
+        unsafe {
+            self.format.GetLineSpacing(&mut method, &mut height, &mut baseline)?;
+        }
+
+        Ok(LineSpacing{
+            method: method.into(),
+            height,
+            baseline
         })
     }
 }
