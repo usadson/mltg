@@ -108,8 +108,31 @@ impl DrawCommand {
     #[inline]
     pub fn translate(&self, point: impl Into<Point<f32>>) {
         let point = point.into();
+
+        let mut old_transform = Matrix3x2::identity();
+        unsafe { self.dc.GetTransform(&mut old_transform) }
+
+        let transform = Matrix3x2::translation(point.x, point.y) * old_transform;
+
         unsafe {
-            let transform = Matrix3x2::translation(point.x, point.y);
+            self.dc.SetTransform(&transform);
+        }
+    }
+
+    #[inline]
+    pub fn scale(&self, size: impl Into<Size<f32>>) {
+        let size = size.into();
+
+        let mut old_transform = Matrix3x2::identity();
+        unsafe { self.dc.GetTransform(&mut old_transform) }
+
+        let transform = Matrix3x2 {
+            M11: size.width,
+            M22: size.height,
+            ..Default::default()
+        } * old_transform;
+
+        unsafe {
             self.dc.SetTransform(&transform);
         }
     }
